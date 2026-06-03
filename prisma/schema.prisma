@@ -188,7 +188,8 @@ model Sale {
   storeId   String
   productId String? // 상품과 연결되지 않은 단독 세일 가능
   title     String
-  photoUrl  String // 제보 시 사진 필수 (Phase 3)
+  photoUrl  String // 대표(커버) 사진 = photoUrls[0]
+  photoUrls String[] @default([]) // 최대 10장 (Phase 6 확장)
   salePrice Int
   qty       String
   expiresAt DateTime // 만료시간 지나면 자동 비활성

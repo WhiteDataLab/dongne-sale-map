@@ -16,14 +16,19 @@ const POINT_SALE_REPORT = 10; // 제보 적립(표시용, status=pending)
 const RATE_WINDOW_MS = 60_000;
 const RATE_MAX = 3;
 
+const MAX_PHOTOS = 10;
+const MAX_CUSTOM_MS = 48 * 60 * 60 * 1000;
+
 type Body = {
   storeId?: string;
   productId?: string | null;
   title?: string;
   salePrice?: number;
   qty?: string;
-  expiresOption?: "1h" | "2h" | "close";
-  photoUrl?: string;
+  expiresOption?: "1h" | "2h" | "close" | "custom";
+  expiresAt?: string; // expiresOption === "custom" 일 때 ISO
+  photoUrl?: string; // 하위호환(단일)
+  photoUrls?: string[]; // 다중(최대 10)
 };
 
 export async function POST(req: NextRequest) {
@@ -39,9 +44,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "잘못된 요청이에요." }, { status: 400 });
   }
 
-  const { storeId, productId, title, salePrice, qty, expiresOption, photoUrl } = body;
+  const { storeId, productId, title, salePrice, qty, expiresOption } = body;
 
-  if (!storeId || !title?.trim() || !qty?.trim() || !photoUrl) {
+  // 사진: photoUrls(다중) 우선, 없으면 photoUrl(단일) 하위호환
+  const photos = (
+    Array.isArray(body.photoUrls) && body.photoUrls.length > 0
+      ? body.photoUrls
+      : body.photoUrl
+        ? [body.photoUrl]
+        : []
+  )
+    .filter((u) => typeof u === "string" && u.length > 0)
+    .slice(0, MAX_PHOTOS);
+
+  if (!storeId || !title?.trim() || !qty?.trim() || photos.length === 0) {
     return NextResponse.json(
       { error: "사진·제목·수량은 필수예요." },
       { status: 400 },
@@ -88,9 +104,24 @@ export async function POST(req: NextRequest) {
 
     // 만료시간 계산
     let expiresAt: Date;
-    if (option === "1h") expiresAt = new Date(now.getTime() + 60 * 60 * 1000);
-    else if (option === "2h") expiresAt = new Date(now.getTime() + 2 * 60 * 60 * 1000);
-    else {
+    if (option === "1h") {
+      expiresAt = new Date(now.getTime() + 60 * 60 * 1000);
+    } else if (option === "2h") {
+      expiresAt = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+    } else if (option === "custom") {
+      const t = body.expiresAt ? new Date(body.expiresAt) : null;
+      if (!t || Number.isNaN(t.getTime())) {
+        return NextResponse.json({ error: "만료 시간을 확인해 주세요." }, { status: 400 });
+      }
+      const ms = t.getTime() - now.getTime();
+      if (ms <= 60_000) {
+        return NextResponse.json({ error: "만료 시간은 현재 이후로 설정해 주세요." }, { status: 400 });
+      }
+      if (ms > MAX_CUSTOM_MS) {
+        return NextResponse.json({ error: "최대 48시간까지 설정할 수 있어요." }, { status: 400 });
+      }
+      expiresAt = t;
+    } else {
       const mins = minutesUntilClose(asStoreHours(store.hoursJson), now);
       expiresAt = new Date(now.getTime() + (mins ?? 120) * 60 * 1000); // 정보없음 → 2시간
     }
@@ -102,7 +133,8 @@ export async function POST(req: NextRequest) {
           storeId,
           productId: productId ?? null,
           title: title.trim(),
-          photoUrl,
+          photoUrl: photos[0],
+          photoUrls: photos,
           salePrice,
           qty: qty.trim(),
           expiresAt,

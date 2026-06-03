@@ -85,6 +85,7 @@ export async function GET(
         id: s.id,
         title: s.title,
         photoUrl: s.photoUrl,
+        photoUrls: s.photoUrls.length > 0 ? s.photoUrls : s.photoUrl ? [s.photoUrl] : [],
         salePrice: s.salePrice,
         qty: s.qty,
         expiresAt: s.expiresAt.toISOString(),

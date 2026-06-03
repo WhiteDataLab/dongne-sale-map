@@ -17,8 +17,14 @@ export async function resolveSocialUser(
   });
 
   if (existing) {
-    // 기존 신원 로그인: 닉네임/프로필을 provider 값으로 덮어쓰지 않는다.
-    // → 병합 기준(연동을 시작한 계정)의 닉네임이 유지된다. (사용자 요청)
+    // 기존 신원 로그인: 닉네임은 덮어쓰지 않는다(병합 기준 유지).
+    // 프로필 사진은 **비어있을 때만** 채운다 → 최초 계정에 사진이 없으면 나중 로그인 사진으로 보완.
+    if (!existing.user.profileImgUrl && profile.profileImgUrl) {
+      return prisma.user.update({
+        where: { id: existing.userId },
+        data: { profileImgUrl: profile.profileImgUrl },
+      });
+    }
     return existing.user;
   }
 
@@ -110,16 +116,18 @@ export async function linkOrMergeIdentity(
     await tx.sale.updateMany({ where: { createdById: otherId }, data: { createdById: currentUserId } });
     await tx.report.updateMany({ where: { reporterId: otherId }, data: { reporterId: currentUserId } });
 
-    // 닉네임/프로필은 **먼저 가입한 계정** 기준으로 보존 (사용자 요청).
+    // 닉네임/프로필은 **먼저 가입한 계정** 기준 보존. 사진이 없으면 나중 계정 사진으로 보완.
     // 포인트는 합산(잔액의 실제 출처는 PointLog), 상대 계정 삭제.
     const other = await tx.user.findUnique({ where: { id: otherId } });
     const otherIsOlder = other ? other.createdAt < current.createdAt : false;
+    const olderUser = otherIsOlder && other ? other : current;
+    const youngerUser = otherIsOlder && other ? current : other;
     const updated = await tx.user.update({
       where: { id: currentUserId },
       data: {
         points: current.points + (other?.points ?? 0),
-        nickname: otherIsOlder && other ? other.nickname : current.nickname,
-        profileImgUrl: otherIsOlder && other ? other.profileImgUrl : current.profileImgUrl,
+        nickname: olderUser.nickname,
+        profileImgUrl: olderUser.profileImgUrl ?? youngerUser?.profileImgUrl ?? null,
       },
     });
     await tx.user.delete({ where: { id: otherId } });

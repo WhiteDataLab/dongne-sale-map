@@ -32,6 +32,7 @@ export type SaleDTO = {
   id: string;
   title: string;
   photoUrl: string;
+  photoUrls: string[];
   salePrice: number;
   qty: string;
   expiresAt: string;

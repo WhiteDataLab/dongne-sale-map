@@ -366,9 +366,9 @@ function SalesTab({
       ) : (
         <ul className="flex flex-col gap-3">
           {detail.sales.map((s) => (
-        <li key={s.id} className="flex gap-3">
-          <Thumb url={s.photoUrl} />
-          <div className="min-w-0 flex-1">
+        <li key={s.id} className="overflow-hidden rounded-xl border border-gray-100">
+          <PhotoCarousel urls={s.photoUrls?.length ? s.photoUrls : s.photoUrl ? [s.photoUrl] : []} />
+          <div className="p-3">
             <div className="flex items-baseline justify-between gap-2">
               <p className="truncate font-medium">{s.title}</p>
               <p className="shrink-0 font-bold text-red-600">{won(s.salePrice)}</p>
@@ -528,6 +528,47 @@ function ReviewsTab({
         </ul>
       )}
       {/* TODO(phase-3): 리뷰 작성/평점 입력 */}
+    </div>
+  );
+}
+
+/** 세일 사진 슬라이드 (스와이프 + n/N 표시). */
+function PhotoCarousel({ urls }: { urls: string[] }) {
+  const [idx, setIdx] = useState(0);
+  const ref = useRef<HTMLDivElement>(null);
+
+  if (urls.length === 0) {
+    return (
+      <div className="flex aspect-video w-full items-center justify-center bg-gray-100 text-3xl text-gray-300">
+        🧺
+      </div>
+    );
+  }
+  return (
+    <div className="relative">
+      <div
+        ref={ref}
+        onScroll={() => {
+          const el = ref.current;
+          if (el) setIdx(Math.round(el.scrollLeft / el.clientWidth));
+        }}
+        className="flex w-full snap-x snap-mandatory overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {urls.map((u, i) => (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            key={i}
+            src={u}
+            alt=""
+            className="aspect-video w-full shrink-0 snap-center object-cover"
+          />
+        ))}
+      </div>
+      {urls.length > 1 && (
+        <div className="pointer-events-none absolute bottom-2 right-2 rounded-full bg-black/60 px-2 py-0.5 text-xs font-medium text-white">
+          {idx + 1}/{urls.length}
+        </div>
+      )}
     </div>
   );
 }

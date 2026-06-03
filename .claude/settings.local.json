@@ -42,7 +42,9 @@
       "Bash(export KAKAO_REST_API_KEY=\"6607d296891f9388a8563eca13bb16be\")",
       "Bash(git --version)",
       "Bash(grep -iE \"^_|test|mint|\\\\.tmp$\")",
-      "Bash(git branch *)"
+      "Bash(git branch *)",
+      "Bash(git remote *)",
+      "Bash(echo \"origin 갱신: $\\(git remote get-url origin\\)\")"
     ]
   }
 }
