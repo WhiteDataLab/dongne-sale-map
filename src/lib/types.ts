@@ -59,6 +59,8 @@ export type StoreDetailDTO = StoreDTO & {
   sales: SaleDTO[];
   reviews: ReviewDTO[];
   isFavorite: boolean;
+  hasOwner: boolean; // 사장님(소유자)이 인증된 가게인지
+  isOwner: boolean; // 현재 사용자가 소유자인지
 };
 
 /** 지오코딩 결과 (검색어 → 좌표). */

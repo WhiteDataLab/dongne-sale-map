@@ -27,8 +27,13 @@ enum Provider {
 enum UserRole {
   user
   admin
-  // merchant 역할은 이번 빌드 미사용 (Out of Scope — 사장님 직접 등록)
-  // TODO(out-of-scope): merchant
+  merchant // 사장님 (인증 승인 후) — Phase 7
+}
+
+enum MerchantStatus {
+  pending
+  approved
+  rejected
 }
 
 enum UserStatus {
@@ -98,8 +103,10 @@ model User {
   createdAt     DateTime   @default(now())
 
   // 관계
-  identities Identity[] // 한 User 에 여러 로그인 수단(kakao/naver/phone) 연결
-  stores     Store[]    @relation("StoreCreatedBy")
+  identities            Identity[] // 한 User 에 여러 로그인 수단(kakao/naver/phone) 연결
+  stores                Store[]    @relation("StoreCreatedBy")
+  ownedStores           Store[]    @relation("StoreOwner")
+  merchantVerifications MerchantVerification[]
   products   Product[]  @relation("ProductCreatedBy")
   sales      Sale[]     @relation("SaleCreatedBy")
   reviews    Review[]
@@ -119,6 +126,24 @@ model Identity {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerId]) // 동일 신원 중복 연결 방지
+  @@index([userId])
+}
+
+// 사장님 인증 신청 (Phase 7). 사업자등록증 이미지는 비공개 버킷 경로만 저장.
+model MerchantVerification {
+  id         String         @id @default(cuid())
+  userId     String
+  storeId    String
+  docPath    String // 비공개 버킷 내 경로 (관리자만 서명 URL로 열람)
+  status     MerchantStatus @default(pending)
+  note       String? // 반려 사유 등
+  createdAt  DateTime       @default(now())
+  reviewedAt DateTime?
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([status])
   @@index([userId])
 }
 
@@ -153,10 +178,16 @@ model Store {
   createdById String
   createdBy   User   @relation("StoreCreatedBy", fields: [createdById], references: [id])
 
-  products  Product[]
-  sales     Sale[]
-  reviews   Review[]
-  favorites Favorite[]
+  ownerId String? // 사장님(merchant) 소유자 — 인증 승인 시 지정 (Phase 7)
+  owner   User?   @relation("StoreOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+
+  products              Product[]
+  sales                 Sale[]
+  reviews               Review[]
+  favorites             Favorite[]
+  merchantVerifications MerchantVerification[]
+
+  @@index([ownerId])
 
   // 현 지도 영역(bounds) 내 핀 조회 최적화 (Phase 1)
   @@index([lat, lng])

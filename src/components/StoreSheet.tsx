@@ -19,6 +19,7 @@ import type { StoreDetailDTO } from "@/lib/types";
 import { SaleReportForm } from "./SaleReportForm";
 import { ReviewForm } from "./ReviewForm";
 import { ReportButton } from "./ReportButton";
+import { MerchantApply } from "./MerchantApply";
 
 type Composing = "sale" | "review" | null;
 
@@ -447,6 +448,15 @@ function NoticeTab({
         ) : (
           <p className="text-gray-400">영업시간 정보가 없어요.</p>
         )}
+      </section>
+
+      <section className="border-t border-gray-100 pt-3">
+        <MerchantApply
+          storeId={detail.id}
+          hasOwner={detail.hasOwner}
+          isOwner={detail.isOwner}
+          onToast={onToast}
+        />
       </section>
 
       <section className="border-t border-gray-100 pt-3">

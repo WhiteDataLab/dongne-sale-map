@@ -74,6 +74,12 @@ Prisma 6 · PostgreSQL(Supabase) · Kakao Maps · Vercel
 - [x] 등록 레이트리밋(10분 5건)
 - ※ **사장님 직접 등록/인증(사업자등록증 서류 업로드 + 관리자 수동 승인)은 다음 단계**로 보류(스펙 Phase 6 주석)
 
+**Phase 7a — 사장님 인증** ✅
+- [x] 사장님 인증 신청: 가게 상세 → 사업자등록증 업로드(**비공개 버킷** `merchant-docs`) → `MerchantVerification(pending)`
+- [x] 관리자 심사 `/admin/merchants`: **서명 URL로 문서 확인** 후 승인/반려. 승인 시 `role=merchant` + `Store.ownerId` 지정(`source=merchant`, `verified=true`)
+- [x] `Store.ownerId` / 상세 DTO `isOwner`·`hasOwner` 추가
+- [ ] 7b 메뉴(상품) 권한 · 7c 가게 배너 · 7d 즐겨찾기 메뉴 → 다음 단계
+
 > SMS는 발송사 미설정 시 **개발모드**로 동작: 실제 발송 없이 인증번호를 응답/서버로그에 노출(`/api/phone/send` → `devCode`). 실발송사(CoolSMS 등)는 `SMS_PROVIDER` 설정 시 연동 예정.
 
 > ⚠️ **Supabase DB 연결**: 직접 호스트(`db.<ref>.supabase.co`)는 IPv4 환경에서 접속이 안 될 수 있다.

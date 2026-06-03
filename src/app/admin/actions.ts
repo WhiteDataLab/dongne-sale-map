@@ -39,6 +39,37 @@ export async function hideAndResolve(formData: FormData) {
   revalidatePath("/admin/reports");
 }
 
+/** 사장님 인증 승인: merchant 권한 부여 + 가게 소유권 지정 (Phase 7a). */
+export async function approveMerchant(formData: FormData) {
+  await ensureAdmin();
+  const id = String(formData.get("id"));
+  const v = await prisma.merchantVerification.findUnique({ where: { id } });
+  if (!v || v.status !== "pending") return;
+
+  await prisma.$transaction([
+    prisma.user.update({ where: { id: v.userId }, data: { role: "merchant" } }),
+    prisma.store.update({
+      where: { id: v.storeId },
+      data: { ownerId: v.userId, source: "merchant", verified: true },
+    }),
+    prisma.merchantVerification.update({
+      where: { id },
+      data: { status: "approved", reviewedAt: new Date() },
+    }),
+  ]);
+  revalidatePath("/admin/merchants");
+}
+
+export async function rejectMerchant(formData: FormData) {
+  await ensureAdmin();
+  const id = String(formData.get("id"));
+  await prisma.merchantVerification.update({
+    where: { id },
+    data: { status: "rejected", reviewedAt: new Date() },
+  });
+  revalidatePath("/admin/merchants");
+}
+
 export async function approveStore(formData: FormData) {
   await ensureAdmin();
   const id = String(formData.get("id"));

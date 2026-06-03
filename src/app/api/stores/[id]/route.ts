@@ -71,6 +71,8 @@ export async function GET(
       avgRating,
       reviewCount: store.reviews.length,
       isFavorite,
+      hasOwner: Boolean(store.ownerId),
+      isOwner: Boolean(userId && store.ownerId === userId),
       products: store.products.map((p) => ({
         id: p.id,
         name: p.name,
