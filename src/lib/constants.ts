@@ -11,6 +11,10 @@ export const CATEGORY_META = {
   vegetable: { label: "야채", icon: "🥬", color: "#16a34a" },
   meat: { label: "정육", icon: "🥩", color: "#dc2626" },
   fruit: { label: "과일", icon: "🍎", color: "#ea580c" },
+  laundry: { label: "세탁", icon: "🧺", color: "#0ea5e9" },
+  sidedish: { label: "반찬", icon: "🥘", color: "#b45309" },
+  salon: { label: "미용실", icon: "💇", color: "#db2777" },
+  etc: { label: "기타", icon: "🏪", color: "#6b7280" },
 } as const;
 
 export type Category = keyof typeof CATEGORY_META;

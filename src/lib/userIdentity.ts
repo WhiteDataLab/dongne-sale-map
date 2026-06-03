@@ -110,11 +110,17 @@ export async function linkOrMergeIdentity(
     await tx.sale.updateMany({ where: { createdById: otherId }, data: { createdById: currentUserId } });
     await tx.report.updateMany({ where: { reporterId: otherId }, data: { reporterId: currentUserId } });
 
-    // 표시 캐시 합산 + 상대 계정 삭제 (잔액의 실제 출처는 PointLog)
+    // 닉네임/프로필은 **먼저 가입한 계정** 기준으로 보존 (사용자 요청).
+    // 포인트는 합산(잔액의 실제 출처는 PointLog), 상대 계정 삭제.
     const other = await tx.user.findUnique({ where: { id: otherId } });
+    const otherIsOlder = other ? other.createdAt < current.createdAt : false;
     const updated = await tx.user.update({
       where: { id: currentUserId },
-      data: { points: current.points + (other?.points ?? 0) },
+      data: {
+        points: current.points + (other?.points ?? 0),
+        nickname: otherIsOlder && other ? other.nickname : current.nickname,
+        profileImgUrl: otherIsOlder && other ? other.profileImgUrl : current.profileImgUrl,
+      },
     });
     await tx.user.delete({ where: { id: otherId } });
     return updated;

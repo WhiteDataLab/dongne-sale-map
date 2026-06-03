@@ -142,7 +142,7 @@ export function SaleReportForm({
         ref={fileRef}
         type="file"
         accept="image/*"
-        capture="environment"
+        // capture 미지정 → 모바일에서 '앨범/카메라' 선택 가능 (갤러리 접근)
         className="hidden"
         onChange={(e) => pickFile(e.target.files?.[0] ?? null)}
       />

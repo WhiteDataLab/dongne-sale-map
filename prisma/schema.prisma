@@ -40,6 +40,10 @@ enum StoreCategory {
   vegetable
   meat
   fruit
+  laundry // 세탁
+  sidedish // 반찬
+  salon // 미용실
+  etc // 기타
 }
 
 enum StoreStatus {

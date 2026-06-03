@@ -67,14 +67,14 @@ export function StoreCreateForm() {
         className={inputClass}
       />
 
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         {CATEGORIES.map((c) => (
           <button
             key={c}
             type="button"
             onClick={() => setCategory(c)}
             className={[
-              "flex-1 rounded-lg border py-2 text-sm transition-colors",
+              "rounded-lg border px-3 py-2 text-sm transition-colors",
               category === c
                 ? "border-blue-600 bg-blue-600 text-white"
                 : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50",
