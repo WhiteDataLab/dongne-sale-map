@@ -1,0 +1,258 @@
+// 동네 세일 지도 — Prisma 스키마
+// 스펙: docs/PROJECT_SPEC.md "4. 데이터 모델" 을 단일 진실 공급원으로 삼는다.
+// 스키마와 스펙이 어긋나면 스펙을 먼저 갱신한 뒤 여기를 수정한다.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  // 서버리스(Vercel) 환경: 풀링된 URL 사용
+  url       = env("DATABASE_URL")
+  // 마이그레이션/스키마 푸시는 직접 연결 URL 사용 (Supabase/Neon 권장)
+  directUrl = env("DIRECT_URL")
+}
+
+// ──────────────────────────────────────────────────────────────
+// Enums
+// ──────────────────────────────────────────────────────────────
+
+enum Provider {
+  kakao
+  naver
+  phone
+}
+
+enum UserRole {
+  user
+  admin
+  // merchant 역할은 이번 빌드 미사용 (Out of Scope — 사장님 직접 등록)
+  // TODO(out-of-scope): merchant
+}
+
+enum UserStatus {
+  active
+  banned
+}
+
+enum StoreCategory {
+  vegetable
+  meat
+  fruit
+}
+
+enum StoreStatus {
+  active
+  hidden
+}
+
+enum StoreSource {
+  user // 소비자(주민)가 등록
+  merchant // 사장님이 직접 등록 (인증 후) — 후속 단계
+}
+
+enum SaleStatus {
+  active
+  expired
+  hidden
+}
+
+enum ReportTargetType {
+  store
+  sale
+  review
+}
+
+enum ReportStatus {
+  open
+  resolved
+}
+
+enum PointStatus {
+  pending
+  granted
+}
+
+// ──────────────────────────────────────────────────────────────
+// Models
+// ──────────────────────────────────────────────────────────────
+
+model User {
+  id String @id @default(cuid())
+  // provider/providerId 는 레거시(주 신원 표시용). 신원의 단일 출처는 Identity.
+  provider      Provider?
+  providerId    String?
+  name          String? // 실명 (전화번호 가입 시 입력)
+  nickname      String
+  profileImgUrl String?
+  phone         String?    @unique // 전화번호 로그인용 (Phase 5)
+  phoneVerified Boolean    @default(false)
+  role          UserRole   @default(user)
+  status        UserStatus @default(active)
+  points        Int        @default(0) // 표시용 (실지급 보류, 적립은 전부 PointLog.pending)
+  createdAt     DateTime   @default(now())
+
+  // 관계
+  identities Identity[] // 한 User 에 여러 로그인 수단(kakao/naver/phone) 연결
+  stores     Store[]    @relation("StoreCreatedBy")
+  products   Product[]  @relation("ProductCreatedBy")
+  sales      Sale[]     @relation("SaleCreatedBy")
+  reviews    Review[]
+  favorites  Favorite[]
+  reports    Report[]   @relation("ReportReporter")
+  pointLogs  PointLog[]
+}
+
+// 로그인 수단(소셜/전화) ↔ User 연결. 계정 연결(account linking)의 핵심 (Phase 5).
+model Identity {
+  id         String   @id @default(cuid())
+  userId     String
+  provider   Provider // kakao | naver | phone
+  providerId String // 소셜 고유 id 또는 전화번호
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerId]) // 동일 신원 중복 연결 방지
+  @@index([userId])
+}
+
+// 전화번호 본인확인 코드 (Phase 5, 개발모드=목업 발송). 평문 저장 금지 → 해시.
+model PhoneVerification {
+  id        String   @id @default(cuid())
+  phone     String
+  codeHash  String
+  expiresAt DateTime
+  attempts  Int      @default(0)
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([phone])
+}
+
+model Store {
+  id          String        @id @default(cuid())
+  name        String
+  category    StoreCategory
+  address     String
+  lat         Float
+  lng         Float
+  phone       String?
+  hoursJson   Json? // 영업시간 (요일+시간). 영업중 자동판정에 사용 (Phase 2)
+  description String?
+  verified    Boolean       @default(false) // 미인증 가게는 회색 핀
+  source      StoreSource   @default(user) // 등록 출처 (소비자/사장님) — UI 구분
+  status      StoreStatus   @default(active)
+  createdAt   DateTime      @default(now())
+
+  createdById String
+  createdBy   User   @relation("StoreCreatedBy", fields: [createdById], references: [id])
+
+  products  Product[]
+  sales     Sale[]
+  reviews   Review[]
+  favorites Favorite[]
+
+  // 현 지도 영역(bounds) 내 핀 조회 최적화 (Phase 1)
+  @@index([lat, lng])
+  @@index([status])
+}
+
+model Product {
+  id        String   @id @default(cuid())
+  storeId   String
+  name      String
+  price     Int
+  qtyUnit   String // 예: "1kg", "1봉"
+  stock     Int?
+  photoUrl  String?
+  origin    String? // 원산지
+  createdAt DateTime @default(now())
+
+  store       Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  createdById String
+  createdBy   User   @relation("ProductCreatedBy", fields: [createdById], references: [id])
+
+  sales Sale[]
+
+  @@index([storeId])
+}
+
+model Sale {
+  id        String     @id @default(cuid())
+  storeId   String
+  productId String? // 상품과 연결되지 않은 단독 세일 가능
+  title     String
+  photoUrl  String // 제보 시 사진 필수 (Phase 3)
+  salePrice Int
+  qty       String
+  expiresAt DateTime // 만료시간 지나면 자동 비활성
+  status    SaleStatus @default(active)
+  createdAt DateTime   @default(now())
+
+  store       Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  product     Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  createdById String
+  createdBy   User     @relation("SaleCreatedBy", fields: [createdById], references: [id])
+
+  @@index([storeId])
+  @@index([status, expiresAt])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  storeId   String
+  userId    String
+  rating    Int // 1~5 (앱 레벨에서 검증)
+  content   String
+  hidden    Boolean  @default(false) // 신고 누적 N건 시 soft hide (Phase 4)
+  createdAt DateTime @default(now())
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([storeId])
+}
+
+model Favorite {
+  userId  String
+  storeId String
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@id([userId, storeId])
+  @@index([storeId])
+}
+
+model Report {
+  id         String           @id @default(cuid())
+  targetType ReportTargetType
+  targetId   String // store|sale|review 의 id (다형 참조 — FK 미설정)
+  reason     String // 신고 사유 또는 정정(correction) 내용
+  reporterId String
+  status     ReportStatus     @default(open)
+  createdAt  DateTime         @default(now())
+
+  reporter User @relation("ReportReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+
+  // 신고 N건 자동 숨김 판정용 (Phase 4)
+  @@index([targetType, targetId])
+  @@index([status])
+}
+
+model PointLog {
+  id        String      @id @default(cuid())
+  userId    String
+  amount    Int
+  reason    String
+  status    PointStatus @default(pending) // 모든 적립은 pending (실지급 보류)
+  refType   String? // 적립 근거 타입 (예: "sale")
+  refId     String? // 적립 근거 id
+  createdAt DateTime    @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}

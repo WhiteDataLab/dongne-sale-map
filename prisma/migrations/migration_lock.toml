@@ -1,0 +1,2 @@
+# Prisma 마이그레이션 provider 잠금. 손으로 수정하지 말 것.
+provider = "postgresql"

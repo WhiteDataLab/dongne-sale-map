@@ -1,0 +1,47 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getCurrentUserId } from "@/lib/session";
+import {
+  isAllowedImageType,
+  storageConfigured,
+  uploadSaleImage,
+} from "@/lib/supabaseStorage";
+
+/** 제보 사진 업로드 (스펙 Phase 3). 서버 경유 → Supabase Storage. */
+export const runtime = "nodejs";
+
+const MAX_BYTES = 5 * 1024 * 1024; // 5MB
+
+export async function POST(req: NextRequest) {
+  const userId = await getCurrentUserId();
+  if (!userId) {
+    return NextResponse.json({ error: "login_required" }, { status: 401 });
+  }
+  if (!storageConfigured()) {
+    return NextResponse.json(
+      { error: "스토리지가 설정되지 않았어요 (SUPABASE_URL/SERVICE_ROLE)." },
+      { status: 503 },
+    );
+  }
+
+  const form = await req.formData();
+  const file = form.get("file");
+  if (!(file instanceof File)) {
+    return NextResponse.json({ error: "사진 파일이 필요해요." }, { status: 400 });
+  }
+  if (!isAllowedImageType(file.type)) {
+    return NextResponse.json(
+      { error: "이미지 파일(png/jpg/webp/gif)만 올릴 수 있어요." },
+      { status: 415 },
+    );
+  }
+  if (file.size > MAX_BYTES) {
+    return NextResponse.json({ error: "사진은 5MB 이하만 가능해요." }, { status: 413 });
+  }
+
+  try {
+    const url = await uploadSaleImage(await file.arrayBuffer(), file.type);
+    return NextResponse.json({ url });
+  } catch {
+    return NextResponse.json({ error: "업로드에 실패했어요." }, { status: 502 });
+  }
+}
