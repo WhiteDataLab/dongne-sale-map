@@ -55,6 +55,8 @@ export async function POST(req: NextRequest) {
           await prisma.store.update({ where: { id: targetId }, data: { status: "hidden" } });
         } else if (type === "sale") {
           await prisma.sale.update({ where: { id: targetId }, data: { status: "hidden" } });
+          // 제재(신고 누적 숨김) 시 해당 제보 적립 포인트 회수
+          await prisma.pointLog.deleteMany({ where: { refType: "sale", refId: targetId } });
         } else if (type === "product") {
           await prisma.product.update({ where: { id: targetId }, data: { hidden: true } });
         } else {
