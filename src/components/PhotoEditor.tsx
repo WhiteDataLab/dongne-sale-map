@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type PointerEvent as RPE } from "react";
+import { createPortal } from "react-dom";
 
 /**
  * 사진 편집기 v2 (캔버스, 라이브러리 미사용).
@@ -313,7 +314,7 @@ export function PhotoEditor({
   const chip = (active: boolean) =>
     `rounded-lg px-3 py-1.5 text-sm font-medium ${active ? "bg-white text-black" : "bg-white/15 text-white"}`;
 
-  return (
+  const content = (
     <div
       className="fixed inset-x-0 top-0 z-[60] flex flex-col overflow-hidden bg-black/95"
       style={{ height: viewH ? `${viewH}px` : "100vh" }}
@@ -379,4 +380,7 @@ export function PhotoEditor({
       </div>
     </div>
   );
+
+  // transform 조상(바텀시트 등)에 갇히지 않도록 body 로 포털 → fixed 가 뷰포트 기준이 됨
+  return typeof document === "undefined" ? null : createPortal(content, document.body);
 }
