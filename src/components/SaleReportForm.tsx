@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { won } from "@/lib/format";
 import type { ProductDTO } from "@/lib/types";
+import { PhotoEditor } from "./PhotoEditor";
 
 type ExpiresOption = "1h" | "2h" | "close" | "custom";
 const MAX_PHOTOS = 10;
@@ -45,7 +46,16 @@ export function SaleReportForm({
   const [customTime, setCustomTime] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [dup, setDup] = useState<{ saleId: string } | null>(null);
+  const [editIdx, setEditIdx] = useState<number | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const replaceAt = (i: number, f: File) => {
+    setFiles((arr) => arr.map((x, idx) => (idx === i ? f : x)));
+    setPreviews((arr) => {
+      URL.revokeObjectURL(arr[i]);
+      return arr.map((x, idx) => (idx === i ? URL.createObjectURL(f) : x));
+    });
+  };
 
   const addFiles = (list: FileList | null) => {
     if (!list) return;
@@ -174,6 +184,13 @@ export function SaleReportForm({
             >
               ×
             </button>
+            <button
+              type="button"
+              onClick={() => setEditIdx(i)}
+              className="absolute bottom-1 left-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] text-white"
+            >
+              ✏️ 편집
+            </button>
           </div>
         ))}
         {files.length < MAX_PHOTOS && (
@@ -288,6 +305,17 @@ export function SaleReportForm({
         >
           {submitting ? "등록 중…" : "세일 제보 등록"}
         </button>
+      )}
+
+      {editIdx !== null && files[editIdx] && (
+        <PhotoEditor
+          file={files[editIdx]}
+          onSave={(f) => {
+            replaceAt(editIdx, f);
+            setEditIdx(null);
+          }}
+          onCancel={() => setEditIdx(null)}
+        />
       )}
     </div>
   );
