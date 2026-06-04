@@ -113,6 +113,7 @@ export async function GET(
         qty: s.qty,
         expiresAt: s.expiresAt.toISOString(),
         createdAt: s.createdAt.toISOString(),
+        isMine: Boolean(userId && s.createdById === userId),
       })),
       reviews: store.reviews.map((r) => ({
         id: r.id,

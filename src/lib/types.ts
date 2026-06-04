@@ -40,6 +40,7 @@ export type SaleDTO = {
   qty: string;
   expiresAt: string;
   createdAt: string;
+  isMine: boolean; // 현재 사용자가 올린 제보인지 (삭제 버튼 노출)
 };
 
 export type ReviewDTO = {

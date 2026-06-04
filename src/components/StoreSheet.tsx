@@ -608,6 +608,23 @@ function SalesTab({
                 {untilLabel(s.expiresAt)}
               </span>
               <span className="text-gray-400">{freshnessLabel(s.createdAt)}</span>
+              {s.isMine && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const res = await fetch(`/api/sales/${s.id}`, { method: "DELETE" });
+                    if (res.ok) {
+                      onToast("삭제했어요. 적립 포인트가 회수됐어요.");
+                      onDone();
+                    } else {
+                      onToast(res.status === 403 ? "권한이 없어요." : "삭제에 실패했어요.");
+                    }
+                  }}
+                  className="text-xs text-red-500"
+                >
+                  삭제
+                </button>
+              )}
               <ReportButton
                 targetType="sale"
                 targetId={s.id}
