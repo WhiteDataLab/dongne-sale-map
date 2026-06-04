@@ -21,6 +21,7 @@ import { ReviewForm } from "./ReviewForm";
 import { ReportButton } from "./ReportButton";
 import { MerchantApply } from "./MerchantApply";
 import { ProductForm } from "./ProductForm";
+import { PhotoEditor } from "./PhotoEditor";
 import type { ProductDTO } from "@/lib/types";
 
 type Composing = "sale" | "review" | null;
@@ -54,6 +55,7 @@ export function StoreSheet({
   const [tab, setTab] = useState<TabKey>("sales");
   const [favorite, setFavorite] = useState(false);
   const [composing, setComposing] = useState<Composing>(null);
+  const [bannerEditFile, setBannerEditFile] = useState<File | null>(null);
 
   // 시트 세로 위치(px). 작을수록 위로 펼쳐짐.
   const [translateY, setTranslateY] = useState(0);
@@ -243,7 +245,7 @@ export function StoreSheet({
                   className="hidden"
                   onChange={(e) => {
                     const f = e.target.files?.[0];
-                    if (f) uploadBanner(f);
+                    if (f) setBannerEditFile(f); // 편집 후 업로드
                     e.target.value = "";
                   }}
                 />
@@ -385,6 +387,17 @@ export function StoreSheet({
           )}
         </div>
       </div>
+
+      {bannerEditFile && (
+        <PhotoEditor
+          file={bannerEditFile}
+          onSave={(f) => {
+            setBannerEditFile(null);
+            uploadBanner(f);
+          }}
+          onCancel={() => setBannerEditFile(null)}
+        />
+      )}
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import type { ProductDTO } from "@/lib/types";
+import { PhotoEditor } from "./PhotoEditor";
 
 /** 메뉴(상품) 추가/수정 폼 (스펙 Phase 7b). 신규 등록 시 사진 필수. */
 export function ProductForm({
@@ -25,6 +26,7 @@ export function ProductForm({
   const [qtyUnit, setQtyUnit] = useState(product?.qtyUnit ?? "");
   const [origin, setOrigin] = useState(product?.origin ?? "");
   const [busy, setBusy] = useState(false);
+  const [photoEditing, setPhotoEditing] = useState(false);
   const ref = useRef<HTMLInputElement>(null);
 
   const submit = async () => {
@@ -124,6 +126,26 @@ export function ProductForm({
           if (f) setPreview(URL.createObjectURL(f));
         }}
       />
+      {file && (
+        <button
+          type="button"
+          onClick={() => setPhotoEditing(true)}
+          className="self-start text-xs font-medium text-blue-600"
+        >
+          ✏️ 사진 편집 (자르기/펜)
+        </button>
+      )}
+      {photoEditing && file && (
+        <PhotoEditor
+          file={file}
+          onSave={(f) => {
+            setFile(f);
+            setPreview(URL.createObjectURL(f));
+            setPhotoEditing(false);
+          }}
+          onCancel={() => setPhotoEditing(false)}
+        />
+      )}
 
       <input
         value={name}
