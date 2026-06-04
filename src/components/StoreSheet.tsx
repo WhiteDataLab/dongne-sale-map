@@ -99,6 +99,46 @@ export function StoreSheet({
     if (storeId) loadDetail(storeId);
   }, [storeId, loadDetail]);
 
+  // 배너(메인 사진) 관리 — 소유자/관리자만 (서버에서 403 가드)
+  const bannerRef = useRef<HTMLInputElement>(null);
+  const uploadBanner = useCallback(
+    async (file: File) => {
+      const fd = new FormData();
+      fd.append("file", file);
+      const up = await fetch("/api/upload", { method: "POST", body: fd });
+      if (!up.ok) {
+        onToast(up.status === 401 ? "로그인이 필요해요." : "사진 업로드 실패");
+        return;
+      }
+      const { url } = (await up.json()) as { url: string };
+      const res = await fetch(`/api/stores/${storeId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bannerUrl: url }),
+      });
+      if (res.ok) {
+        onToast("메인 사진을 등록했어요.");
+        refresh();
+      } else {
+        onToast(res.status === 403 ? "사장님·관리자만 가능해요." : "변경에 실패했어요.");
+      }
+    },
+    [storeId, onToast, refresh],
+  );
+  const removeBanner = useCallback(async () => {
+    const res = await fetch(`/api/stores/${storeId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ bannerUrl: null }),
+    });
+    if (res.ok) {
+      onToast("메인 사진을 삭제했어요.");
+      refresh();
+    } else {
+      onToast("변경에 실패했어요.");
+    }
+  }, [storeId, onToast, refresh]);
+
   const onPointerDown = (e: ReactPointerEvent) => {
     dragRef.current = { startY: e.clientY, startT: translateY };
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
@@ -163,6 +203,52 @@ export function StoreSheet({
           <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-gray-300" />
 
           {detail ? (
+            <>
+            {(detail.bannerUrl || detail.canManageStore) && (
+              <div className="relative -mx-4 mb-2">
+                {detail.bannerUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={detail.bannerUrl} alt="" className="h-28 w-full object-cover" />
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => bannerRef.current?.click()}
+                    className="flex h-16 w-full items-center justify-center bg-gray-100 text-sm text-gray-400"
+                  >
+                    ＋ 메인 사진 추가 (사장님·관리자)
+                  </button>
+                )}
+                {detail.canManageStore && detail.bannerUrl && (
+                  <div className="absolute right-2 top-2 flex gap-1">
+                    <button
+                      type="button"
+                      onClick={() => bannerRef.current?.click()}
+                      className="rounded bg-black/60 px-2 py-1 text-xs text-white"
+                    >
+                      변경
+                    </button>
+                    <button
+                      type="button"
+                      onClick={removeBanner}
+                      className="rounded bg-black/60 px-2 py-1 text-xs text-white"
+                    >
+                      삭제
+                    </button>
+                  </div>
+                )}
+                <input
+                  ref={bannerRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) uploadBanner(f);
+                    e.target.value = "";
+                  }}
+                />
+              </div>
+            )}
             <div className="flex items-start gap-3">
               <span className="text-2xl" aria-hidden>
                 {meta?.icon}
@@ -242,6 +328,7 @@ export function StoreSheet({
                 </span>
               </button>
             </div>
+            </>
           ) : (
             <div className="h-12 animate-pulse rounded bg-gray-100" />
           )}

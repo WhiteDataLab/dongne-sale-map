@@ -171,6 +171,7 @@ model Store {
   phone       String?
   hoursJson   Json? // 영업시간 (요일+시간). 영업중 자동판정에 사용 (Phase 2)
   description String?
+  bannerUrl   String? // 가게 상단 메인 사진 — 사장님/관리자만 설정 (Phase 7c)
   verified    Boolean       @default(false) // 미인증 가게는 회색 핀
   source      StoreSource   @default(user) // 등록 출처 (소비자/사장님) — UI 구분
   status      StoreStatus   @default(active)

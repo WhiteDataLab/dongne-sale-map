@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
-import { canManageMenu } from "@/lib/menu";
+import { canManageMenu, canManageStore } from "@/lib/menu";
 import { asStoreHours, isOpenNow } from "@/lib/businessHours";
 import type { Category } from "@/lib/constants";
 import type { StoreDetailDTO, StoreSource } from "@/lib/types";
@@ -82,6 +82,8 @@ export async function GET(
       hasOwner: Boolean(store.ownerId),
       isOwner: Boolean(userId && store.ownerId === userId),
       canManageMenu: canManageMenu(store, user),
+      canManageStore: canManageStore(store, user),
+      bannerUrl: store.bannerUrl,
       registeredBy: {
         nickname: store.createdBy.nickname,
         img: store.createdBy.profileImgUrl,
@@ -127,5 +129,39 @@ export async function GET(
       { error: "상세 정보를 불러오지 못했어요." },
       { status: 500 },
     );
+  }
+}
+
+/** 가게 정보 수정 (Phase 7c: 배너). 소유자(사장님)·관리자만. */
+export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+  const { id } = await ctx.params;
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "login_required" }, { status: 401 });
+
+  let body: { bannerUrl?: string | null };
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "잘못된 요청이에요." }, { status: 400 });
+  }
+
+  try {
+    const store = await prisma.store.findUnique({ where: { id } });
+    if (!store || store.status !== "active") {
+      return NextResponse.json({ error: "가게를 찾을 수 없어요." }, { status: 404 });
+    }
+    if (!canManageStore(store, user)) {
+      return NextResponse.json(
+        { error: "사장님·관리자만 변경할 수 있어요." },
+        { status: 403 },
+      );
+    }
+    await prisma.store.update({
+      where: { id },
+      data: { bannerUrl: body.bannerUrl ?? null },
+    });
+    return NextResponse.json({ ok: true });
+  } catch {
+    return NextResponse.json({ error: "변경에 실패했어요." }, { status: 500 });
   }
 }

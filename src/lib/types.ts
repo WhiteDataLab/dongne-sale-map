@@ -65,6 +65,8 @@ export type StoreDetailDTO = StoreDTO & {
   hasOwner: boolean; // 사장님(소유자)이 인증된 가게인지
   isOwner: boolean; // 현재 사용자가 소유자인지
   canManageMenu: boolean; // 현재 사용자가 메뉴를 추가/수정/삭제할 수 있는지
+  canManageStore: boolean; // 현재 사용자가 가게(배너 등)를 관리할 수 있는지 (소유자·관리자)
+  bannerUrl: string | null; // 가게 상단 메인 사진
   registeredBy: { nickname: string; img: string | null }; // 최초 등록자
   owner: { nickname: string; img: string | null } | null; // 사장님(소유자)
 };

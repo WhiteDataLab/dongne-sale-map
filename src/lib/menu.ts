@@ -13,3 +13,16 @@ export function canManageMenu(
   if (store.ownerId) return store.ownerId === user.id;
   return true;
 }
+
+/**
+ * 가게 자체(배너·정보) 관리 권한 (스펙 Phase 7c).
+ * 메뉴와 달리 **소유자(사장님)·관리자만** 가능 (소비자 등록 가게라도 일반 소비자 불가).
+ */
+export function canManageStore(
+  store: { ownerId: string | null },
+  user: { id: string; role: "user" | "admin" | "merchant" } | null,
+): boolean {
+  if (!user) return false;
+  if (user.role === "admin") return true;
+  return Boolean(store.ownerId) && store.ownerId === user.id;
+}
