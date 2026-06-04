@@ -40,6 +40,20 @@ export function PhotoEditor({
   const [color, setColor] = useState(COLORS[0]);
   const [penW, setPenW] = useState(PEN_WIDTHS[1]);
   const [ready, setReady] = useState(false);
+  // 모바일 브라우저 UI 제외한 실제 보이는 높이(px) — 도구바가 가리지 않도록
+  const [viewH, setViewH] = useState<number | null>(null);
+  useEffect(() => {
+    const update = () => setViewH(window.visualViewport?.height ?? window.innerHeight);
+    update();
+    window.visualViewport?.addEventListener("resize", update);
+    window.addEventListener("resize", update);
+    window.addEventListener("orientationchange", update);
+    return () => {
+      window.visualViewport?.removeEventListener("resize", update);
+      window.removeEventListener("resize", update);
+      window.removeEventListener("orientationchange", update);
+    };
+  }, []);
 
   const toolRef = useRef(tool);
   toolRef.current = tool;
@@ -301,19 +315,16 @@ export function PhotoEditor({
 
   return (
     <div
-      className="fixed inset-x-0 top-0 z-[60] flex h-[100dvh] flex-col bg-black/95"
-      style={{ height: "100dvh" }}
+      className="fixed inset-x-0 top-0 z-[60] flex flex-col overflow-hidden bg-black/95"
+      style={{ height: viewH ? `${viewH}px` : "100vh" }}
     >
-      <div
-        className="flex items-center justify-between px-3 pb-3 text-sm text-white"
-        style={{ paddingTop: "calc(env(safe-area-inset-top) + 0.75rem)" }}
-      >
+      <div className="flex shrink-0 items-center justify-between p-3 text-sm text-white">
         <button type="button" onClick={onCancel}>취소</button>
         <span className="font-medium">사진 편집</span>
         <button type="button" onClick={save} className="font-semibold text-blue-300">저장</button>
       </div>
 
-      <div ref={wrapRef} className="relative flex-1 overflow-hidden">
+      <div ref={wrapRef} className="relative min-h-0 flex-1 overflow-hidden">
         <canvas
           ref={viewRef}
           onPointerDown={onDown}
@@ -331,7 +342,7 @@ export function PhotoEditor({
       </div>
 
       <div
-        className="flex flex-col gap-2 bg-black/90 px-3 pt-3"
+        className="flex shrink-0 flex-col gap-2 bg-black/90 px-3 pt-3"
         style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 0.75rem)" }}
       >
         <div className="flex flex-wrap gap-2">
