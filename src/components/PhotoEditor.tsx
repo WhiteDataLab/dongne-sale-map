@@ -4,10 +4,11 @@ import { useEffect, useRef, useState, type PointerEvent as RPE } from "react";
 import { createPortal } from "react-dom";
 
 /**
- * 사진 편집기 v2 (캔버스, 라이브러리 미사용).
- * 도구: 펜(다양한 색/굵기) · 지우개 · 모자이크(블러) · 자르기(핀치 줌·팬 후 화면영역으로 크롭).
- * 레이어: base(원본/크롭) + annot(펜/모자이크) 분리 → 지우개는 annot 만 지움.
- * 저장 시 합성하여 JPEG File 반환.
+ * 사진 편집기 v3 (캔버스, 라이브러리 미사용).
+ * 도구: 펜(색/굵기) · 지우개 · 모자이크 · 자르기(줌 / 박스) · 되돌리기(복원).
+ * - 과도 축소 시 여백 없이 화면을 꽉 채우도록(cover) 스케일/이동 클램프.
+ * - 레이어 분리(base/annot)로 지우개는 주석만 제거.
+ * - 작업마다 스냅샷 저장 → 되돌리기(최대 12회).
  */
 const COLORS = [
   "#ef4444", "#f97316", "#f59e0b", "#eab308", "#22c55e", "#10b981",
@@ -15,8 +16,17 @@ const COLORS = [
 ];
 const PEN_WIDTHS = [3, 6, 12, 20];
 const MAX_SIDE = 1600;
+const MAX_HISTORY = 12;
 
 type Tool = "pen" | "eraser" | "blur" | "crop";
+
+function clone(c: HTMLCanvasElement) {
+  const n = document.createElement("canvas");
+  n.width = c.width;
+  n.height = c.height;
+  n.getContext("2d")!.drawImage(c, 0, 0);
+  return n;
+}
 
 export function PhotoEditor({
   file,
@@ -32,16 +42,33 @@ export function PhotoEditor({
   const baseRef = useRef<HTMLCanvasElement | null>(null);
   const annotRef = useRef<HTMLCanvasElement | null>(null);
 
-  // 변환(이미지→뷰): viewX = s*imgX + tx
   const s = useRef(1);
   const tx = useRef(0);
   const ty = useRef(0);
 
   const [tool, setTool] = useState<Tool>("pen");
+  const [cropMode, setCropMode] = useState<"zoom" | "box">("zoom");
   const [color, setColor] = useState(COLORS[0]);
   const [penW, setPenW] = useState(PEN_WIDTHS[1]);
   const [ready, setReady] = useState(false);
-  // 모바일 브라우저 UI 제외한 실제 보이는 높이(px) — 도구바가 가리지 않도록
+  const [histLen, setHistLen] = useState(0);
+  const [cropRect, setCropRect] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
+
+  const toolRef = useRef(tool);
+  toolRef.current = tool;
+  const cropModeRef = useRef(cropMode);
+  cropModeRef.current = cropMode;
+  const colorRef = useRef(color);
+  colorRef.current = color;
+  const penWRef = useRef(penW);
+  penWRef.current = penW;
+
+  const pointers = useRef<Map<number, { x: number; y: number }>>(new Map());
+  const last = useRef<{ x: number; y: number } | null>(null);
+  const pinch = useRef<{ dist: number; mx: number; my: number } | null>(null);
+  const boxStart = useRef<{ x: number; y: number } | null>(null);
+  const history = useRef<{ base: HTMLCanvasElement; annot: HTMLCanvasElement }[]>([]);
+
   const [viewH, setViewH] = useState<number | null>(null);
   useEffect(() => {
     const update = () => setViewH(window.visualViewport?.height ?? window.innerHeight);
@@ -56,19 +83,6 @@ export function PhotoEditor({
     };
   }, []);
 
-  const toolRef = useRef(tool);
-  toolRef.current = tool;
-  const colorRef = useRef(color);
-  colorRef.current = color;
-  const penWRef = useRef(penW);
-  penWRef.current = penW;
-
-  // 포인터/드로잉 상태
-  const pointers = useRef<Map<number, { x: number; y: number }>>(new Map());
-  const last = useRef<{ x: number; y: number } | null>(null);
-  const pinch = useRef<{ dist: number; mx: number; my: number } | null>(null);
-
-  // ── 렌더 ──
   const render = () => {
     const v = viewRef.current;
     const base = baseRef.current;
@@ -85,16 +99,52 @@ export function PhotoEditor({
     ctx.setTransform(1, 0, 0, 1, 0, 0);
   };
 
-  const fit = () => {
+  const coverScale = () => {
     const v = viewRef.current!;
     const base = baseRef.current!;
-    const sc = Math.min(v.width / base.width, v.height / base.height);
-    s.current = sc;
-    tx.current = (v.width - base.width * sc) / 2;
-    ty.current = (v.height - base.height * sc) / 2;
+    return Math.max(v.width / base.width, v.height / base.height);
   };
 
-  // ── 초기화 ──
+  // 여백 없이 화면을 꽉 채우도록 스케일/이동 보정
+  const clamp = () => {
+    const v = viewRef.current!;
+    const base = baseRef.current!;
+    const minS = coverScale();
+    if (s.current < minS) s.current = minS;
+    if (s.current > minS * 8) s.current = minS * 8;
+    const sw = base.width * s.current;
+    const sh = base.height * s.current;
+    tx.current = Math.min(0, Math.max(v.width - sw, tx.current));
+    ty.current = Math.min(0, Math.max(v.height - sh, ty.current));
+  };
+
+  const cover = () => {
+    const v = viewRef.current!;
+    const base = baseRef.current!;
+    s.current = coverScale();
+    tx.current = (v.width - base.width * s.current) / 2;
+    ty.current = (v.height - base.height * s.current) / 2;
+  };
+
+  const pushHistory = () => {
+    if (!baseRef.current || !annotRef.current) return;
+    history.current.push({ base: clone(baseRef.current), annot: clone(annotRef.current) });
+    if (history.current.length > MAX_HISTORY) history.current.shift();
+    setHistLen(history.current.length);
+  };
+
+  const undo = () => {
+    const snap = history.current.pop();
+    if (!snap) return;
+    baseRef.current = clone(snap.base);
+    annotRef.current = clone(snap.annot);
+    setHistLen(history.current.length);
+    setCropRect(null);
+    cover();
+    clamp();
+    render();
+  };
+
   useEffect(() => {
     const url = URL.createObjectURL(file);
     const img = new Image();
@@ -104,7 +154,6 @@ export function PhotoEditor({
       if (!v || !wrap) return;
       v.width = wrap.clientWidth;
       v.height = wrap.clientHeight;
-
       let w = img.naturalWidth;
       let h = img.naturalHeight;
       if (Math.max(w, h) > MAX_SIDE) {
@@ -121,7 +170,8 @@ export function PhotoEditor({
       annot.height = h;
       baseRef.current = base;
       annotRef.current = annot;
-      fit();
+      cover();
+      clamp();
       render();
       setReady(true);
       URL.revokeObjectURL(url);
@@ -130,13 +180,16 @@ export function PhotoEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [file]);
 
-  // 화면 좌표 → 이미지 좌표
   const toImg = (clientX: number, clientY: number) => {
     const v = viewRef.current!;
     const r = v.getBoundingClientRect();
     const vx = (clientX - r.left) * (v.width / r.width);
     const vy = (clientY - r.top) * (v.height / r.height);
     return { x: (vx - tx.current) / s.current, y: (vy - ty.current) / s.current };
+  };
+  const toCss = (clientX: number, clientY: number) => {
+    const r = viewRef.current!.getBoundingClientRect();
+    return { x: clientX - r.left, y: clientY - r.top, w: r.width, h: r.height };
   };
 
   const drawStroke = (a: { x: number; y: number }, b: { x: number; y: number }, erase: boolean) => {
@@ -153,11 +206,10 @@ export function PhotoEditor({
     ctx.globalCompositeOperation = "source-over";
   };
 
-  // 모자이크: base 영역을 픽셀화해 annot 에 원형으로 스탬프
   const mosaic = (cx: number, cy: number) => {
     const base = baseRef.current!;
     const annot = annotRef.current!;
-    const size = 44 / s.current; // 화면상 일정 크기
+    const size = 44 / s.current;
     const sx = cx - size / 2;
     const sy = cy - size / 2;
     const small = document.createElement("canvas");
@@ -176,17 +228,23 @@ export function PhotoEditor({
     ctx.restore();
   };
 
-  // ── 포인터 ──
   const onDown = (e: RPE<HTMLCanvasElement>) => {
     e.preventDefault();
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     const t = toolRef.current;
     if (t === "crop") {
-      pinch.current = null;
-      last.current = { x: e.clientX, y: e.clientY };
+      if (cropModeRef.current === "box") {
+        const p = toCss(e.clientX, e.clientY);
+        boxStart.current = { x: p.x, y: p.y };
+        setCropRect({ x: p.x, y: p.y, w: 0, h: 0 });
+      } else {
+        pinch.current = null;
+        last.current = { x: e.clientX, y: e.clientY };
+      }
     } else {
       if (pointers.current.size > 1) return;
+      pushHistory(); // 스트로크/모자이크 시작 전 스냅샷
       const p = toImg(e.clientX, e.clientY);
       last.current = p;
       if (t === "blur") mosaic(p.x, p.y);
@@ -201,6 +259,19 @@ export function PhotoEditor({
     const t = toolRef.current;
 
     if (t === "crop") {
+      if (cropModeRef.current === "box") {
+        if (!boxStart.current) return;
+        const p = toCss(e.clientX, e.clientY);
+        const sx = boxStart.current.x;
+        const sy = boxStart.current.y;
+        setCropRect({
+          x: Math.max(0, Math.min(sx, p.x)),
+          y: Math.max(0, Math.min(sy, p.y)),
+          w: Math.min(p.w, Math.abs(p.x - sx)),
+          h: Math.min(p.h, Math.abs(p.y - sy)),
+        });
+        return;
+      }
       const pts = [...pointers.current.values()];
       if (pts.length >= 2) {
         const [a, b] = pts;
@@ -211,11 +282,13 @@ export function PhotoEditor({
           const ratio = dist / pinch.current.dist;
           const v = viewRef.current!;
           const r = v.getBoundingClientRect();
-          const vmx = (mx - r.left) * (v.width / r.width);
-          const vmy = (my - r.top) * (v.height / r.height);
+          const k = v.width / r.width;
+          const vmx = (mx - r.left) * k;
+          const vmy = (my - r.top) * k;
           s.current *= ratio;
-          tx.current = vmx - (vmx - tx.current) * ratio + (mx - pinch.current.mx);
-          ty.current = vmy - (vmy - ty.current) * ratio + (my - pinch.current.my);
+          tx.current = vmx - (vmx - tx.current) * ratio + (mx - pinch.current.mx) * k;
+          ty.current = vmy - (vmy - ty.current) * ratio + (my - pinch.current.my) * k;
+          clamp();
           render();
         }
         pinch.current = { dist, mx, my };
@@ -226,6 +299,7 @@ export function PhotoEditor({
         tx.current += (e.clientX - last.current.x) * k;
         ty.current += (e.clientY - last.current.y) * k;
         last.current = { x: e.clientX, y: e.clientY };
+        clamp();
         render();
       }
       return;
@@ -234,7 +308,6 @@ export function PhotoEditor({
     if (pointers.current.size > 1 || !last.current) return;
     const p = toImg(e.clientX, e.clientY);
     if (t === "blur") {
-      // 경로 보간 스탬프
       const steps = Math.max(1, Math.round(Math.hypot(p.x - last.current.x, p.y - last.current.y) / (10 / s.current)));
       for (let i = 1; i <= steps; i++) {
         mosaic(
@@ -252,26 +325,21 @@ export function PhotoEditor({
   const onUp = (e: RPE<HTMLCanvasElement>) => {
     pointers.current.delete(e.pointerId);
     last.current = null;
+    boxStart.current = null;
     if (pointers.current.size < 2) pinch.current = null;
   };
 
-  // ── 자르기: 현재 뷰에 보이는 이미지 영역으로 크롭 ──
-  const applyCrop = () => {
-    const v = viewRef.current!;
+  const cropTo = (ix: number, iy: number, iw: number, ih: number) => {
     const base = baseRef.current!;
     const annot = annotRef.current!;
-    let x = -tx.current / s.current;
-    let y = -ty.current / s.current;
-    let w = v.width / s.current;
-    let h = v.height / s.current;
-    // 이미지 경계로 클램프
-    x = Math.max(0, x);
-    y = Math.max(0, y);
-    w = Math.min(base.width - x, w);
-    h = Math.min(base.height - y, h);
+    let x = Math.max(0, ix);
+    let y = Math.max(0, iy);
+    let w = Math.min(base.width - x, iw);
+    let h = Math.min(base.height - y, ih);
     if (w < 8 || h < 8) return;
     const cw = Math.round(w);
     const ch = Math.round(h);
+    pushHistory();
     const nb = document.createElement("canvas");
     nb.width = cw;
     nb.height = ch;
@@ -282,13 +350,27 @@ export function PhotoEditor({
     na.getContext("2d")!.drawImage(annot, x, y, w, h, 0, 0, cw, ch);
     baseRef.current = nb;
     annotRef.current = na;
-    fit();
+    setCropRect(null);
+    cover();
+    clamp();
     render();
   };
 
-  const reset = () => {
-    fit();
-    render();
+  const applyZoomCrop = () => {
+    const v = viewRef.current!;
+    cropTo(-tx.current / s.current, -ty.current / s.current, v.width / s.current, v.height / s.current);
+  };
+  const applyBoxCrop = () => {
+    if (!cropRect || cropRect.w < 8 || cropRect.h < 8) return;
+    const v = viewRef.current!;
+    const r = v.getBoundingClientRect();
+    const k = v.width / r.width;
+    cropTo(
+      (cropRect.x * k - tx.current) / s.current,
+      (cropRect.y * k - ty.current) / s.current,
+      (cropRect.w * k) / s.current,
+      (cropRect.h * k) / s.current,
+    );
   };
 
   const save = () => {
@@ -321,7 +403,14 @@ export function PhotoEditor({
     >
       <div className="flex shrink-0 items-center justify-between p-3 text-sm text-white">
         <button type="button" onClick={onCancel}>취소</button>
-        <span className="font-medium">사진 편집</span>
+        <button
+          type="button"
+          onClick={undo}
+          disabled={histLen === 0}
+          className={`rounded-lg px-3 py-1 ${histLen === 0 ? "text-white/30" : "bg-white/15"}`}
+        >
+          ↩ 되돌리기
+        </button>
         <button type="button" onClick={save} className="font-semibold text-blue-300">저장</button>
       </div>
 
@@ -335,10 +424,14 @@ export function PhotoEditor({
           className="block h-full w-full touch-none"
           style={{ touchAction: "none" }}
         />
+        {tool === "crop" && cropMode === "box" && cropRect && (
+          <div
+            className="pointer-events-none absolute border-2 border-blue-400 bg-blue-400/20"
+            style={{ left: cropRect.x, top: cropRect.y, width: cropRect.w, height: cropRect.h }}
+          />
+        )}
         {!ready && (
-          <div className="absolute inset-0 flex items-center justify-center text-sm text-white/60">
-            불러오는 중…
-          </div>
+          <div className="absolute inset-0 flex items-center justify-center text-sm text-white/60">불러오는 중…</div>
         )}
       </div>
 
@@ -351,15 +444,9 @@ export function PhotoEditor({
           <button type="button" onClick={() => setTool("eraser")} className={chip(tool === "eraser")}>🧽 지우개</button>
           <button type="button" onClick={() => setTool("blur")} className={chip(tool === "blur")}>🟦 모자이크</button>
           <button type="button" onClick={() => setTool("crop")} className={chip(tool === "crop")}>✂️ 자르기</button>
-          {tool === "crop" && (
-            <>
-              <button type="button" onClick={applyCrop} className="rounded-lg bg-blue-500 px-3 py-1.5 text-sm font-medium text-white">적용</button>
-              <button type="button" onClick={reset} className="rounded-lg bg-white/15 px-3 py-1.5 text-sm font-medium text-white">맞춤</button>
-            </>
-          )}
         </div>
 
-        {(tool === "pen") && (
+        {tool === "pen" && (
           <div className="flex flex-wrap items-center gap-1.5">
             {COLORS.map((c) => (
               <button key={c} type="button" aria-label="색상" onClick={() => setColor(c)} style={{ background: c }}
@@ -374,13 +461,28 @@ export function PhotoEditor({
             ))}
           </div>
         )}
-        {tool === "crop" && <p className="text-xs text-white/60">두 손가락으로 확대/축소·이동해 원하는 부분을 맞춘 뒤 ‘적용’.</p>}
+        {tool === "crop" && (
+          <div className="flex flex-wrap items-center gap-2">
+            <button type="button" onClick={() => setCropMode("zoom")} className={chip(cropMode === "zoom")}>🔍 줌 자르기</button>
+            <button type="button" onClick={() => setCropMode("box")} className={chip(cropMode === "box")}>⬚ 박스 자르기</button>
+            <button
+              type="button"
+              onClick={cropMode === "zoom" ? applyZoomCrop : applyBoxCrop}
+              className="rounded-lg bg-blue-500 px-3 py-1.5 text-sm font-medium text-white"
+            >
+              적용
+            </button>
+            <button type="button" onClick={() => { setCropRect(null); cover(); clamp(); render(); }}
+              className="rounded-lg bg-white/15 px-3 py-1.5 text-sm font-medium text-white">맞춤</button>
+          </div>
+        )}
+        {tool === "crop" && cropMode === "zoom" && <p className="text-xs text-white/60">두 손가락으로 확대·이동(여백 없이 꽉 채워짐) 후 ‘적용’.</p>}
+        {tool === "crop" && cropMode === "box" && <p className="text-xs text-white/60">캡처처럼 네모를 그려 영역을 지정한 뒤 ‘적용’.</p>}
         {tool === "blur" && <p className="text-xs text-white/60">가리고 싶은 부분을 문지르면 모자이크 처리돼요.</p>}
         {tool === "eraser" && <p className="text-xs text-white/60">펜·모자이크 표시를 지웁니다(원본 사진은 유지).</p>}
       </div>
     </div>
   );
 
-  // transform 조상(바텀시트 등)에 갇히지 않도록 body 로 포털 → fixed 가 뷰포트 기준이 됨
   return typeof document === "undefined" ? null : createPortal(content, document.body);
 }
