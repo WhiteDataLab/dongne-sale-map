@@ -63,8 +63,10 @@ export function SaleReportForm({
     const room = MAX_PHOTOS - files.length;
     if (room <= 0) return onToast(`사진은 최대 ${MAX_PHOTOS}장이에요.`);
     const picked = incoming.slice(0, room);
+    const firstNew = files.length; // 추가된 첫 사진 인덱스
     setFiles((f) => [...f, ...picked]);
     setPreviews((p) => [...p, ...picked.map((f) => URL.createObjectURL(f))]);
+    setEditIdx(firstNew); // 선택 즉시 편집모드 진입
   };
 
   const removeAt = (i: number) => {

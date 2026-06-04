@@ -123,7 +123,10 @@ export function ProductForm({
         onChange={(e) => {
           const f = e.target.files?.[0] ?? null;
           setFile(f);
-          if (f) setPreview(URL.createObjectURL(f));
+          if (f) {
+            setPreview(URL.createObjectURL(f));
+            setPhotoEditing(true); // 선택 즉시 편집모드 진입
+          }
         }}
       />
       {file && (
