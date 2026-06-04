@@ -210,12 +210,12 @@ export function StoreSheet({
               <div className="relative -mx-4 mb-2">
                 {detail.bannerUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={detail.bannerUrl} alt="" className="h-28 w-full object-cover" />
+                  <img src={detail.bannerUrl} alt="" className="h-44 w-full object-cover" />
                 ) : (
                   <button
                     type="button"
                     onClick={() => bannerRef.current?.click()}
-                    className="flex h-16 w-full items-center justify-center bg-gray-100 text-sm text-gray-400"
+                    className="flex h-24 w-full items-center justify-center bg-gray-100 text-sm text-gray-400"
                   >
                     ＋ 메인 사진 추가 (사장님·관리자)
                   </button>
