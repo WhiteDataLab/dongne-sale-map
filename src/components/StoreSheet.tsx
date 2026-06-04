@@ -206,12 +206,11 @@ export function StoreSheet({
 
           {detail ? (
             <>
-            {(detail.bannerUrl || detail.canManageStore) && (
-              <div className="relative -mx-4 mb-2">
-                {detail.bannerUrl ? (
+            <div className="relative -mx-4 mb-2">
+              {detail.bannerUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={detail.bannerUrl} alt="" className="h-44 w-full object-cover" />
-                ) : (
+                ) : detail.canManageStore ? (
                   <button
                     type="button"
                     onClick={() => bannerRef.current?.click()}
@@ -219,6 +218,18 @@ export function StoreSheet({
                   >
                     ＋ 메인 사진 추가 (사장님·관리자)
                   </button>
+                ) : (
+                  // 배너 없는 소비자 화면 → 카테고리 기본 배너
+                  <div
+                    className="flex h-44 w-full items-center justify-center"
+                    style={{
+                      background: meta
+                        ? `linear-gradient(135deg, ${meta.color}22, ${meta.color}66)`
+                        : "#f3f4f6",
+                    }}
+                  >
+                    <span className="text-5xl opacity-50">{meta?.icon ?? "🛒"}</span>
+                  </div>
                 )}
                 {detail.canManageStore && detail.bannerUrl && (
                   <div className="absolute right-2 top-2 flex gap-1">
@@ -249,8 +260,7 @@ export function StoreSheet({
                     e.target.value = "";
                   }}
                 />
-              </div>
-            )}
+            </div>
             <div className="flex items-start gap-3">
               <span className="text-2xl" aria-hidden>
                 {meta?.icon}
