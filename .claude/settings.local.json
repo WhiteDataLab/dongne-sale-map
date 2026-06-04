@@ -44,7 +44,8 @@
       "Bash(grep -iE \"^_|test|mint|\\\\.tmp$\")",
       "Bash(git branch *)",
       "Bash(git remote *)",
-      "Bash(echo \"origin 갱신: $\\(git remote get-url origin\\)\")"
+      "Bash(echo \"origin 갱신: $\\(git remote get-url origin\\)\")",
+      "Bash(Get-Process)"
     ]
   }
 }

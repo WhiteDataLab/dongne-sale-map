@@ -300,8 +300,14 @@ export function PhotoEditor({
     `rounded-lg px-3 py-1.5 text-sm font-medium ${active ? "bg-white text-black" : "bg-white/15 text-white"}`;
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col bg-black/95">
-      <div className="flex items-center justify-between p-3 text-sm text-white">
+    <div
+      className="fixed inset-x-0 top-0 z-[60] flex h-[100dvh] flex-col bg-black/95"
+      style={{ height: "100dvh" }}
+    >
+      <div
+        className="flex items-center justify-between px-3 pb-3 text-sm text-white"
+        style={{ paddingTop: "calc(env(safe-area-inset-top) + 0.75rem)" }}
+      >
         <button type="button" onClick={onCancel}>취소</button>
         <span className="font-medium">사진 편집</span>
         <button type="button" onClick={save} className="font-semibold text-blue-300">저장</button>
@@ -324,7 +330,10 @@ export function PhotoEditor({
         )}
       </div>
 
-      <div className="flex flex-col gap-2 bg-black/90 p-3">
+      <div
+        className="flex flex-col gap-2 bg-black/90 px-3 pt-3"
+        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 0.75rem)" }}
+      >
         <div className="flex flex-wrap gap-2">
           <button type="button" onClick={() => setTool("pen")} className={chip(tool === "pen")}>✏️ 펜</button>
           <button type="button" onClick={() => setTool("eraser")} className={chip(tool === "eraser")}>🧽 지우개</button>
