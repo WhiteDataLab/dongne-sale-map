@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { hideAndResolve, resolveReport } from "../actions";
+import { banAuthor, hideAndResolve, resolveReport } from "../actions";
 
 const TYPE_LABEL: Record<string, string> = {
   store: "가게",
@@ -78,6 +78,16 @@ export default async function AdminReports() {
                 반려(처리완료)
               </button>
             </form>
+            {r.targetType !== "store" && (
+              <form action={banAuthor}>
+                <input type="hidden" name="reportId" value={r.id} />
+                <input type="hidden" name="targetType" value={r.targetType} />
+                <input type="hidden" name="targetId" value={r.targetId} />
+                <button className="rounded-lg bg-red-700 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-red-800">
+                  작성자 정지
+                </button>
+              </form>
+            )}
           </div>
         </li>
       ))}

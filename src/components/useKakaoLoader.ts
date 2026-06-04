@@ -41,8 +41,8 @@ export function useKakaoLoader(appKey?: string) {
     const script = document.createElement("script");
     script.id = SCRIPT_ID;
     script.async = true;
-    // autoload=false → 명시적으로 kakao.maps.load 호출
-    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${appKey}&autoload=false`;
+    // autoload=false → 명시적으로 kakao.maps.load 호출. services = 좌표↔주소 변환(역지오코딩)
+    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${appKey}&autoload=false&libraries=services`;
     script.addEventListener("load", onLoad);
     script.addEventListener("error", onError);
     document.head.appendChild(script);

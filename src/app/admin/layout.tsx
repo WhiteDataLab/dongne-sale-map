@@ -37,6 +37,9 @@ export default async function AdminLayout({
           <Link href="/admin/merchants" className="text-gray-600 hover:text-gray-900">
             사장님 인증
           </Link>
+          <Link href="/admin/users" className="text-gray-600 hover:text-gray-900">
+            정지 계정
+          </Link>
           <Link href="/" className="ml-auto text-gray-400">
             ← 지도
           </Link>

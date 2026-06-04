@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { CATEGORIES, CATEGORY_META, type Category } from "@/lib/constants";
+import { MapPicker } from "./MapPicker";
 
 /** 가게 등록 폼 (스펙 Phase 6, 소비자). 주소→지오코딩으로 좌표 저장. */
 export function StoreCreateForm() {
@@ -13,6 +14,8 @@ export function StoreCreateForm() {
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
   const [description, setDescription] = useState("");
+  const [picked, setPicked] = useState<{ lat: number; lng: number } | null>(null);
+  const [showMap, setShowMap] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [needLogin, setNeedLogin] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -27,7 +30,14 @@ export function StoreCreateForm() {
       const res = await fetch("/api/stores", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, category, address, phone, description }),
+        body: JSON.stringify({
+          name,
+          category,
+          address,
+          phone,
+          description,
+          ...(picked ? { lat: picked.lat, lng: picked.lng } : {}),
+        }),
       });
       if (res.status === 401) {
         setNeedLogin(true);
@@ -91,6 +101,27 @@ export function StoreCreateForm() {
         placeholder="주소 (예: 서울 동대문구 이문로 100)"
         className={inputClass}
       />
+      <button
+        type="button"
+        onClick={() => setShowMap((v) => !v)}
+        className="rounded-lg border border-gray-300 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+      >
+        🗺️ {showMap ? "지도 닫기" : "지도에서 위치 선택"}
+      </button>
+      {showMap && (
+        <MapPicker
+          initial={picked}
+          onPick={({ lat, lng, address: addr }) => {
+            setPicked({ lat, lng });
+            if (addr) setAddress(addr);
+          }}
+        />
+      )}
+      {picked && (
+        <p className="text-xs text-green-600">
+          ✓ 지도에서 위치 선택됨 (이 좌표로 등록돼요)
+        </p>
+      )}
       <input
         value={phone}
         onChange={(e) => setPhone(e.target.value)}

@@ -98,6 +98,8 @@ type CreateBody = {
   address?: string;
   phone?: string;
   description?: string;
+  lat?: number; // 지도에서 직접 찍은 좌표 (있으면 지오코딩 생략)
+  lng?: number;
 };
 
 export async function POST(req: NextRequest) {
@@ -134,12 +136,27 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const geo = await geocodeAddress(address);
-    if (!geo) {
-      return NextResponse.json(
-        { error: "주소의 위치를 찾을 수 없어요. 주소를 확인해 주세요." },
-        { status: 422 },
-      );
+    // 좌표: 지도에서 직접 찍었으면 그대로, 아니면 주소 지오코딩
+    let lat: number;
+    let lng: number;
+    if (
+      typeof body.lat === "number" &&
+      typeof body.lng === "number" &&
+      Number.isFinite(body.lat) &&
+      Number.isFinite(body.lng)
+    ) {
+      lat = body.lat;
+      lng = body.lng;
+    } else {
+      const geo = await geocodeAddress(address);
+      if (!geo) {
+        return NextResponse.json(
+          { error: "주소의 위치를 찾을 수 없어요. 주소를 확인하거나 지도에서 선택해 주세요." },
+          { status: 422 },
+        );
+      }
+      lat = geo.lat;
+      lng = geo.lng;
     }
 
     const store = await prisma.store.create({
@@ -147,8 +164,8 @@ export async function POST(req: NextRequest) {
         name,
         category,
         address,
-        lat: geo.lat,
-        lng: geo.lng,
+        lat,
+        lng,
         phone: body.phone?.trim() || null,
         description: body.description?.trim() || null,
         verified: false,
@@ -157,7 +174,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    return NextResponse.json({ ok: true, storeId: store.id, lat: geo.lat, lng: geo.lng });
+    return NextResponse.json({ ok: true, storeId: store.id, lat, lng });
   } catch {
     return NextResponse.json({ error: "가게 등록에 실패했어요." }, { status: 500 });
   }

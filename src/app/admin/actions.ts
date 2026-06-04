@@ -72,6 +72,48 @@ export async function rejectMerchant(formData: FormData) {
   revalidatePath("/admin/merchants");
 }
 
+/** 신고 대상 콘텐츠의 작성자 id 조회. */
+async function authorOf(targetType: string, targetId: string): Promise<string | null> {
+  if (targetType === "sale") {
+    return (await prisma.sale.findUnique({ where: { id: targetId }, select: { createdById: true } }))?.createdById ?? null;
+  }
+  if (targetType === "product") {
+    return (await prisma.product.findUnique({ where: { id: targetId }, select: { createdById: true } }))?.createdById ?? null;
+  }
+  if (targetType === "review") {
+    return (await prisma.review.findUnique({ where: { id: targetId }, select: { userId: true } }))?.userId ?? null;
+  }
+  if (targetType === "store") {
+    return (await prisma.store.findUnique({ where: { id: targetId }, select: { createdById: true } }))?.createdById ?? null;
+  }
+  return null;
+}
+
+/** 신고 콘텐츠 작성자 계정 정지 + 신고 종료 (Phase 7b-2). 관리자 계정은 정지하지 않음. */
+export async function banAuthor(formData: FormData) {
+  await ensureAdmin();
+  const reportId = String(formData.get("reportId"));
+  const targetType = String(formData.get("targetType"));
+  const targetId = String(formData.get("targetId"));
+  const authorId = await authorOf(targetType, targetId);
+  if (authorId) {
+    const u = await prisma.user.findUnique({ where: { id: authorId }, select: { role: true } });
+    if (u && u.role !== "admin") {
+      await prisma.user.update({ where: { id: authorId }, data: { status: "banned" } });
+    }
+  }
+  await prisma.report.update({ where: { id: reportId }, data: { status: "resolved" } });
+  revalidatePath("/admin/reports");
+}
+
+/** 계정 정지 해제 (Phase 7b-2). */
+export async function unbanUser(formData: FormData) {
+  await ensureAdmin();
+  const id = String(formData.get("id"));
+  await prisma.user.update({ where: { id }, data: { status: "active" } });
+  revalidatePath("/admin/users");
+}
+
 export async function approveStore(formData: FormData) {
   await ensureAdmin();
   const id = String(formData.get("id"));
