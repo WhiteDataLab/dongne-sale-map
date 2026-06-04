@@ -83,6 +83,18 @@ export function MapExplorer() {
     // 이동/확대 종료 시 현 영역 가게 재조회
     kakao.maps.event.addListener(map, "idle", fetchStores);
     fetchStores();
+
+    // 딥링크(/?store=&lat=&lng=) — 즐겨찾기 등에서 위치 무관하게 바로 상세 열기
+    const params = new URLSearchParams(window.location.search);
+    const qStore = params.get("store");
+    if (qStore) {
+      const qLat = Number(params.get("lat"));
+      const qLng = Number(params.get("lng"));
+      if (Number.isFinite(qLat) && Number.isFinite(qLng)) {
+        map.setCenter(new kakao.maps.LatLng(qLat, qLng));
+      }
+      setSelectedStoreId(qStore);
+    }
   }, [loaded, fetchStores]);
 
   // 필터 변경 시 재조회

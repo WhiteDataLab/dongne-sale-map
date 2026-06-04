@@ -81,9 +81,14 @@ export function SideNav({
               ➕ 가게 등록
             </Link>
             {user && (
-              <Link href="/account" onClick={close} className={itemClass}>
-                👤 마이페이지
-              </Link>
+              <>
+                <Link href="/favorites" onClick={close} className={itemClass}>
+                  ♥ 즐겨찾기
+                </Link>
+                <Link href="/account" onClick={close} className={itemClass}>
+                  👤 마이페이지
+                </Link>
+              </>
             )}
             {user?.isAdmin && (
               <Link href="/admin" onClick={close} className={itemClass}>

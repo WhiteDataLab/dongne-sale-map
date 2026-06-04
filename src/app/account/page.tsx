@@ -2,7 +2,6 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { auth, signIn } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { CATEGORY_META, type Category } from "@/lib/constants";
 import { POINT_EXPIRY_YEARS, POINT_HISTORY_YEARS, yearsAgo } from "@/lib/points";
 import { deleteAccount, startLink, updateNickname } from "./actions";
 
@@ -91,26 +90,6 @@ export default async function AccountPage() {
     });
   } catch {
     // DB 미연결
-  }
-
-  let favorites: { id: string; name: string; category: Category; address: string }[] = [];
-  try {
-    const rows = await prisma.favorite.findMany({
-      where: { userId: session.user.id },
-      include: {
-        store: { select: { id: true, name: true, category: true, address: true, status: true } },
-      },
-    });
-    favorites = rows
-      .filter((r) => r.store.status === "active")
-      .map((r) => ({
-        id: r.store.id,
-        name: r.store.name,
-        category: r.store.category as Category,
-        address: r.store.address,
-      }));
-  } catch {
-    // DB 미연결 → 빈 목록
   }
 
   return (
@@ -216,33 +195,13 @@ export default async function AccountPage() {
           </ul>
         </section>
 
-        <section>
-          <h2 className="mb-2 text-sm font-semibold text-gray-700">
-            즐겨찾기한 가게 {favorites.length > 0 && `(${favorites.length})`}
-          </h2>
-          {favorites.length === 0 ? (
-            <p className="rounded-xl border border-dashed border-gray-200 p-4 text-center text-sm text-gray-400">
-              아직 즐겨찾기한 가게가 없어요.
-            </p>
-          ) : (
-            <ul className="flex flex-col gap-2">
-              {favorites.map((f) => (
-                <li
-                  key={f.id}
-                  className="flex items-center gap-3 rounded-xl border border-gray-200 p-3"
-                >
-                  <span className="text-xl" aria-hidden>
-                    {CATEGORY_META[f.category].icon}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="truncate font-medium">{f.name}</p>
-                    <p className="truncate text-xs text-gray-400">{f.address}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+        <Link
+          href="/favorites"
+          className="flex items-center justify-between rounded-xl border border-gray-200 p-4 transition-colors hover:bg-gray-50"
+        >
+          <span className="font-medium">♥ 즐겨찾기</span>
+          <span className="text-sm text-gray-400">보기 →</span>
+        </Link>
 
         <section className="flex gap-4 text-sm">
           <Link

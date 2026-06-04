@@ -87,7 +87,11 @@ Prisma 6 · PostgreSQL(Supabase) · Kakao Maps · Vercel
 **Phase 7c — 가게 상단 메인 사진(배너)** ✅
 - [x] 가게 상세 상단 배너(`Store.bannerUrl`) 표시 + 등록/변경/삭제
 - [x] 권한: **사장님(소유자)·관리자만**(소비자 등록 가게라도 일반 소비자는 불가) — `canManageStore`, PATCH `/api/stores/[id]` 403 가드
-- [ ] 7d 즐겨찾기 별도 메뉴 → 다음 단계
+**Phase 7d — 즐겨찾기 별도 메뉴** ✅
+- [x] `/favorites` 별도 페이지(드로어 "♥ 즐겨찾기") — 마이페이지에서 분리
+- [x] 가게별 **세일 여부**(🔥 세일중 / 세일 없음) 표시
+- [x] 클릭 시 `/?store=&lat=&lng=` 딥링크 → 지도가 **위치 무관**하게 해당 가게 상세(메뉴/세일/리뷰)를 바로 엶
+- ※ 후속: 신고 누적 작성자 **계정 정지(ban)** 관리(7b-2)
 
 > SMS는 발송사 미설정 시 **개발모드**로 동작: 실제 발송 없이 인증번호를 응답/서버로그에 노출(`/api/phone/send` → `devCode`). 실발송사(CoolSMS 등)는 `SMS_PROVIDER` 설정 시 연동 예정.
 
