@@ -78,7 +78,13 @@ Prisma 6 · PostgreSQL(Supabase) · Kakao Maps · Vercel
 - [x] 사장님 인증 신청: 가게 상세 → 사업자등록증 업로드(**비공개 버킷** `merchant-docs`) → `MerchantVerification(pending)`
 - [x] 관리자 심사 `/admin/merchants`: **서명 URL로 문서 확인** 후 승인/반려. 승인 시 `role=merchant` + `Store.ownerId` 지정(`source=merchant`, `verified=true`)
 - [x] `Store.ownerId` / 상세 DTO `isOwner`·`hasOwner` 추가
-- [ ] 7b 메뉴(상품) 권한 · 7c 가게 배너 · 7d 즐겨찾기 메뉴 → 다음 단계
+**Phase 7b — 메뉴(상품) 관리/권한** ✅
+- [x] 소유자(사장님)·관리자 가게: 소유자·관리자만 메뉴 추가/수정/삭제 (비소유자 403)
+- [x] 소유자 없는(소비자 등록) 가게: 로그인한 누구나 메뉴 관리(커뮤니티) — **사진 필수**, **등록자 닉네임/프사·갱신일 표시**
+- [x] 메뉴별 **신고 버튼** → 신고 3건 누적 시 **자동 숨김**(`Product.hidden`), 관리자 신고 큐에서도 처리
+- [x] 가게 헤더: 소유자 없으면 **최초 등록자** 노출, 사장님 소유면 **👑 사장님 관리** + 최초등록자 작게
+- ※ 신고 작성자 **계정 정지(ban)** 관리 기능은 후속(7b-2)
+- [ ] 7c 가게 상단 배너 · 7d 즐겨찾기 별도 메뉴 → 다음 단계
 
 > SMS는 발송사 미설정 시 **개발모드**로 동작: 실제 발송 없이 인증번호를 응답/서버로그에 노출(`/api/phone/send` → `devCode`). 실발송사(CoolSMS 등)는 `SMS_PROVIDER` 설정 시 연동 예정.
 

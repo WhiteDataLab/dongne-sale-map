@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-type TargetType = "store" | "sale" | "review";
+type TargetType = "store" | "sale" | "review" | "product";
 
 /**
  * 신고 진입점 (스펙 Phase 4). 작은 "신고" 버튼 → 사유 입력 → /api/reports.

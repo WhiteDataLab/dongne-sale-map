@@ -145,7 +145,7 @@ export const authConfig: NextAuthConfig = {
       // NextAuth v5 의 JWT 인덱스 시그니처 때문에 명시 캐스팅한다.
       if (token.userId) {
         session.user.id = token.userId as string;
-        session.user.role = (token.role as "user" | "admin") ?? "user";
+        session.user.role = (token.role as "user" | "admin" | "merchant") ?? "user";
         session.user.points = (token.points as number) ?? 0;
         if (token.nickname) session.user.name = token.nickname as string;
       }

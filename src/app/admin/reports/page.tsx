@@ -5,6 +5,7 @@ const TYPE_LABEL: Record<string, string> = {
   store: "가게",
   sale: "세일",
   review: "리뷰",
+  product: "메뉴",
 };
 
 /** 대상 콘텐츠의 간단 라벨을 벌크로 조회. */
@@ -13,15 +14,17 @@ async function buildLabels(
 ): Promise<Map<string, string>> {
   const ids = (t: string) =>
     reports.filter((r) => r.targetType === t).map((r) => r.targetId);
-  const [stores, sales, reviews] = await Promise.all([
+  const [stores, sales, reviews, products] = await Promise.all([
     prisma.store.findMany({ where: { id: { in: ids("store") } }, select: { id: true, name: true } }),
     prisma.sale.findMany({ where: { id: { in: ids("sale") } }, select: { id: true, title: true } }),
     prisma.review.findMany({ where: { id: { in: ids("review") } }, select: { id: true, content: true } }),
+    prisma.product.findMany({ where: { id: { in: ids("product") } }, select: { id: true, name: true } }),
   ]);
   const map = new Map<string, string>();
   stores.forEach((s) => map.set(s.id, s.name));
   sales.forEach((s) => map.set(s.id, s.title));
   reviews.forEach((r) => map.set(r.id, r.content.slice(0, 30)));
+  products.forEach((p) => map.set(p.id, p.name));
   return map;
 }
 

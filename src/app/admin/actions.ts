@@ -29,6 +29,8 @@ export async function hideAndResolve(formData: FormData) {
       await prisma.store.update({ where: { id: targetId }, data: { status: "hidden" } });
     } else if (targetType === "sale") {
       await prisma.sale.update({ where: { id: targetId }, data: { status: "hidden" } });
+    } else if (targetType === "product") {
+      await prisma.product.update({ where: { id: targetId }, data: { hidden: true } });
     } else if (targetType === "review") {
       await prisma.review.update({ where: { id: targetId }, data: { hidden: true } });
     }

@@ -26,6 +26,9 @@ export type ProductDTO = {
   photoUrl: string | null;
   origin: string | null;
   createdAt: string;
+  updatedAt: string;
+  contributorNickname: string;
+  contributorImg: string | null;
 };
 
 export type SaleDTO = {
@@ -61,6 +64,9 @@ export type StoreDetailDTO = StoreDTO & {
   isFavorite: boolean;
   hasOwner: boolean; // 사장님(소유자)이 인증된 가게인지
   isOwner: boolean; // 현재 사용자가 소유자인지
+  canManageMenu: boolean; // 현재 사용자가 메뉴를 추가/수정/삭제할 수 있는지
+  registeredBy: { nickname: string; img: string | null }; // 최초 등록자
+  owner: { nickname: string; img: string | null } | null; // 사장님(소유자)
 };
 
 /** 지오코딩 결과 (검색어 → 좌표). */

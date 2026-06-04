@@ -10,7 +10,7 @@ import { REPORT_HIDE_THRESHOLD } from "@/lib/constants";
  */
 export const runtime = "nodejs";
 
-const TARGET_TYPES = ["store", "sale", "review"] as const;
+const TARGET_TYPES = ["store", "sale", "review", "product"] as const;
 type TargetType = (typeof TARGET_TYPES)[number];
 
 type Body = { targetType?: string; targetId?: string; reason?: string };
@@ -55,6 +55,8 @@ export async function POST(req: NextRequest) {
           await prisma.store.update({ where: { id: targetId }, data: { status: "hidden" } });
         } else if (type === "sale") {
           await prisma.sale.update({ where: { id: targetId }, data: { status: "hidden" } });
+        } else if (type === "product") {
+          await prisma.product.update({ where: { id: targetId }, data: { hidden: true } });
         } else {
           await prisma.review.update({ where: { id: targetId }, data: { hidden: true } });
         }

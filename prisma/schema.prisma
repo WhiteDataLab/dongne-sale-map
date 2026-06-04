@@ -71,6 +71,7 @@ enum ReportTargetType {
   store
   sale
   review
+  product
 }
 
 enum ReportStatus {
@@ -201,9 +202,11 @@ model Product {
   price     Int
   qtyUnit   String // 예: "1kg", "1봉"
   stock     Int?
-  photoUrl  String?
+  photoUrl  String? // 신규 등록 시 필수(앱 레벨), 시드 호환 위해 컬럼은 nullable
   origin    String? // 원산지
+  hidden    Boolean  @default(false) // 신고 누적 자동 숨김 (Phase 7b)
   createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt // 메뉴 갱신일
 
   store       Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
   createdById String

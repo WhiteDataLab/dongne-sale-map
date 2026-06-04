@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUserId } from "@/lib/session";
+import { getCurrentUser } from "@/lib/session";
+import { canManageMenu } from "@/lib/menu";
 import { asStoreHours, isOpenNow } from "@/lib/businessHours";
 import type { Category } from "@/lib/constants";
 import type { StoreDetailDTO, StoreSource } from "@/lib/types";
@@ -19,7 +20,11 @@ export async function GET(
     const store = await prisma.store.findUnique({
       where: { id },
       include: {
-        products: { orderBy: { createdAt: "desc" } },
+        products: {
+          where: { hidden: false }, // 신고 자동 숨김 제외 (Phase 7b)
+          include: { createdBy: { select: { nickname: true, profileImgUrl: true } } },
+          orderBy: { updatedAt: "desc" },
+        },
         sales: {
           where: { status: "active", expiresAt: { gt: now } },
           orderBy: { createdAt: "desc" },
@@ -29,6 +34,8 @@ export async function GET(
           include: { user: { select: { nickname: true } } },
           orderBy: { createdAt: "desc" },
         },
+        createdBy: { select: { nickname: true, profileImgUrl: true } },
+        owner: { select: { nickname: true, profileImgUrl: true } },
       },
     });
 
@@ -45,7 +52,8 @@ export async function GET(
     const hours = asStoreHours(store.hoursJson);
 
     // 즐겨찾기 여부: 로그인 사용자의 Favorite 존재 여부.
-    const userId = await getCurrentUserId();
+    const user = await getCurrentUser();
+    const userId = user?.id ?? null;
     const isFavorite = userId
       ? Boolean(
           await prisma.favorite.findUnique({
@@ -73,6 +81,14 @@ export async function GET(
       isFavorite,
       hasOwner: Boolean(store.ownerId),
       isOwner: Boolean(userId && store.ownerId === userId),
+      canManageMenu: canManageMenu(store, user),
+      registeredBy: {
+        nickname: store.createdBy.nickname,
+        img: store.createdBy.profileImgUrl,
+      },
+      owner: store.owner
+        ? { nickname: store.owner.nickname, img: store.owner.profileImgUrl }
+        : null,
       products: store.products.map((p) => ({
         id: p.id,
         name: p.name,
@@ -82,6 +98,9 @@ export async function GET(
         photoUrl: p.photoUrl,
         origin: p.origin,
         createdAt: p.createdAt.toISOString(),
+        updatedAt: p.updatedAt.toISOString(),
+        contributorNickname: p.createdBy.nickname,
+        contributorImg: p.createdBy.profileImgUrl,
       })),
       sales: store.sales.map((s) => ({
         id: s.id,

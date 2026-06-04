@@ -20,6 +20,8 @@ import { SaleReportForm } from "./SaleReportForm";
 import { ReviewForm } from "./ReviewForm";
 import { ReportButton } from "./ReportButton";
 import { MerchantApply } from "./MerchantApply";
+import { ProductForm } from "./ProductForm";
+import type { ProductDTO } from "@/lib/types";
 
 type Composing = "sale" | "review" | null;
 
@@ -193,6 +195,25 @@ export function StoreSheet({
                   )}
                   <span className="truncate text-gray-400">{detail.address}</span>
                 </div>
+                <div className="mt-1 flex items-center gap-1.5 text-xs">
+                  {detail.owner ? (
+                    <>
+                      <span className="rounded bg-amber-100 px-1.5 py-0.5 font-medium text-amber-700">
+                        👑 사장님 관리
+                      </span>
+                      <Avatar img={detail.owner.img} />
+                      <span className="text-gray-600">{detail.owner.nickname}</span>
+                      {detail.registeredBy.nickname !== detail.owner.nickname && (
+                        <span className="text-gray-300">· 최초등록 {detail.registeredBy.nickname}</span>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <Avatar img={detail.registeredBy.img} />
+                      <span className="text-gray-500">{detail.registeredBy.nickname}님이 등록</span>
+                    </>
+                  )}
+                </div>
               </div>
               <button
                 type="button"
@@ -253,7 +274,7 @@ export function StoreSheet({
           {loading || !detail ? (
             <p className="py-10 text-center text-sm text-gray-400">불러오는 중…</p>
           ) : tab === "products" ? (
-            <ProductsTab detail={detail} />
+            <ProductsTab detail={detail} onToast={onToast} onDone={refresh} />
           ) : tab === "sales" ? (
             <SalesTab
               detail={detail}
@@ -300,30 +321,127 @@ function EmptyState({ children }: { children: React.ReactNode }) {
   return <p className="py-10 text-center text-sm text-gray-400">{children}</p>;
 }
 
-function ProductsTab({ detail }: { detail: StoreDetailDTO }) {
-  if (detail.products.length === 0) {
-    return <EmptyState>아직 등록된 상품이 없어요.</EmptyState>;
-  }
+function ProductsTab({
+  detail,
+  onToast,
+  onDone,
+}: {
+  detail: StoreDetailDTO;
+  onToast: (msg: string) => void;
+  onDone: () => void;
+}) {
+  const [composing, setComposing] = useState<{ mode: "add" } | { mode: "edit"; product: ProductDTO } | null>(
+    null,
+  );
+
+  const remove = async (id: string) => {
+    const res = await fetch(`/api/products/${id}`, { method: "DELETE" });
+    if (res.ok) {
+      onToast("메뉴를 삭제했어요.");
+      onDone();
+    } else {
+      onToast(res.status === 403 ? "권한이 없어요." : "삭제에 실패했어요.");
+    }
+  };
+
   return (
-    <ul className="flex flex-col gap-3">
-      {detail.products.map((p) => (
-        <li key={p.id} className="flex gap-3">
-          <Thumb url={p.photoUrl} />
-          <div className="min-w-0 flex-1">
-            <div className="flex items-baseline justify-between gap-2">
-              <p className="truncate font-medium">{p.name}</p>
-              <p className="shrink-0 font-bold">{won(p.price)}</p>
-            </div>
-            <p className="text-xs text-gray-500">
-              {p.qtyUnit}
-              {p.origin ? ` · ${p.origin}` : ""}
-              {p.stock !== null ? ` · 재고 ${p.stock}` : ""}
-            </p>
-            <p className="mt-0.5 text-xs text-gray-400">{freshnessLabel(p.createdAt)}</p>
-          </div>
-        </li>
-      ))}
-    </ul>
+    <div className="flex flex-col gap-3">
+      {detail.canManageMenu &&
+        (composing ? (
+          <ProductForm
+            storeId={detail.id}
+            product={composing.mode === "edit" ? composing.product : undefined}
+            onDone={() => {
+              setComposing(null);
+              onDone();
+            }}
+            onCancel={() => setComposing(null)}
+            onToast={onToast}
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => setComposing({ mode: "add" })}
+            className="rounded-lg border border-blue-600 py-2 text-sm font-medium text-blue-600"
+          >
+            ＋ 메뉴 추가
+          </button>
+        ))}
+
+      {!detail.hasOwner && (
+        <p className="text-xs text-gray-400">
+          사장님 미등록 가게예요. 이웃 누구나 메뉴를 등록·수정할 수 있어요.
+        </p>
+      )}
+
+      {detail.products.length === 0 ? (
+        <EmptyState>아직 등록된 메뉴가 없어요.</EmptyState>
+      ) : (
+        <ul className="flex flex-col gap-3">
+          {detail.products.map((p) => (
+            <li key={p.id} className="flex gap-3">
+              <Thumb url={p.photoUrl} />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-baseline justify-between gap-2">
+                  <p className="truncate font-medium">{p.name}</p>
+                  <p className="shrink-0 font-bold">{won(p.price)}</p>
+                </div>
+                <p className="text-xs text-gray-500">
+                  {p.qtyUnit}
+                  {p.origin ? ` · ${p.origin}` : ""}
+                  {p.stock !== null ? ` · 재고 ${p.stock}` : ""}
+                </p>
+                <div className="mt-1 flex items-center gap-1.5">
+                  <Avatar img={p.contributorImg} />
+                  <span className="text-xs text-gray-500">{p.contributorNickname}</span>
+                  <span className="text-xs text-gray-300">·</span>
+                  <span className="text-xs text-gray-400">{freshnessLabel(p.updatedAt)}</span>
+                </div>
+                <div className="mt-1 flex items-center gap-3">
+                  {detail.canManageMenu && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setComposing({ mode: "edit", product: p })}
+                        className="text-xs text-blue-600"
+                      >
+                        수정
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => remove(p.id)}
+                        className="text-xs text-red-500"
+                      >
+                        삭제
+                      </button>
+                    </>
+                  )}
+                  <ReportButton
+                    targetType="product"
+                    targetId={p.id}
+                    onToast={onToast}
+                    onChanged={onDone}
+                  />
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function Avatar({ img }: { img: string | null }) {
+  return (
+    <span className="flex size-5 items-center justify-center overflow-hidden rounded-full bg-gray-100 text-[10px]">
+      {img ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={img} alt="" className="size-full object-cover" />
+      ) : (
+        "🙂"
+      )}
+    </span>
   );
 }
 
