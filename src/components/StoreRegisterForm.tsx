@@ -38,6 +38,29 @@ export function StoreRegisterForm({
   const [needLogin, setNeedLogin] = useState(false);
   const [busy, setBusy] = useState(false);
 
+  // 바텀 시트 높이(vh) — 그립을 드래그해 위아래로 조절(지도를 더 넓게 쓰기 위함)
+  const MIN_VH = 24;
+  const MAX_VH = 82;
+  const [sheetVh, setSheetVh] = useState(58);
+  const dragRef = useRef<{ startY: number; startVh: number } | null>(null);
+
+  const onGripDown = (e: React.PointerEvent) => {
+    (e.target as Element).setPointerCapture?.(e.pointerId);
+    dragRef.current = { startY: e.clientY, startVh: sheetVh };
+  };
+  const onGripMove = (e: React.PointerEvent) => {
+    const d = dragRef.current;
+    if (!d) return;
+    // 아래로 끌면(양수 delta) 시트가 낮아짐 → 지도가 넓어짐
+    const deltaVh = ((e.clientY - d.startY) / window.innerHeight) * 100;
+    const next = Math.min(MAX_VH, Math.max(MIN_VH, d.startVh - deltaVh));
+    setSheetVh(next);
+  };
+  const onGripUp = (e: React.PointerEvent) => {
+    (e.target as Element).releasePointerCapture?.(e.pointerId);
+    dragRef.current = null;
+  };
+
   const submit = async () => {
     if (!name.trim()) return onToast("가게명을 입력해 주세요.");
     setBusy(true);
@@ -77,19 +100,33 @@ export function StoreRegisterForm({
     "w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500";
 
   return (
-    <div className="pointer-events-auto absolute inset-x-0 bottom-0 z-30 max-h-[72%] overflow-y-auto rounded-t-2xl bg-white p-4 shadow-2xl">
-      <div className="mx-auto mb-2 h-1.5 w-10 rounded-full bg-gray-300" />
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold">이 위치에 가게 등록</h2>
-        <button type="button" onClick={onCancel} className="text-sm text-gray-400">
-          취소
-        </button>
+    <div
+      className="pointer-events-auto absolute inset-x-0 bottom-0 z-30 flex flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl"
+      style={{ height: `${sheetVh}vh` }}
+    >
+      {/* 드래그 그립 — 위아래로 끌어 시트 높이 조절(지도를 더 넓게 보기) */}
+      <div
+        onPointerDown={onGripDown}
+        onPointerMove={onGripMove}
+        onPointerUp={onGripUp}
+        onPointerCancel={onGripUp}
+        className="shrink-0 cursor-row-resize touch-none px-4 pb-1 pt-3"
+        role="separator"
+        aria-label="등록 창 높이 조절"
+      >
+        <div className="mx-auto mb-2 h-1.5 w-12 rounded-full bg-gray-300" />
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold">이 위치에 가게 등록</h2>
+          <button type="button" onClick={onCancel} className="text-sm text-gray-400">
+            취소
+          </button>
+        </div>
+        <p className="mt-1 text-xs text-gray-400">
+          선택한 좌표: {point.lat.toFixed(5)}, {point.lng.toFixed(5)} · 위치를 바꾸려면 지도를 다시 누르세요.
+        </p>
       </div>
-      <p className="mt-1 text-xs text-gray-400">
-        선택한 좌표: {point.lat.toFixed(5)}, {point.lng.toFixed(5)} · 위치를 바꾸려면 지도를 다시 누르세요.
-      </p>
 
-      <div className="mt-3 flex flex-col gap-3">
+      <div className="flex flex-1 flex-col gap-3 overflow-y-auto px-4 pb-4 pt-1">
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}

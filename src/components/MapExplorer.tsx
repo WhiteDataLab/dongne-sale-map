@@ -398,7 +398,7 @@ export function MapExplorer() {
         <div className="pointer-events-none absolute inset-x-0 bottom-6 z-10 flex justify-center px-4">
           <div className="rounded-2xl bg-black/75 px-4 py-3 text-center text-sm text-white shadow-lg">
             이 동네는 아직 정보가 없어요.
-            <br />첫 제보를 남겨보세요! (제보는 Phase 3)
+            <br />첫 제보를 남겨보세요!
           </div>
         </div>
       )}
