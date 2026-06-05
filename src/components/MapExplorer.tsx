@@ -130,6 +130,32 @@ export function MapExplorer() {
     }
   }, [stores, flashNotice]);
 
+  // 현재 위치로 지도 이동 (좌표 저장 안 함 — 지도 이동 보조용)
+  const goToMyLocation = useCallback(() => {
+    if (!navigator.geolocation) {
+      flashNotice("이 기기에서는 위치를 사용할 수 없어요.");
+      return;
+    }
+    flashNotice("현재 위치를 찾는 중…");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const map = mapRef.current;
+        if (map) {
+          map.setCenter(new window.kakao.maps.LatLng(pos.coords.latitude, pos.coords.longitude));
+          fetchStores();
+        }
+      },
+      (err) => {
+        flashNotice(
+          err.code === err.PERMISSION_DENIED
+            ? "위치 권한이 거부됐어요. 브라우저 설정에서 허용해 주세요."
+            : "현재 위치를 가져오지 못했어요.",
+        );
+      },
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 },
+    );
+  }, [fetchStores, flashNotice]);
+
   const handleSearch = useCallback(
     async (q: string) => {
       setSearching(true);
@@ -178,7 +204,19 @@ export function MapExplorer() {
 
       {/* 상단 오버레이: 검색 + 필터 */}
       <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex flex-col gap-2 p-3">
-        <SearchBar onSearch={handleSearch} pending={searching} />
+        <div className="flex items-center gap-2">
+          <div className="flex-1">
+            <SearchBar onSearch={handleSearch} pending={searching} />
+          </div>
+          <button
+            type="button"
+            onClick={goToMyLocation}
+            aria-label="현재 위치"
+            className="pointer-events-auto flex size-11 shrink-0 items-center justify-center rounded-full bg-white text-lg shadow-md transition-colors hover:bg-gray-50 active:bg-gray-100"
+          >
+            📍
+          </button>
+        </div>
         <FilterBar filters={filters} onChange={setFilters} />
       </div>
 

@@ -20,6 +20,7 @@ export function MapPicker({
   const el = useRef<HTMLDivElement>(null);
   // 무타입 SDK
   const markerRef = useRef<any>(null);
+  const mapRef = useRef<any>(null);
   const onPickRef = useRef(onPick);
   onPickRef.current = onPick;
 
@@ -43,6 +44,7 @@ export function MapPicker({
       initial?.lng ?? DEFAULT_CENTER.lng,
     );
     const map = new kakao.maps.Map(el.current, { center, level: 3 });
+    mapRef.current = map;
     const marker = new kakao.maps.Marker({ position: center });
     markerRef.current = marker;
     if (initial) marker.setMap(map);
@@ -56,6 +58,22 @@ export function MapPicker({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loaded, reverse]);
 
+  const goToMyLocation = () => {
+    if (!navigator.geolocation || !mapRef.current) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { kakao } = window;
+        const ll = new kakao.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
+        mapRef.current.setCenter(ll);
+        markerRef.current.setPosition(ll);
+        markerRef.current.setMap(mapRef.current);
+        reverse(pos.coords.latitude, pos.coords.longitude);
+      },
+      () => {}, // 권한 거부/실패 시 무시
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 },
+    );
+  };
+
   if (error) {
     return (
       <div className="flex h-56 items-center justify-center rounded-lg bg-gray-100 p-4 text-center text-xs text-gray-500">
@@ -66,9 +84,19 @@ export function MapPicker({
 
   return (
     <div className="overflow-hidden rounded-lg border border-gray-200">
-      <div ref={el} className="h-56 w-full bg-gray-100" />
+      <div className="relative">
+        <div ref={el} className="h-56 w-full bg-gray-100" />
+        <button
+          type="button"
+          onClick={goToMyLocation}
+          aria-label="현재 위치"
+          className="absolute right-2 top-2 z-10 flex size-10 items-center justify-center rounded-full bg-white text-lg shadow-md active:bg-gray-100"
+        >
+          📍
+        </button>
+      </div>
       <p className="bg-gray-50 px-3 py-1.5 text-xs text-gray-400">
-        지도를 눌러 가게 위치를 선택하면 주소가 자동으로 채워져요.
+        지도를 눌러 가게 위치를 선택하거나, 📍로 현재 위치를 찾으세요. 주소는 자동으로 채워져요.
       </p>
     </div>
   );
