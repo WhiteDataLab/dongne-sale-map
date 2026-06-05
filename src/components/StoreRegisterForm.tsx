@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { CATEGORIES, CATEGORY_META, type Category } from "@/lib/constants";
 
@@ -10,11 +10,14 @@ import { CATEGORIES, CATEGORY_META, type Category } from "@/lib/constants";
  */
 export function StoreRegisterForm({
   point,
+  topInsetPx,
   onDone,
   onCancel,
   onToast,
 }: {
   point: { lat: number; lng: number; address: string };
+  /** 상단 검색/필터 바 바닥 px — 최대화 시 이 직전까지만 펼침 */
+  topInsetPx: number;
   onDone: () => void;
   onCancel: () => void;
   onToast: (msg: string) => void;
@@ -38,27 +41,50 @@ export function StoreRegisterForm({
   const [needLogin, setNeedLogin] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  // 바텀 시트 높이(vh) — 그립을 드래그해 위아래로 조절(지도를 더 넓게 쓰기 위함)
+  // 바텀 시트 높이(vh) — 그립을 드래그해 조절, 그립을 한 번 탭하면 최대/기본 토글
   const MIN_VH = 24;
-  const MAX_VH = 82;
-  const [sheetVh, setSheetVh] = useState(58);
-  const dragRef = useRef<{ startY: number; startVh: number } | null>(null);
+  const DEFAULT_VH = 58;
+  const [sheetVh, setSheetVh] = useState(DEFAULT_VH);
+  const [dragging, setDragging] = useState(false);
+  const dragRef = useRef<{ startY: number; startVh: number; moved: boolean } | null>(null);
+
+  // 최대 높이: 상단 검색/필터 바 직전까지(= 뷰포트 높이 - topInset). 측정 전엔 82vh.
+  const maxVh = useMemo(() => {
+    if (typeof window === "undefined" || !topInsetPx) return 82;
+    const vh = ((window.innerHeight - topInsetPx) / window.innerHeight) * 100;
+    return Math.min(92, Math.max(MIN_VH, vh));
+  }, [topInsetPx]);
+
+  // 측정값이 바뀌어 현재 높이가 최대치를 넘으면 맞춰 줄임
+  useEffect(() => {
+    setSheetVh((h) => Math.min(h, maxVh));
+  }, [maxVh]);
 
   const onGripDown = (e: React.PointerEvent) => {
     (e.target as Element).setPointerCapture?.(e.pointerId);
-    dragRef.current = { startY: e.clientY, startVh: sheetVh };
+    dragRef.current = { startY: e.clientY, startVh: sheetVh, moved: false };
   };
   const onGripMove = (e: React.PointerEvent) => {
     const d = dragRef.current;
     if (!d) return;
+    const deltaPx = e.clientY - d.startY;
+    if (Math.abs(deltaPx) > 4) {
+      d.moved = true;
+      setDragging(true);
+    }
     // 아래로 끌면(양수 delta) 시트가 낮아짐 → 지도가 넓어짐
-    const deltaVh = ((e.clientY - d.startY) / window.innerHeight) * 100;
-    const next = Math.min(MAX_VH, Math.max(MIN_VH, d.startVh - deltaVh));
-    setSheetVh(next);
+    const deltaVh = (deltaPx / window.innerHeight) * 100;
+    setSheetVh(Math.min(maxVh, Math.max(MIN_VH, d.startVh - deltaVh)));
   };
   const onGripUp = (e: React.PointerEvent) => {
     (e.target as Element).releasePointerCapture?.(e.pointerId);
+    const d = dragRef.current;
     dragRef.current = null;
+    setDragging(false);
+    // 움직임 없이 탭 → 최대화/기본 토글 (윈도우 최대화 느낌)
+    if (d && !d.moved) {
+      setSheetVh((h) => (h >= maxVh - 1 ? DEFAULT_VH : maxVh));
+    }
   };
 
   const submit = async () => {
@@ -101,7 +127,10 @@ export function StoreRegisterForm({
 
   return (
     <div
-      className="pointer-events-auto absolute inset-x-0 bottom-0 z-30 flex flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl"
+      className={[
+        "pointer-events-auto absolute inset-x-0 bottom-0 z-30 flex flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl",
+        dragging ? "" : "transition-[height] duration-300 ease-out",
+      ].join(" ")}
       style={{ height: `${sheetVh}vh` }}
     >
       {/* 드래그 그립 — 위아래로 끌어 시트 높이 조절(지도를 더 넓게 보기) */}

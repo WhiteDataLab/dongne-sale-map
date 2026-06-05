@@ -31,6 +31,9 @@ export function MapExplorer() {
   const { loaded, error } = useKakaoLoader(appKey);
 
   const mapEl = useRef<HTMLDivElement>(null);
+  // 상단 오버레이(검색+필터) 바닥 위치 — 등록 시트 최대화 시 여기 직전까지만 펼침
+  const topOverlayRef = useRef<HTMLDivElement>(null);
+  const [topInset, setTopInset] = useState(120);
   // 카카오맵 인스턴스/오버레이는 무타입 SDK 라 any. (사유: 공식 타입 미제공)
   const mapRef = useRef<any>(null);
   const overlaysRef = useRef<any[]>([]);
@@ -177,6 +180,21 @@ export function MapExplorer() {
     }
     if (params.get("register") === "1") setRegisterMode(true);
   }, [loaded, fetchStores]);
+
+  // 상단 오버레이 높이 측정(검색+필터). 시트 최대화 한계로 사용.
+  useEffect(() => {
+    const el = topOverlayRef.current;
+    if (!el) return;
+    const measure = () => setTopInset(el.getBoundingClientRect().bottom);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    window.addEventListener("resize", measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, []);
 
   const exitRegister = useCallback(() => {
     setRegisterMode(false);
@@ -347,7 +365,7 @@ export function MapExplorer() {
       )}
 
       {/* 상단 오버레이: 검색 + 필터 */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex flex-col gap-2 p-3">
+      <div ref={topOverlayRef} className="pointer-events-none absolute inset-x-0 top-0 z-10 flex flex-col gap-2 p-3">
         <div className="flex items-center gap-2">
           <div className="flex-1">
             <SearchBar onSearch={handleSearch} pending={searching} />
@@ -443,6 +461,7 @@ export function MapExplorer() {
       {registerMode && picked && (
         <StoreRegisterForm
           point={picked}
+          topInsetPx={topInset}
           onCancel={exitRegister}
           onToast={flashNotice}
           onDone={() => {
