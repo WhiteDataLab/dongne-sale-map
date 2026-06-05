@@ -80,6 +80,9 @@ export function SideNav({
             <Link href="/stores/new" onClick={close} className={itemClass}>
               ➕ 가게 등록
             </Link>
+            <Link href="/about" onClick={close} className={itemClass}>
+              ✨ 서비스 소개
+            </Link>
             {user && (
               <>
                 <Link href="/favorites" onClick={close} className={itemClass}>

@@ -206,7 +206,7 @@ export function StoreSheet({
 
           {detail ? (
             <>
-            <div className="relative -mx-4 mb-2">
+            <div className="zoomable relative -mx-4 mb-2">
               {detail.bannerUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={detail.bannerUrl} alt="" className="h-44 w-full object-cover" />
@@ -830,7 +830,7 @@ function PhotoCarousel({ urls }: { urls: string[] }) {
 
 function Thumb({ url }: { url: string | null }) {
   return (
-    <div className="size-16 shrink-0 overflow-hidden rounded-lg bg-gray-100">
+    <div className="zoomable size-16 shrink-0 rounded-lg bg-gray-100">
       {url ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={url} alt="" className="size-full object-cover" />
