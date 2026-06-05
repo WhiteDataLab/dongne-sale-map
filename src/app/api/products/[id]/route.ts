@@ -30,7 +30,6 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     price?: number;
     qtyUnit?: string;
     photoUrl?: string;
-    videoUrl?: string | null;
     origin?: string;
     stock?: number | null;
   };
@@ -48,7 +47,6 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
         ...(typeof body.price === "number" ? { price: body.price } : {}),
         ...(body.qtyUnit !== undefined ? { qtyUnit: body.qtyUnit.trim() } : {}),
         ...(body.photoUrl !== undefined ? { photoUrl: body.photoUrl } : {}),
-        ...(body.videoUrl !== undefined ? { videoUrl: body.videoUrl?.trim() || null } : {}),
         ...(body.origin !== undefined ? { origin: body.origin?.trim() || null } : {}),
         ...(body.stock !== undefined ? { stock: body.stock } : {}),
       },

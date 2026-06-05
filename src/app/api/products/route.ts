@@ -12,7 +12,6 @@ type Body = {
   price?: number;
   qtyUnit?: string;
   photoUrl?: string;
-  videoUrl?: string;
   origin?: string;
   stock?: number | null;
 };
@@ -53,7 +52,6 @@ export async function POST(req: NextRequest) {
         price: body.price,
         qtyUnit: qtyUnit.trim(),
         photoUrl,
-        videoUrl: body.videoUrl?.trim() || null,
         origin: origin?.trim() || null,
         stock: typeof body.stock === "number" ? body.stock : null,
         createdById: user.id,

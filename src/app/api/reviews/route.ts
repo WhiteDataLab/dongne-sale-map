@@ -5,7 +5,7 @@ import { getCurrentUserId } from "@/lib/session";
 /** 리뷰 작성/평점 (스펙 Phase 3). */
 export const runtime = "nodejs";
 
-type Body = { storeId?: string; rating?: number; content?: string; videoUrl?: string };
+type Body = { storeId?: string; rating?: number; content?: string };
 
 export async function POST(req: NextRequest) {
   const userId = await getCurrentUserId();
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "가게를 찾을 수 없어요." }, { status: 404 });
     }
     const review = await prisma.review.create({
-      data: { storeId, userId, rating, content: content.trim(), videoUrl: body.videoUrl?.trim() || null },
+      data: { storeId, userId, rating, content: content.trim() },
     });
     return NextResponse.json({ ok: true, reviewId: review.id });
   } catch {

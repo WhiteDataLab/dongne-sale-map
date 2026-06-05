@@ -84,7 +84,6 @@ export async function GET(
       canManageMenu: canManageMenu(store, user),
       canManageStore: canManageStore(store, user),
       bannerUrl: store.bannerUrl,
-      bannerVideoUrl: store.bannerVideoUrl,
       registeredBy: {
         nickname: store.createdBy.nickname,
         img: store.createdBy.profileImgUrl,
@@ -99,7 +98,6 @@ export async function GET(
         qtyUnit: p.qtyUnit,
         stock: p.stock,
         photoUrl: p.photoUrl,
-        videoUrl: p.videoUrl,
         origin: p.origin,
         createdAt: p.createdAt.toISOString(),
         updatedAt: p.updatedAt.toISOString(),
@@ -111,7 +109,6 @@ export async function GET(
         title: s.title,
         photoUrl: s.photoUrl,
         photoUrls: s.photoUrls.length > 0 ? s.photoUrls : s.photoUrl ? [s.photoUrl] : [],
-        videoUrl: s.videoUrl,
         salePrice: s.salePrice,
         qty: s.qty,
         expiresAt: s.expiresAt.toISOString(),
@@ -122,7 +119,6 @@ export async function GET(
         id: r.id,
         rating: r.rating,
         content: r.content,
-        videoUrl: r.videoUrl,
         nickname: r.user.nickname,
         createdAt: r.createdAt.toISOString(),
       })),
@@ -143,7 +139,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "login_required" }, { status: 401 });
 
-  let body: { bannerUrl?: string | null; bannerVideoUrl?: string | null };
+  let body: { bannerUrl?: string | null };
   try {
     body = await req.json();
   } catch {
@@ -161,10 +157,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
         { status: 403 },
       );
     }
-    const data: { bannerUrl?: string | null; bannerVideoUrl?: string | null } = {};
-    if ("bannerUrl" in body) data.bannerUrl = body.bannerUrl ?? null;
-    if ("bannerVideoUrl" in body) data.bannerVideoUrl = body.bannerVideoUrl?.trim() || null;
-    await prisma.store.update({ where: { id }, data });
+    await prisma.store.update({ where: { id }, data: { bannerUrl: body.bannerUrl ?? null } });
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ error: "변경에 실패했어요." }, { status: 500 });

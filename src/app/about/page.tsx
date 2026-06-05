@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Reveal } from "@/components/Reveal";
+import { prisma } from "@/lib/prisma";
 
 export const metadata = {
   title: "우리 동네 세일 — 소개",
@@ -7,7 +8,14 @@ export const metadata = {
 };
 
 /** Apple 스타일 긴 스크롤 소개(랜딩) 페이지. */
-export default function AboutPage() {
+export default async function AboutPage() {
+  let introVideo: string | null = null;
+  try {
+    introVideo = (await prisma.siteConfig.findUnique({ where: { key: "intro_video_url" } }))?.value ?? null;
+  } catch {
+    // DB 미연결
+  }
+
   return (
     <div className="h-full overflow-y-auto bg-white">
       {/* Hero */}
@@ -37,6 +45,17 @@ export default function AboutPage() {
           <p className="mt-16 animate-bounce text-2xl text-white/30">↓</p>
         </Reveal>
       </section>
+
+      {/* 소개 영상 (관리자가 업로드한 경우) */}
+      {introVideo && (
+        <section className="bg-black px-6 pb-24">
+          <Reveal>
+            <div className="mx-auto max-w-4xl overflow-hidden rounded-3xl">
+              <video src={introVideo} controls playsInline className="aspect-video w-full bg-black" />
+            </div>
+          </Reveal>
+        </section>
+      )}
 
       {/* 1 */}
       <Section

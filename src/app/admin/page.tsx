@@ -1,16 +1,23 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { IntroVideoUploader } from "@/components/IntroVideoUploader";
 
 export default async function AdminHome() {
   let openReports = 0;
   let pendingStores = 0;
   let pendingMerchants = 0;
+  let introVideo: string | null = null;
   try {
-    [openReports, pendingStores, pendingMerchants] = await Promise.all([
+    const [r, s, m, cfg] = await Promise.all([
       prisma.report.count({ where: { status: "open" } }),
       prisma.store.count({ where: { verified: false, status: "active" } }),
       prisma.merchantVerification.count({ where: { status: "pending" } }),
+      prisma.siteConfig.findUnique({ where: { key: "intro_video_url" } }),
     ]);
+    openReports = r;
+    pendingStores = s;
+    pendingMerchants = m;
+    introVideo = cfg?.value ?? null;
   } catch {
     // DB 미연결 시 0
   }
@@ -44,6 +51,8 @@ export default async function AdminHome() {
           승인 대기 {pendingMerchants}
         </span>
       </Link>
+
+      <IntroVideoUploader current={introVideo} />
     </div>
   );
 }

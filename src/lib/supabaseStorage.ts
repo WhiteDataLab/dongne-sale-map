@@ -9,6 +9,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const BUCKET = "sale-photos";
 const DOC_BUCKET = "merchant-docs"; // 비공개 — 사업자등록증 등 민감 문서
+const INTRO_BUCKET = "intro"; // 공개 — 소개 페이지 영상
 
 const EXT_BY_TYPE: Record<string, string> = {
   "image/png": "png",
@@ -78,6 +79,33 @@ export async function uploadMerchantDoc(
   });
   if (!res.ok) throw new Error(`doc_upload_failed: ${res.status}`);
   return path;
+}
+
+const VIDEO_EXT: Record<string, string> = {
+  "video/mp4": "mp4",
+  "video/webm": "webm",
+  "video/quicktime": "mov",
+};
+
+export function isAllowedVideoType(type: string): boolean {
+  return type in VIDEO_EXT;
+}
+
+/** 소개 페이지 영상 업로드(공개 버킷) → 공개 URL. */
+export async function uploadIntroVideo(
+  data: ArrayBuffer,
+  contentType: string,
+): Promise<string> {
+  if (!storageConfigured()) throw new Error("storage_not_configured");
+  const ext = VIDEO_EXT[contentType] ?? "mp4";
+  const path = `videos/${randomUUID()}.${ext}`;
+  const res = await fetch(`${SUPABASE_URL}/storage/v1/object/${INTRO_BUCKET}/${path}`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${SERVICE_KEY}`, "Content-Type": contentType },
+    body: Buffer.from(data),
+  });
+  if (!res.ok) throw new Error(`intro_upload_failed: ${res.status}`);
+  return `${SUPABASE_URL}/storage/v1/object/public/${INTRO_BUCKET}/${path}`;
 }
 
 /** 비공개 문서의 단기 서명 URL (관리자 열람용). 기본 5분. */

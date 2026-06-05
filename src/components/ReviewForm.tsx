@@ -16,7 +16,6 @@ export function ReviewForm({
 }) {
   const [rating, setRating] = useState(5);
   const [content, setContent] = useState("");
-  const [videoUrl, setVideoUrl] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const submit = async () => {
@@ -26,7 +25,7 @@ export function ReviewForm({
       const res = await fetch("/api/reviews", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ storeId, rating, content: content.trim(), videoUrl: videoUrl.trim() || null }),
+        body: JSON.stringify({ storeId, rating, content: content.trim() }),
       });
       if (!res.ok) {
         const e = (await res.json().catch(() => ({}))) as { error?: string };
@@ -71,13 +70,6 @@ export function ReviewForm({
         rows={3}
         placeholder="가게는 어땠나요?"
         className="resize-none rounded-lg border border-gray-200 px-3 py-2 text-sm"
-      />
-      <input
-        value={videoUrl}
-        onChange={(e) => setVideoUrl(e.target.value)}
-        inputMode="url"
-        placeholder="동영상 링크 (YouTube 등, 선택)"
-        className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
       />
 
       <button

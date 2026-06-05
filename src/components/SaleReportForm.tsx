@@ -43,7 +43,6 @@ export function SaleReportForm({
   const [salePrice, setSalePrice] = useState("");
   const [qty, setQty] = useState("");
   const [expires, setExpires] = useState<ExpiresOption>("close");
-  const [videoUrl, setVideoUrl] = useState("");
   const [customTime, setCustomTime] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [dup, setDup] = useState<{ saleId: string } | null>(null);
@@ -141,7 +140,6 @@ export function SaleReportForm({
           expiresOption: expires,
           expiresAt,
           photoUrls,
-          videoUrl: videoUrl.trim() || null,
         }),
       });
 
@@ -275,14 +273,6 @@ export function SaleReportForm({
           </button>
         ))}
       </div>
-      <input
-        value={videoUrl}
-        onChange={(e) => setVideoUrl(e.target.value)}
-        inputMode="url"
-        placeholder="동영상 링크 (YouTube 등, 선택)"
-        className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
-      />
-
       {expires === "custom" && (
         <label className="flex items-center gap-2 text-sm text-gray-600">
           마감 시각
