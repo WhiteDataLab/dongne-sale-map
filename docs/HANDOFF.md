@@ -1,0 +1,53 @@
+# HANDOFF — 동네 세일 지도 (진행 상황 인수인계)
+
+> 새 세션/작업자가 빠르게 이어받기 위한 요약. 제품 스펙은 [`PROJECT_SPEC.md`](PROJECT_SPEC.md), 코드 규칙은 [`../CLAUDE.md`](../CLAUDE.md), 배포는 [`../DEPLOY.md`](../DEPLOY.md).
+
+## 1. 한 줄 정의 & 현황
+동네 식료품 소상공인(야채/정육/과일 + 세탁/반찬/미용실/기타)의 **실시간 세일을 지도에서 보고 제보**하는 하이퍼로컬 웹.
+- **배포 중**: https://dongne-sale-map.vercel.app (GitHub `WhiteDataLab/dongne-sale-map`, main 푸시 시 자동 재배포)
+- 로컬: `C:\Market`, `npm run dev`(3000) / `npm run build`
+
+## 2. 기술 스택
+Next.js 15(App Router)·React 19·TS strict · Tailwind v4 · NextAuth v5(JWT) · Prisma 6 · Supabase(PostgreSQL + Storage) · Kakao Maps JS SDK + Local REST · Vercel.
+
+## 3. 구현 완료 (Phase 0~7 + 추가)
+- **0** 스캐폴딩/스키마/레이아웃, **1** 지도+검색+핀(이문동 기본), **2** 가게 상세 바텀시트(상품/세일/공지/리뷰 탭, 영업중 자동판정, 즐겨찾기), **3** 세일 제보(사진·만료·PointLog pending)+리뷰+**Naver 로그인**, **4** 신고/자동숨김(3건)+관리자 화면+회원탈퇴+약관/개인정보.
+- **5** 인증확장: 전화번호 로그인+SMS 본인확인(**개발모드 목업**)+Kakao 로그인(개발앱 키)+`Identity` 기반 **계정 병합**(포인트 합산·즐겨찾기 통합, 닉네임/프사는 **먼저 가입 계정** 기준)+포인트 내역(2년 조회/5년 소멸).
+- **6** 소비자 가게 등록 + 카테고리 확장 + 출처(소비자/사장님) 구분.
+- **7** 사장님(merchant): **7a** 사업자등록증 업로드(비공개 버킷)→관리자 서명URL 심사·승인→merchant 권한+소유권, **7b** 메뉴(상품) CRUD 권한(소유자/관리자 vs 소유자없으면 누구나, 사진필수·등록자표시·신고자동숨김)+**7b-2 계정 정지(ban)**, **7c** 가게 배너(소유자/관리자만, 없으면 소비자에겐 기본배너), **7d** 즐겨찾기 별도 메뉴(`/favorites`, 세일여부+딥링크).
+- **추가**: 전역 버튼 micro-interaction, 이미지 hover 확대(`.zoomable`), Apple풍 소개페이지 `/about`(긴 스크롤+등장 애니메이션), **사진 편집기**(PhotoEditor v3: 펜/지우개/모자이크/줌·박스 자르기/되돌리기), **GPS 현재위치**(파란 점, 좌표 미저장), **장소검색**(카카오 POI→기존가게 열기/빠른등록), **가게 등록을 메인 지도에서 직접 좌표 찍어 인라인 등록**, **소개페이지 업로드 영상**(관리자, `SiteConfig.intro_video_url`).
+- ❌ 제거됨: 외부(YouTube) 영상 링크 — 영상은 소개페이지 업로드만.
+
+## 4. 데이터 모델 (Prisma, migrations 0~10 적용 완료)
+User(provider?/providerId? nullable, name?, nickname, phone? unique, phoneVerified, role `user|admin|merchant`, status `active|banned`, points) · **Identity**(provider/providerId→user, 계정연결 단일출처) · Store(category `vegetable|meat|fruit|laundry|sidedish|salon|etc`, lat/lng, verified, **source `user|merchant`**, **ownerId?**, bannerUrl?, hoursJson?, status) · Product(photoUrl?, hidden, updatedAt) · Sale(photoUrls[], status, expiresAt) · Review(hidden) · Favorite · Report(targetType `store|sale|review|product`, 누적 3건 자동숨김) · PointLog(status pending|granted, refType/refId) · MerchantVerification(docPath) · PhoneVerification(codeHash) · **SiteConfig**(key/value).
+- 포인트 잔액 출처 = PointLog 합계(<5년). 세일 삭제/숨김/제재 시 해당 PointLog **회수**.
+
+## 5. 인프라/시크릿
+- DB: Supabase 풀러 `aws-1-ap-northeast-2.pooler.supabase.com`(user `postgres.<ref>`), 6543(앱)/5432(마이그레이션). **직접호스트 db.<ref>.supabase.co 는 IPv6-only라 사용 불가.**
+- Storage 버킷: `sale-photos`(public·이미지), `merchant-docs`(private·서명URL), `intro`(public·영상 50MB).
+- 시크릿은 `.env.local`(gitignore). 키: DATABASE_URL/DIRECT_URL, AUTH_SECRET, AUTH_NAVER_ID/SECRET, AUTH_KAKAO_ID/SECRET(**개발앱 키**), NEXT_PUBLIC_KAKAO_MAP_JS_KEY, KAKAO_REST_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY. (`.env.example`은 placeholder)
+- Auth: 세션=JWT. 신원 해석/병합 = `src/lib/userIdentity.ts`. 정지(ban)·role 확인 = `src/lib/session.ts`(DB status 체크).
+
+## 6. ⚠️ 작업 시 함정 (Windows 환경)
+1. **빌드 EPERM**(`query_engine.dll` rename 실패): dev 서버가 DLL 점유. → PowerShell로 node 종료 + `.prisma/client/*.tmp` 삭제 후 빌드. **dev 켠 채 build 금지.**
+2. **`pkill -f "next dev"`(git-bash)로 안 죽음** → PowerShell `Stop-Process`. 안 죽이면 EADDRINUSE로 **낡은 코드가 서빙됨**(디버깅 헛수고 원인).
+3. **Prisma CLI는 `.env` 만 읽음(`.env.local` X)** → migrate/seed/studio 시 `DATABASE_URL`/`DIRECT_URL` inline export.
+4. 새 마이그레이션: 파일 작성 → `prisma db execute --file ...` → `prisma migrate resolve --applied <name>`.
+5. **curl `-d`로 한글 보내면 깨짐**(테스트) → URL은 percent-encoding, 본문은 ASCII/파일. node의 `/tmp`는 `C:\tmp`로 깨짐 → 프로젝트 폴더 사용.
+6. ESLint: **`@typescript-eslint/no-explicit-any` 룰 미로딩** → 그 disable 주석 쓰면 빌드 실패. `any`는 주석 없이 사용.
+7. `position:fixed` 전체화면 모달은 **transform 조상(바텀시트)에 갇힘** → `createPortal(document.body)`. 모바일 높이는 `visualViewport`.
+
+## 7. 검증 방식
+빌드 통과 + dev(3137)에서 headless API 테스트. 인증 필요한 경로는 **세션 토큰 발급**해 쿠키로 호출: `encode`(`next-auth/jwt`, secret=AUTH_SECRET, salt `"authjs.session-token"`)로 `{userId,role,...}` 토큰 생성 → `Cookie: authjs.session-token=...`.
+
+## 8. 사용자가 직접 할 일(운영/테스트)
+- **Kakao 개발앱**: 카카오 로그인 Redirect URI `https://dongne-sale-map.vercel.app/api/auth/callback/kakao`(+localhost) 등록, 동의항목(닉네임/프로필). **지도(운영앱) JS키**의 Web 플랫폼에 배포 도메인 등록.
+- **Naver**: Callback `https://<도메인>/api/auth/callback/naver`.
+- **관리자 권한**: Supabase SQL `UPDATE "User" SET role='admin' WHERE nickname='4Leaf';` 후 재로그인. (관리 화면 `/admin`)
+- 소개페이지 영상: `/admin`에서 업로드.
+
+## 9. 남은 후보(미구현/선택)
+실제 **SMS 발송사** 연동(현재 목업) · 앱 전체 Apple풍 톤 정비 · 5년 경과 포인트 **물리 삭제 스케줄**(현재 지연계산) · PWA(설치/매니페스트/오프라인) · 푸시(스펙상 Out of Scope) · 전화번호를 소셜 계정에 추가연결(현재 소셜→현재계정 병합만).
+
+## 10. 최근 커밋
+`096d9c0` 가게 등록 인라인(지도 직접 좌표) — 이후 작업은 여기서 이어가면 됨.
