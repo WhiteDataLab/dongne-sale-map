@@ -51,6 +51,13 @@ export async function deleteAccount() {
       data: { provider: "kakao", providerId: "deleted-user", nickname: "탈퇴한 사용자" },
     }));
 
+  // 탈퇴 통계 로그(PII 없이 시각+가입경로만) — 대시보드 추이용
+  const leaving = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { provider: true },
+  });
+  await prisma.withdrawalLog.create({ data: { provider: leaving?.provider ?? null } });
+
   await prisma.$transaction([
     prisma.store.updateMany({ where: { createdById: userId }, data: { createdById: ghost.id } }),
     prisma.product.updateMany({ where: { createdById: userId }, data: { createdById: ghost.id } }),

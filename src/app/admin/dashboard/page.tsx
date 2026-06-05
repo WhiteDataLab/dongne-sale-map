@@ -16,6 +16,9 @@ function kstDayStart(daysAgo = 0): Date {
 
 type Counter = (args?: { where?: { createdAt?: { gte?: Date; lt?: Date } } }) => Promise<number>;
 
+// 탈퇴 sentinel(고스트) 계정은 실제 회원이 아니므로 통계에서 제외
+const NOT_GHOST = { providerId: { not: "deleted-user" } };
+
 async function periodCounts(count: Counter) {
   const today = kstDayStart(0);
   const yesterday = kstDayStart(1);
@@ -33,15 +36,18 @@ const EMPTY = { today: 0, yesterday: 0, week: 0, total: 0 };
 
 export default async function AdminDashboard() {
   let rows: { label: string; emoji: string; data: typeof EMPTY }[] = [];
+  const providers = { kakao: 0, naver: 0, phone: 0 };
   let dbError = false;
 
   try {
-    const [users, stores, sales, reviews, reports] = await Promise.all([
-      periodCounts((a) => prisma.user.count(a)),
+    const [users, stores, sales, reviews, reports, withdrawals, byProvider] = await Promise.all([
+      periodCounts((a) => prisma.user.count({ where: { ...(a?.where ?? {}), ...NOT_GHOST } })),
       periodCounts((a) => prisma.store.count(a)),
       periodCounts((a) => prisma.sale.count(a)),
       periodCounts((a) => prisma.review.count(a)),
       periodCounts((a) => prisma.report.count(a)),
+      periodCounts((a) => prisma.withdrawalLog.count(a)),
+      prisma.user.groupBy({ by: ["provider"], where: NOT_GHOST, _count: true }),
     ]);
     rows = [
       { label: "회원가입", emoji: "🙋", data: users },
@@ -49,7 +55,13 @@ export default async function AdminDashboard() {
       { label: "세일 제보", emoji: "🔥", data: sales },
       { label: "리뷰 작성", emoji: "✍️", data: reviews },
       { label: "신고 접수", emoji: "🚩", data: reports },
+      { label: "회원 탈퇴", emoji: "👋", data: withdrawals },
     ];
+    for (const g of byProvider) {
+      if (g.provider === "kakao") providers.kakao = g._count;
+      else if (g.provider === "naver") providers.naver = g._count;
+      else if (g.provider === "phone") providers.phone = g._count;
+    }
   } catch {
     dbError = true;
   }
@@ -70,7 +82,7 @@ export default async function AdminDashboard() {
       </div>
 
       {/* 오늘 활동 하이라이트 */}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+      <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
         {rows.map((r) => (
           <div key={r.label} className="rounded-xl border border-gray-200 p-3 text-center">
             <div className="text-xl">{r.emoji}</div>
@@ -108,8 +120,29 @@ export default async function AdminDashboard() {
         </table>
       </div>
 
+      {/* 가입 경로별 현재 회원 */}
+      <div>
+        <h3 className="mb-2 text-sm font-bold">가입 경로별 현재 회원</h3>
+        <div className="grid grid-cols-3 gap-2">
+          {[
+            { label: "카카오", emoji: "💬", n: providers.kakao, color: "bg-yellow-50 text-yellow-700" },
+            { label: "네이버", emoji: "🟢", n: providers.naver, color: "bg-green-50 text-green-700" },
+            { label: "전화번호", emoji: "📱", n: providers.phone, color: "bg-blue-50 text-blue-700" },
+          ].map((p) => (
+            <div key={p.label} className={`rounded-xl p-3 text-center ${p.color}`}>
+              <div className="text-lg">{p.emoji}</div>
+              <div className="mt-1 text-2xl font-bold tabular-nums">{p.n}</div>
+              <div className="text-[11px] opacity-70">{p.label} 가입</div>
+            </div>
+          ))}
+        </div>
+        <p className="mt-1 text-xs text-gray-400">
+          현재 회원 합계 {providers.kakao + providers.naver + providers.phone}명 (탈퇴·sentinel 제외)
+        </p>
+      </div>
+
       <p className="text-xs text-gray-400">
-        · 일자 경계는 한국시간(KST) 자정 기준이에요. · 누적은 전체 기간 합계예요.
+        · 일자 경계는 한국시간(KST) 자정 기준이에요. · 누적은 전체 기간 합계예요. · 회원 탈퇴는 로그 도입 이후부터 집계돼요.
       </p>
     </div>
   );

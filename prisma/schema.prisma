@@ -154,6 +154,16 @@ model SiteConfig {
   value String
 }
 
+// 회원 탈퇴 통계 로그 (관리자 대시보드용). PII 없음 — 탈퇴 시각 + 가입 경로(provider)만.
+// User 는 탈퇴 시 hard delete 되므로 별도 로그로 추이를 남긴다.
+model WithdrawalLog {
+  id        String    @id @default(cuid())
+  provider  Provider? // 탈퇴 계정의 주 가입 경로(통계용)
+  createdAt DateTime  @default(now())
+
+  @@index([createdAt])
+}
+
 // 전화번호 본인확인 코드 (Phase 5, 개발모드=목업 발송). 평문 저장 금지 → 해시.
 model PhoneVerification {
   id        String   @id @default(cuid())
