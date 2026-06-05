@@ -121,6 +121,7 @@ export const authConfig: NextAuthConfig = {
           const dbUser = await resolveSocialUser(provider, providerId, {
             nickname: user.name?.trim() || "이웃",
             profileImgUrl: user.image ?? null,
+            email: user.email ?? null,
           });
           token.userId = dbUser.id;
           token.role = dbUser.role;

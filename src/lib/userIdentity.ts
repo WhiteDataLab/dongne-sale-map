@@ -1,6 +1,31 @@
 import { prisma } from "@/lib/prisma";
 import type { User } from "@prisma/client";
 
+/** KST 기준 YYYYMMDDHHmmss. */
+function ts14(d: Date): string {
+  const k = new Date(d.getTime() + 9 * 60 * 60 * 1000);
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${k.getUTCFullYear()}${p(k.getUTCMonth() + 1)}${p(k.getUTCDate())}${p(k.getUTCHours())}${p(k.getUTCMinutes())}${p(k.getUTCSeconds())}`;
+}
+
+function randomLetters(n: number): string {
+  const a = "abcdefghijklmnopqrstuvwxyz";
+  let s = "";
+  for (let i = 0; i < n; i++) s += a[Math.floor(Math.random() * a.length)];
+  return s;
+}
+
+/**
+ * 계정 식별자(ID값) 생성.
+ * - 이메일이 있으면 이메일(소문자)을 ID값으로.
+ * - 없으면 영문자4 + 가입일시(YYYYMMDDHHmmss, KST).
+ */
+export function makeAccountId(email: string | null | undefined, when: Date): string {
+  const e = email?.trim().toLowerCase();
+  if (e) return e;
+  return `${randomLetters(4)}${ts14(when)}`;
+}
+
 /**
  * 소셜 신원(provider, providerId) → User 해석.
  * Identity 가 단일 출처: 있으면 그 User, 없으면 User + Identity 신규 생성.
@@ -9,7 +34,7 @@ import type { User } from "@prisma/client";
 export async function resolveSocialUser(
   provider: "kakao" | "naver",
   providerId: string,
-  profile: { nickname: string; profileImgUrl: string | null },
+  profile: { nickname: string; profileImgUrl: string | null; email: string | null },
 ): Promise<User> {
   const existing = await prisma.identity.findUnique({
     where: { provider_providerId: { provider, providerId } },
@@ -18,12 +43,12 @@ export async function resolveSocialUser(
 
   if (existing) {
     // 기존 신원 로그인: 닉네임은 덮어쓰지 않는다(병합 기준 유지).
-    // 프로필 사진은 **비어있을 때만** 채운다 → 최초 계정에 사진이 없으면 나중 로그인 사진으로 보완.
-    if (!existing.user.profileImgUrl && profile.profileImgUrl) {
-      return prisma.user.update({
-        where: { id: existing.userId },
-        data: { profileImgUrl: profile.profileImgUrl },
-      });
+    // accountId(ID값)·프로필 사진은 **비어있을 때만** 보완(기존 계정 backfill).
+    const patch: { profileImgUrl?: string; accountId?: string } = {};
+    if (!existing.user.profileImgUrl && profile.profileImgUrl) patch.profileImgUrl = profile.profileImgUrl;
+    if (!existing.user.accountId) patch.accountId = makeAccountId(profile.email, existing.user.createdAt);
+    if (Object.keys(patch).length > 0) {
+      return prisma.user.update({ where: { id: existing.userId }, data: patch });
     }
     return existing.user;
   }
@@ -33,6 +58,7 @@ export async function resolveSocialUser(
       provider, // 레거시 표시용 컬럼도 채워둠
       providerId,
       nickname: profile.nickname,
+      accountId: makeAccountId(profile.email, new Date()),
       profileImgUrl: profile.profileImgUrl,
       identities: { create: { provider, providerId } },
     },
@@ -51,9 +77,10 @@ export async function resolvePhoneUser(
     include: { user: true },
   });
   if (existing) {
+    // 전화 가입자의 ID값 = 전화번호. 기존 계정에 비어있으면 backfill.
     return prisma.user.update({
       where: { id: existing.userId },
-      data: { phoneVerified: true },
+      data: { phoneVerified: true, ...(existing.user.accountId ? {} : { accountId: phone }) },
     });
   }
   return prisma.user.create({
@@ -61,6 +88,7 @@ export async function resolvePhoneUser(
       provider: "phone",
       providerId: phone,
       phone,
+      accountId: phone, // 전화번호가 ID값
       phoneVerified: true,
       nickname: profile.nickname?.trim() || "이웃",
       name: profile.name?.trim() || null,

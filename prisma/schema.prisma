@@ -95,6 +95,9 @@ model User {
   providerId    String?
   name          String? // 실명 (전화번호 가입 시 입력)
   nickname      String
+  // 계정 식별자(ID값): 소셜=이메일(없으면 영문4+YYYYMMDDHHmmss), 전화=전화번호.
+  // 닉네임 중복과 무관한 안정적 식별자. 신원 매칭은 Identity(provider+providerId)가 담당.
+  accountId     String?
   profileImgUrl String?
   phone         String?    @unique // 전화번호 로그인용 (Phase 5)
   phoneVerified Boolean    @default(false)

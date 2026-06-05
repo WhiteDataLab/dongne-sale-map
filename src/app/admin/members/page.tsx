@@ -18,8 +18,10 @@ type Member = {
   createdAt: Date;
   provider: string | null;
   phone: string | null;
+  accountId: string | null;
   role: string;
   status: string;
+  identities: { provider: string; createdAt: Date }[];
 };
 
 export default async function AdminMembers() {
@@ -38,8 +40,13 @@ export default async function AdminMembers() {
         createdAt: true,
         provider: true,
         phone: true,
+        accountId: true,
         role: true,
         status: true,
+        identities: {
+          select: { provider: true, createdAt: true },
+          orderBy: { createdAt: "asc" },
+        },
       },
     });
     // 적립포인트 잔액 = PointLog 합계(소멸 기간 이내), 회원별 집계
@@ -69,9 +76,10 @@ export default async function AdminMembers() {
       ) : (
         <ul className="flex flex-col gap-2">
           {members.map((u) => {
-            const account =
-              u.provider === "phone" && u.phone
-                ? u.phone
+            // 연결된 모든 로그인 수단(병합 계정은 여러 개): "네이버 · 카카오"
+            const linked =
+              u.identities.length > 0
+                ? u.identities.map((i) => PROVIDER_LABEL[i.provider] ?? i.provider).join(" · ")
                 : PROVIDER_LABEL[u.provider ?? ""] ?? "기타";
             const locked = u.status === "banned";
             return (
@@ -90,8 +98,9 @@ export default async function AdminMembers() {
                         <span className="rounded bg-red-100 px-1.5 py-0.5 text-[11px] font-medium text-red-600">잠금</span>
                       )}
                     </div>
-                    <p className="mt-0.5 text-xs text-gray-500">
-                      {PROVIDER_LABEL[u.provider ?? ""] ?? "기타"} · {account}
+                    <p className="mt-0.5 text-xs text-gray-500">{linked}</p>
+                    <p className="truncate text-xs text-gray-400">
+                      ID {u.accountId ?? "—"}
                     </p>
                     <p className="text-xs text-gray-400">
                       가입 {new Date(u.createdAt).toLocaleDateString("ko-KR")}
