@@ -25,6 +25,7 @@ export function ProductForm({
   const [price, setPrice] = useState(product ? String(product.price) : "");
   const [qtyUnit, setQtyUnit] = useState(product?.qtyUnit ?? "");
   const [origin, setOrigin] = useState(product?.origin ?? "");
+  const [videoUrl, setVideoUrl] = useState(product?.videoUrl ?? "");
   const [busy, setBusy] = useState(false);
   const [photoEditing, setPhotoEditing] = useState(false);
   const ref = useRef<HTMLInputElement>(null);
@@ -56,6 +57,7 @@ export function ProductForm({
         price: p,
         qtyUnit: qtyUnit.trim(),
         origin: origin.trim() || null,
+        videoUrl: videoUrl.trim() || null,
       };
       let res: Response;
       if (editing && product) {
@@ -175,6 +177,13 @@ export function ProductForm({
         value={origin}
         onChange={(e) => setOrigin(e.target.value)}
         placeholder="원산지 (선택)"
+        className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
+      />
+      <input
+        value={videoUrl}
+        onChange={(e) => setVideoUrl(e.target.value)}
+        inputMode="url"
+        placeholder="동영상 링크 (YouTube 등, 선택)"
         className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
       />
 

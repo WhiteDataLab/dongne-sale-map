@@ -171,7 +171,8 @@ model Store {
   phone       String?
   hoursJson   Json? // 영업시간 (요일+시간). 영업중 자동판정에 사용 (Phase 2)
   description String?
-  bannerUrl   String? // 가게 상단 메인 사진 — 사장님/관리자만 설정 (Phase 7c)
+  bannerUrl      String? // 가게 상단 메인 사진 — 사장님/관리자만 설정 (Phase 7c)
+  bannerVideoUrl String? // 가게 소개 영상 링크(YouTube 등 외부 임베드)
   verified    Boolean       @default(false) // 미인증 가게는 회색 핀
   source      StoreSource   @default(user) // 등록 출처 (소비자/사장님) — UI 구분
   status      StoreStatus   @default(active)
@@ -204,6 +205,7 @@ model Product {
   qtyUnit   String // 예: "1kg", "1봉"
   stock     Int?
   photoUrl  String? // 신규 등록 시 필수(앱 레벨), 시드 호환 위해 컬럼은 nullable
+  videoUrl  String? // 동영상 링크(YouTube 등 외부 임베드)
   origin    String? // 원산지
   hidden    Boolean  @default(false) // 신고 누적 자동 숨김 (Phase 7b)
   createdAt DateTime @default(now())
@@ -225,6 +227,7 @@ model Sale {
   title     String
   photoUrl  String // 대표(커버) 사진 = photoUrls[0]
   photoUrls String[] @default([]) // 최대 10장 (Phase 6 확장)
+  videoUrl  String? // 동영상 링크(YouTube 등 외부 임베드)
   salePrice Int
   qty       String
   expiresAt DateTime // 만료시간 지나면 자동 비활성
@@ -246,6 +249,7 @@ model Review {
   userId    String
   rating    Int // 1~5 (앱 레벨에서 검증)
   content   String
+  videoUrl  String? // 동영상 링크(YouTube 등 외부 임베드)
   hidden    Boolean  @default(false) // 신고 누적 N건 시 soft hide (Phase 4)
   createdAt DateTime @default(now())
 

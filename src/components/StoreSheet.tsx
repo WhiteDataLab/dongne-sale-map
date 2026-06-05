@@ -22,6 +22,7 @@ import { ReportButton } from "./ReportButton";
 import { MerchantApply } from "./MerchantApply";
 import { ProductForm } from "./ProductForm";
 import { PhotoEditor } from "./PhotoEditor";
+import { VideoEmbed } from "./VideoEmbed";
 import type { ProductDTO } from "@/lib/types";
 
 type Composing = "sale" | "review" | null;
@@ -56,6 +57,7 @@ export function StoreSheet({
   const [favorite, setFavorite] = useState(false);
   const [composing, setComposing] = useState<Composing>(null);
   const [bannerEditFile, setBannerEditFile] = useState<File | null>(null);
+  const [bannerVideo, setBannerVideo] = useState("");
 
   // 시트 세로 위치(px). 작을수록 위로 펼쳐짐.
   const [translateY, setTranslateY] = useState(0);
@@ -76,6 +78,7 @@ export function StoreSheet({
         const data = (await res.json()) as StoreDetailDTO;
         setDetail(data);
         setFavorite(data.isFavorite);
+        setBannerVideo(data.bannerVideoUrl ?? "");
       } catch {
         onToast("상세 정보를 불러오지 못했어요.");
       } finally {
@@ -127,6 +130,20 @@ export function StoreSheet({
     },
     [storeId, onToast, refresh],
   );
+  const saveBannerVideo = useCallback(async () => {
+    const res = await fetch(`/api/stores/${storeId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ bannerVideoUrl: bannerVideo.trim() || null }),
+    });
+    if (res.ok) {
+      onToast(bannerVideo.trim() ? "소개 영상을 등록했어요." : "소개 영상을 지웠어요.");
+      refresh();
+    } else {
+      onToast(res.status === 403 ? "사장님·관리자만 가능해요." : "변경에 실패했어요.");
+    }
+  }, [storeId, bannerVideo, onToast, refresh]);
+
   const removeBanner = useCallback(async () => {
     const res = await fetch(`/api/stores/${storeId}`, {
       method: "PATCH",
@@ -207,7 +224,9 @@ export function StoreSheet({
           {detail ? (
             <>
             <div className="zoomable relative -mx-4 mb-2">
-              {detail.bannerUrl ? (
+              {detail.bannerVideoUrl ? (
+                  <VideoEmbed url={detail.bannerVideoUrl} />
+                ) : detail.bannerUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={detail.bannerUrl} alt="" className="h-44 w-full object-cover" />
                 ) : detail.canManageStore ? (
@@ -261,6 +280,24 @@ export function StoreSheet({
                   }}
                 />
             </div>
+            {detail.canManageStore && (
+              <div className="mb-2 flex gap-1">
+                <input
+                  value={bannerVideo}
+                  onChange={(e) => setBannerVideo(e.target.value)}
+                  inputMode="url"
+                  placeholder="소개 영상 링크(YouTube 등)"
+                  className="min-w-0 flex-1 rounded border border-gray-200 px-2 py-1 text-xs"
+                />
+                <button
+                  type="button"
+                  onClick={saveBannerVideo}
+                  className="shrink-0 rounded border border-gray-300 px-2 py-1 text-xs text-gray-600"
+                >
+                  영상 저장
+                </button>
+              </div>
+            )}
             <div className="flex items-start gap-3">
               <span className="text-2xl" aria-hidden>
                 {meta?.icon}
@@ -489,7 +526,8 @@ function ProductsTab({
       ) : (
         <ul className="flex flex-col gap-3">
           {detail.products.map((p) => (
-            <li key={p.id} className="flex gap-3">
+            <li key={p.id} className="flex flex-col gap-2">
+             <div className="flex gap-3">
               <Thumb url={p.photoUrl} />
               <div className="min-w-0 flex-1">
                 <div className="flex items-baseline justify-between gap-2">
@@ -534,6 +572,12 @@ function ProductsTab({
                   />
                 </div>
               </div>
+             </div>
+              {p.videoUrl && (
+                <div className="overflow-hidden rounded-lg">
+                  <VideoEmbed url={p.videoUrl} />
+                </div>
+              )}
             </li>
           ))}
         </ul>
@@ -597,6 +641,7 @@ function SalesTab({
           {detail.sales.map((s) => (
         <li key={s.id} className="overflow-hidden rounded-xl border border-gray-100">
           <PhotoCarousel urls={s.photoUrls?.length ? s.photoUrls : s.photoUrl ? [s.photoUrl] : []} />
+          {s.videoUrl && <VideoEmbed url={s.videoUrl} />}
           <div className="p-3">
             <div className="flex items-baseline justify-between gap-2">
               <p className="truncate font-medium">{s.title}</p>
@@ -770,6 +815,11 @@ function ReviewsTab({
                 <span className="text-amber-500 text-sm">{starString(r.rating)}</span>
               </div>
               <p className="mt-1 text-sm text-gray-700">{r.content}</p>
+              {r.videoUrl && (
+                <div className="mt-2 overflow-hidden rounded-lg">
+                  <VideoEmbed url={r.videoUrl} />
+                </div>
+              )}
               <div className="mt-1">
                 <ReportButton
                   targetType="review"

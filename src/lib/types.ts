@@ -24,6 +24,7 @@ export type ProductDTO = {
   qtyUnit: string;
   stock: number | null;
   photoUrl: string | null;
+  videoUrl: string | null;
   origin: string | null;
   createdAt: string;
   updatedAt: string;
@@ -36,6 +37,7 @@ export type SaleDTO = {
   title: string;
   photoUrl: string;
   photoUrls: string[];
+  videoUrl: string | null;
   salePrice: number;
   qty: string;
   expiresAt: string;
@@ -47,6 +49,7 @@ export type ReviewDTO = {
   id: string;
   rating: number;
   content: string;
+  videoUrl: string | null;
   nickname: string;
   createdAt: string;
 };
@@ -68,6 +71,7 @@ export type StoreDetailDTO = StoreDTO & {
   canManageMenu: boolean; // 현재 사용자가 메뉴를 추가/수정/삭제할 수 있는지
   canManageStore: boolean; // 현재 사용자가 가게(배너 등)를 관리할 수 있는지 (소유자·관리자)
   bannerUrl: string | null; // 가게 상단 메인 사진
+  bannerVideoUrl: string | null; // 가게 소개 영상 링크
   registeredBy: { nickname: string; img: string | null }; // 최초 등록자
   owner: { nickname: string; img: string | null } | null; // 사장님(소유자)
 };

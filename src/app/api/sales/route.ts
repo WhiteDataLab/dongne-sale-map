@@ -29,6 +29,7 @@ type Body = {
   expiresAt?: string; // expiresOption === "custom" 일 때 ISO
   photoUrl?: string; // 하위호환(단일)
   photoUrls?: string[]; // 다중(최대 10)
+  videoUrl?: string; // 동영상 링크(외부 임베드)
 };
 
 export async function POST(req: NextRequest) {
@@ -135,6 +136,7 @@ export async function POST(req: NextRequest) {
           title: title.trim(),
           photoUrl: photos[0],
           photoUrls: photos,
+          videoUrl: body.videoUrl?.trim() || null,
           salePrice,
           qty: qty.trim(),
           expiresAt,
