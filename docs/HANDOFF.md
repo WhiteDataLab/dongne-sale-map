@@ -18,7 +18,7 @@ Next.js 15(App Router)·React 19·TS strict · Tailwind v4 · NextAuth v5(JWT) �
 - **추가**: 전역 버튼 micro-interaction, 이미지 hover 확대(`.zoomable`), Apple풍 소개페이지 `/about`(긴 스크롤+등장 애니메이션), **사진 편집기**(PhotoEditor v3: 펜/지우개/모자이크/줌·박스 자르기/되돌리기), **GPS 현재위치**(파란 점, 좌표 미저장), **장소검색**(카카오 POI→기존가게 열기/빠른등록), **가게 등록을 메인 지도에서 직접 좌표 찍어 인라인 등록**, **소개페이지 업로드 영상**(관리자, `SiteConfig.intro_video_url`).
 - ❌ 제거됨: 외부(YouTube) 영상 링크 — 영상은 소개페이지 업로드만.
 - **반응형 패널**: 가게 등록 폼·가게 상세시트가 모바일=하단 바텀시트(드래그/탭 높이조절), 태블릿·PC(≥768px)=왼쪽 전체높이 사이드 패널. 등록 시트는 그립 탭으로 필터바 직전까지 최대화 토글. 지도 핀 찍기 전 커서 따라다니는 미리보기 핀(ghost)+드롭 애니메이션.
-- **가게 공지사항(notice)**: 공지 탭에서 사장님/관리자(`canManageStore`)만 추가·수정·삭제, 소비자는 조회만(`Store.notice`, PATCH `/api/stores/[id]`).
+- **가게 공지사항(notice)**: 공지 탭에서 사장님/관리자(`canManageStore`)만 추가·수정·삭제, 소비자는 조회만(`Store.notice`, PATCH `/api/stores/[id]`). 같은 탭의 **가게 소개·기본정보(주소/전화)·영업시간(요일별)도 동일 권한으로 인라인 편집**(PATCH 부분수정).
 - **신고 버튼**: 텍스트 → 깃발 아이콘(`ReportButton`).
 - 프로필 사진(메뉴) 열면 지도에 열린 등록/상세 패널 자동 닫힘(`window` `app:overlay-close` 이벤트).
 

@@ -13,6 +13,7 @@ import {
   DAY_LABELS,
   formatDayHours,
   getKstNow,
+  type DayKey,
 } from "@/lib/businessHours";
 import { freshnessLabel, starString, untilLabel, won } from "@/lib/format";
 import type { StoreDetailDTO } from "@/lib/types";
@@ -662,6 +663,334 @@ function SalesTab({
   );
 }
 
+/** 가게 정보 PATCH 공통 헬퍼. 성공 시 onDone, 실패 시 사유 토스트. */
+async function patchStore(
+  id: string,
+  body: Record<string, unknown>,
+  onToast: (m: string) => void,
+  onDone: () => void,
+  okMsg: string,
+): Promise<boolean> {
+  try {
+    const res = await fetch(`/api/stores/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (res.ok) {
+      onToast(okMsg);
+      onDone();
+      return true;
+    }
+    const e = (await res.json().catch(() => ({}))) as { error?: string };
+    onToast(
+      res.status === 403
+        ? "사장님·관리자만 가능해요."
+        : res.status === 401
+          ? "로그인이 필요해요."
+          : e.error ?? "저장에 실패했어요.",
+    );
+    return false;
+  } catch {
+    onToast("네트워크 오류가 발생했어요.");
+    return false;
+  }
+}
+
+/** 섹션 제목 + (권한 있을 때) 수정 버튼. */
+function SectionHead({
+  title,
+  canEdit,
+  editing,
+  onEdit,
+  emoji,
+}: {
+  title: string;
+  canEdit: boolean;
+  editing: boolean;
+  onEdit: () => void;
+  emoji?: string;
+}) {
+  return (
+    <div className="mb-1 flex items-center justify-between">
+      <h3 className="flex items-center gap-1 font-semibold">
+        {emoji ? `${emoji} ` : ""}
+        {title}
+      </h3>
+      {canEdit && !editing && (
+        <button type="button" onClick={onEdit} className="text-xs font-medium text-blue-600">
+          수정
+        </button>
+      )}
+    </div>
+  );
+}
+
+const inputCls =
+  "w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-blue-500";
+
+/** 가게 소개(description) — 소유자/관리자만 편집. */
+function IntroSection({
+  detail,
+  onToast,
+  onDone,
+}: {
+  detail: StoreDetailDTO;
+  onToast: (m: string) => void;
+  onDone: () => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [text, setText] = useState(detail.description ?? "");
+  const [busy, setBusy] = useState(false);
+
+  return (
+    <section>
+      <SectionHead
+        title="가게 소개"
+        canEdit={detail.canManageStore}
+        editing={editing}
+        onEdit={() => {
+          setText(detail.description ?? "");
+          setEditing(true);
+        }}
+      />
+      {editing ? (
+        <div className="flex flex-col gap-2">
+          <textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            rows={3}
+            autoFocus
+            placeholder="가게를 소개하는 글을 적어 주세요."
+            className={`${inputCls} resize-none`}
+          />
+          <SaveCancel
+            busy={busy}
+            onCancel={() => setEditing(false)}
+            onSave={async () => {
+              setBusy(true);
+              const ok = await patchStore(detail.id, { description: text }, onToast, onDone, "소개를 저장했어요.");
+              setBusy(false);
+              if (ok) setEditing(false);
+            }}
+          />
+        </div>
+      ) : (
+        <p className="whitespace-pre-wrap text-gray-600">
+          {detail.description?.trim() || "아직 등록된 소개가 없어요."}
+        </p>
+      )}
+    </section>
+  );
+}
+
+/** 기본 정보(주소/전화) — 소유자/관리자만 편집. */
+function BasicInfoSection({
+  detail,
+  onToast,
+  onDone,
+}: {
+  detail: StoreDetailDTO;
+  onToast: (m: string) => void;
+  onDone: () => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [address, setAddress] = useState(detail.address);
+  const [phone, setPhone] = useState(detail.phone ?? "");
+  const [busy, setBusy] = useState(false);
+
+  return (
+    <section>
+      <SectionHead
+        title="기본 정보"
+        canEdit={detail.canManageStore}
+        editing={editing}
+        onEdit={() => {
+          setAddress(detail.address);
+          setPhone(detail.phone ?? "");
+          setEditing(true);
+        }}
+      />
+      {editing ? (
+        <div className="flex flex-col gap-2">
+          <label className="text-xs text-gray-400">주소</label>
+          <input value={address} onChange={(e) => setAddress(e.target.value)} className={inputCls} />
+          <label className="text-xs text-gray-400">전화번호 (선택)</label>
+          <input
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            inputMode="tel"
+            placeholder="없으면 비워 두세요"
+            className={inputCls}
+          />
+          <SaveCancel
+            busy={busy}
+            onCancel={() => setEditing(false)}
+            onSave={async () => {
+              if (!address.trim()) return onToast("주소를 입력해 주세요.");
+              setBusy(true);
+              const ok = await patchStore(detail.id, { address, phone }, onToast, onDone, "기본 정보를 저장했어요.");
+              setBusy(false);
+              if (ok) setEditing(false);
+            }}
+          />
+        </div>
+      ) : (
+        <dl className="flex flex-col gap-1 text-gray-600">
+          <div className="flex gap-2">
+            <dt className="w-12 shrink-0 text-gray-400">주소</dt>
+            <dd>{detail.address}</dd>
+          </div>
+          <div className="flex gap-2">
+            <dt className="w-12 shrink-0 text-gray-400">전화</dt>
+            <dd>{detail.phone ?? "정보 없음"}</dd>
+          </div>
+        </dl>
+      )}
+    </section>
+  );
+}
+
+type DayDraft = { open: string; close: string; closed: boolean };
+
+/** 영업시간(hoursJson) — 소유자/관리자만 편집(요일별 휴무/시간). */
+function HoursSection({
+  detail,
+  onToast,
+  onDone,
+}: {
+  detail: StoreDetailDTO;
+  onToast: (m: string) => void;
+  onDone: () => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const initDraft = useCallback((): Record<DayKey, DayDraft> => {
+    const out = {} as Record<DayKey, DayDraft>;
+    for (const d of DAY_KEYS) {
+      const h = detail.hours?.[d] ?? null;
+      out[d] = h
+        ? { open: h.open, close: h.close, closed: false }
+        : { open: "09:00", close: "21:00", closed: true };
+    }
+    return out;
+  }, [detail.hours]);
+  const [draft, setDraft] = useState<Record<DayKey, DayDraft>>(initDraft);
+
+  const setDay = (d: DayKey, patch: Partial<DayDraft>) =>
+    setDraft((prev) => ({ ...prev, [d]: { ...prev[d], ...patch } }));
+
+  const save = async () => {
+    const hours: Record<string, { open: string; close: string } | null> = {};
+    for (const d of DAY_KEYS) {
+      const v = draft[d];
+      hours[d] = v.closed ? null : { open: v.open, close: v.close };
+    }
+    setBusy(true);
+    const ok = await patchStore(detail.id, { hoursJson: hours }, onToast, onDone, "영업시간을 저장했어요.");
+    setBusy(false);
+    if (ok) setEditing(false);
+  };
+
+  return (
+    <section>
+      <SectionHead
+        title="영업시간"
+        canEdit={detail.canManageStore}
+        editing={editing}
+        onEdit={() => {
+          setDraft(initDraft());
+          setEditing(true);
+        }}
+      />
+      {editing ? (
+        <div className="flex flex-col gap-2">
+          {DAY_KEYS.map((d) => {
+            const v = draft[d];
+            return (
+              <div key={d} className="flex items-center gap-2 text-sm">
+                <span className="w-6 shrink-0 font-medium">{DAY_LABELS[d]}</span>
+                {v.closed ? (
+                  <span className="flex-1 text-gray-400">휴무</span>
+                ) : (
+                  <span className="flex flex-1 items-center gap-1">
+                    <input
+                      type="time"
+                      value={v.open}
+                      onChange={(e) => setDay(d, { open: e.target.value })}
+                      className="rounded border border-gray-200 px-2 py-1"
+                    />
+                    <span className="text-gray-400">–</span>
+                    <input
+                      type="time"
+                      value={v.close}
+                      onChange={(e) => setDay(d, { close: e.target.value })}
+                      className="rounded border border-gray-200 px-2 py-1"
+                    />
+                  </span>
+                )}
+                <label className="flex shrink-0 items-center gap-1 text-xs text-gray-500">
+                  <input
+                    type="checkbox"
+                    checked={v.closed}
+                    onChange={(e) => setDay(d, { closed: e.target.checked })}
+                  />
+                  휴무
+                </label>
+              </div>
+            );
+          })}
+          <SaveCancel busy={busy} onCancel={() => setEditing(false)} onSave={save} />
+        </div>
+      ) : detail.hours ? (
+        <ul className="flex flex-col gap-0.5 text-gray-600">
+          {DAY_KEYS.map((d) => {
+            const today = getKstNow().dayKey === d;
+            return (
+              <li
+                key={d}
+                className={`flex justify-between ${today ? "font-semibold text-gray-900" : ""}`}
+              >
+                <span>{DAY_LABELS[d]}</span>
+                <span>{formatDayHours(detail.hours?.[d] ?? null)}</span>
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        <p className="text-gray-400">영업시간 정보가 없어요.</p>
+      )}
+    </section>
+  );
+}
+
+/** 저장/취소 버튼 묶음. */
+function SaveCancel({
+  busy,
+  onSave,
+  onCancel,
+}: {
+  busy: boolean;
+  onSave: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <button
+        type="button"
+        onClick={onSave}
+        disabled={busy}
+        className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white disabled:bg-gray-300"
+      >
+        {busy ? "저장 중…" : "저장"}
+      </button>
+      <button type="button" onClick={onCancel} className="text-xs text-gray-500">
+        취소
+      </button>
+    </div>
+  );
+}
+
 /**
  * 가게 공지사항 — 사장님/관리자(canManageStore)만 추가·수정·삭제, 소비자는 조회만.
  */
@@ -793,49 +1122,9 @@ function NoticeTab({
   return (
     <div className="flex flex-col gap-4 text-sm">
       <NoticeSection detail={detail} onToast={onToast} onDone={onDone} />
-
-      <section>
-        <h3 className="mb-1 font-semibold">가게 소개</h3>
-        <p className="whitespace-pre-wrap text-gray-600">
-          {detail.description?.trim() || "아직 등록된 소개가 없어요."}
-        </p>
-      </section>
-
-      <section>
-        <h3 className="mb-1 font-semibold">기본 정보</h3>
-        <dl className="flex flex-col gap-1 text-gray-600">
-          <div className="flex gap-2">
-            <dt className="w-12 shrink-0 text-gray-400">주소</dt>
-            <dd>{detail.address}</dd>
-          </div>
-          <div className="flex gap-2">
-            <dt className="w-12 shrink-0 text-gray-400">전화</dt>
-            <dd>{detail.phone ?? "정보 없음"}</dd>
-          </div>
-        </dl>
-      </section>
-
-      <section>
-        <h3 className="mb-1 font-semibold">영업시간</h3>
-        {detail.hours ? (
-          <ul className="flex flex-col gap-0.5 text-gray-600">
-            {DAY_KEYS.map((d) => {
-              const today = getKstNow().dayKey === d;
-              return (
-                <li
-                  key={d}
-                  className={`flex justify-between ${today ? "font-semibold text-gray-900" : ""}`}
-                >
-                  <span>{DAY_LABELS[d]}</span>
-                  <span>{formatDayHours(detail.hours?.[d] ?? null)}</span>
-                </li>
-              );
-            })}
-          </ul>
-        ) : (
-          <p className="text-gray-400">영업시간 정보가 없어요.</p>
-        )}
-      </section>
+      <IntroSection detail={detail} onToast={onToast} onDone={onDone} />
+      <BasicInfoSection detail={detail} onToast={onToast} onDone={onDone} />
+      <HoursSection detail={detail} onToast={onToast} onDone={onDone} />
 
       <section className="border-t border-gray-100 pt-3">
         <MerchantApply

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 import { canManageMenu, canManageStore } from "@/lib/menu";
@@ -140,7 +141,14 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "login_required" }, { status: 401 });
 
-  let body: { bannerUrl?: string | null; notice?: string | null };
+  let body: {
+    bannerUrl?: string | null;
+    notice?: string | null;
+    description?: string | null;
+    address?: string;
+    phone?: string | null;
+    hoursJson?: unknown;
+  };
   try {
     body = await req.json();
   } catch {
@@ -158,12 +166,30 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
         { status: 403 },
       );
     }
-    // 전달된 필드만 부분 수정 (배너 / 공지)
-    const data: { bannerUrl?: string | null; notice?: string | null } = {};
+    // 전달된 필드만 부분 수정 (배너 / 공지 / 소개 / 기본정보 / 영업시간)
+    const data: Prisma.StoreUpdateInput = {};
     if ("bannerUrl" in body) data.bannerUrl = body.bannerUrl ?? null;
     if ("notice" in body) {
       const n = typeof body.notice === "string" ? body.notice.trim() : "";
       data.notice = n || null; // 빈 문자열 = 삭제
+    }
+    if ("description" in body) {
+      const d = typeof body.description === "string" ? body.description.trim() : "";
+      data.description = d || null;
+    }
+    if ("address" in body) {
+      const a = typeof body.address === "string" ? body.address.trim() : "";
+      if (!a) return NextResponse.json({ error: "주소를 입력해 주세요." }, { status: 400 });
+      data.address = a;
+    }
+    if ("phone" in body) {
+      const p = typeof body.phone === "string" ? body.phone.trim() : "";
+      data.phone = p || null;
+    }
+    if ("hoursJson" in body) {
+      // null = 영업시간 정보 없음
+      const h = asStoreHours(body.hoursJson);
+      data.hoursJson = h === null ? Prisma.JsonNull : h;
     }
     await prisma.store.update({ where: { id }, data });
     return NextResponse.json({ ok: true });
