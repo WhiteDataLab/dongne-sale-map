@@ -25,6 +25,13 @@ export default async function AdminHome() {
   return (
     <div className="flex flex-col gap-3">
       <Link
+        href="/admin/dashboard"
+        className="flex items-center justify-between rounded-xl border border-gray-200 p-4"
+      >
+        <span className="font-medium">📊 대시보드</span>
+        <span className="text-sm text-gray-400">오늘 가입·등록·리뷰 현황 →</span>
+      </Link>
+      <Link
         href="/admin/reports"
         className="flex items-center justify-between rounded-xl border border-gray-200 p-4"
       >

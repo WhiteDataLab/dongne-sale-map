@@ -28,6 +28,9 @@ export default async function AdminLayout({
       <div className="mx-auto max-w-2xl p-4">
         <header className="mb-4 flex items-center gap-4 border-b border-gray-100 pb-3 text-sm">
           <span className="font-bold">관리</span>
+          <Link href="/admin/dashboard" className="text-gray-600 hover:text-gray-900">
+            대시보드
+          </Link>
           <Link href="/admin/reports" className="text-gray-600 hover:text-gray-900">
             신고 큐
           </Link>
