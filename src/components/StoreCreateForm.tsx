@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { CATEGORIES, CATEGORY_META, type Category } from "@/lib/constants";
@@ -19,6 +19,22 @@ export function StoreCreateForm() {
   const [msg, setMsg] = useState<string | null>(null);
   const [needLogin, setNeedLogin] = useState(false);
   const [busy, setBusy] = useState(false);
+
+  // 검색 결과(카카오 장소)에서 넘어온 경우 prefill (?name=&address=&lat=&lng=&phone=)
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search);
+    const n = p.get("name");
+    if (n) setName(n);
+    const a = p.get("address");
+    if (a) setAddress(a);
+    const ph = p.get("phone");
+    if (ph) setPhone(ph);
+    const lat = Number(p.get("lat"));
+    const lng = Number(p.get("lng"));
+    if (Number.isFinite(lat) && Number.isFinite(lng) && (lat || lng)) {
+      setPicked({ lat, lng });
+    }
+  }, []);
 
   const submit = async () => {
     if (!name.trim()) return setMsg("가게명을 입력해 주세요.");

@@ -2,18 +2,30 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { haversineMeters } from "@/lib/geo";
 import { useKakaoLoader } from "./useKakaoLoader";
 import { SearchBar } from "./SearchBar";
 import { FilterBar, type Filters } from "./FilterBar";
 import { StoreSheet } from "./StoreSheet";
 import { DEFAULT_CENTER, DEFAULT_LEVEL, CATEGORY_META } from "@/lib/constants";
-import type { GeocodeResult, StoreDTO } from "@/lib/types";
+import type { StoreDTO } from "@/lib/types";
 
 /**
  * Phase 1 지도 화면: 카카오맵 렌더링 + 검색 이동 + bounds 핀 + 필터.
  * 기본 중심 = 이문동. 미인증 가게는 회색 핀, 클릭 시 "인증 진행중" 안내.
  * 가게 상세(바텀시트)는 Phase 2 → 지금은 안내만.
  */
+type Place = {
+  name: string;
+  address: string;
+  roadAddress: string;
+  lat: number;
+  lng: number;
+  phone: string;
+  category: string;
+};
+
 export function MapExplorer() {
   const appKey = process.env.NEXT_PUBLIC_KAKAO_MAP_JS_KEY;
   const { loaded, error } = useKakaoLoader(appKey);
@@ -32,6 +44,8 @@ export function MapExplorer() {
   const [searching, setSearching] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
+  const [results, setResults] = useState<Place[] | null>(null);
+  const router = useRouter();
 
   // 최신 filters 를 idle 리스너에서 참조하기 위한 ref
   const filtersRef = useRef(filters);
@@ -160,25 +174,63 @@ export function MapExplorer() {
     async (q: string) => {
       setSearching(true);
       try {
-        const res = await fetch(`/api/geocode?q=${encodeURIComponent(q)}`);
-        if (!res.ok) {
-          const err = (await res.json()) as { error?: string };
-          flashNotice(err.error ?? "검색 결과가 없어요.");
+        const params = new URLSearchParams({ q });
+        const c = mapRef.current?.getCenter?.();
+        if (c) {
+          params.set("x", String(c.getLng()));
+          params.set("y", String(c.getLat()));
+        }
+        const res = await fetch(`/api/places?${params.toString()}`);
+        const data = (await res.json()) as { places?: Place[] };
+        const places = data.places ?? [];
+        if (places.length === 0) {
+          flashNotice("검색 결과가 없어요.");
+          setResults(null);
           return;
         }
-        const r = (await res.json()) as GeocodeResult;
-        const map = mapRef.current;
-        if (map) {
-          map.setCenter(new window.kakao.maps.LatLng(r.lat, r.lng));
-          fetchStores();
-        }
+        setResults(places);
       } catch {
         flashNotice("검색 중 오류가 발생했어요.");
       } finally {
         setSearching(false);
       }
     },
-    [fetchStores, flashNotice],
+    [flashNotice],
+  );
+
+  // 검색 결과(카카오 장소) 선택 → 이미 등록된 가게면 열기, 아니면 빠른 등록(prefill)
+  const pickPlace = useCallback(
+    async (pl: Place) => {
+      setResults(null);
+      const map = mapRef.current;
+      if (map) map.setCenter(new window.kakao.maps.LatLng(pl.lat, pl.lng));
+      try {
+        const d = 0.0009; // ~100m
+        const res = await fetch(
+          `/api/stores?swLat=${pl.lat - d}&swLng=${pl.lng - d}&neLat=${pl.lat + d}&neLng=${pl.lng + d}`,
+        );
+        const data = (await res.json()) as { stores?: StoreDTO[] };
+        const near = (data.stores ?? []).find(
+          (s) => haversineMeters(s.lat, s.lng, pl.lat, pl.lng) < 60,
+        );
+        if (near) {
+          setSelectedStoreId(near.id);
+          fetchStores();
+          return;
+        }
+      } catch {
+        // 무시하고 등록으로
+      }
+      const qs = new URLSearchParams({
+        name: pl.name,
+        address: pl.roadAddress || pl.address,
+        lat: String(pl.lat),
+        lng: String(pl.lng),
+      });
+      if (pl.phone) qs.set("phone", pl.phone);
+      router.push(`/stores/new?${qs.toString()}`);
+    },
+    [fetchStores, router],
   );
 
   return (
@@ -217,6 +269,35 @@ export function MapExplorer() {
             📍
           </button>
         </div>
+
+        {results && (
+          <div className="pointer-events-auto max-h-64 overflow-y-auto rounded-xl bg-white shadow-lg">
+            <div className="flex items-center justify-between border-b border-gray-100 px-3 py-2 text-xs text-gray-400">
+              <span>검색 결과 {results.length}곳 — 누르면 가게 보기/등록</span>
+              <button type="button" onClick={() => setResults(null)}>
+                닫기
+              </button>
+            </div>
+            <ul className="divide-y divide-gray-50">
+              {results.map((pl, i) => (
+                <li key={`${pl.name}-${i}`}>
+                  <button
+                    type="button"
+                    onClick={() => pickPlace(pl)}
+                    className="block w-full px-3 py-2.5 text-left hover:bg-gray-50"
+                  >
+                    <p className="truncate text-sm font-medium">
+                      {pl.name}
+                      {pl.category && <span className="ml-1 text-xs text-gray-400">{pl.category}</span>}
+                    </p>
+                    <p className="truncate text-xs text-gray-500">{pl.roadAddress || pl.address}</p>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         <FilterBar filters={filters} onChange={setFilters} />
       </div>
 
