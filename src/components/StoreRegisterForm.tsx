@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { CATEGORIES, CATEGORY_META, type Category } from "@/lib/constants";
 
@@ -23,6 +23,17 @@ export function StoreRegisterForm({
   const [category, setCategory] = useState<Category>("vegetable");
   const [address, setAddress] = useState(point.address);
   const [phone, setPhone] = useState("");
+
+  // 지도에서 다른 좌표를 다시 찍으면 주소를 새 역지오코딩 결과로 갱신.
+  // (좌표가 바뀔 때만 덮어쓰므로 사용자가 직접 수정한 내용은 같은 위치에선 유지됨)
+  const coordKey = `${point.lat},${point.lng}`;
+  const prevCoordRef = useRef(coordKey);
+  useEffect(() => {
+    if (prevCoordRef.current !== coordKey) {
+      prevCoordRef.current = coordKey;
+      setAddress(point.address);
+    }
+  }, [coordKey, point.address]);
   const [description, setDescription] = useState("");
   const [needLogin, setNeedLogin] = useState(false);
   const [busy, setBusy] = useState(false);

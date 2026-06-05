@@ -53,6 +53,8 @@ export function MapExplorer() {
   const registerModeRef = useRef(false);
   registerModeRef.current = registerMode;
   const registerMarkerRef = useRef<any>(null);
+  // 등록 모드에서 커서를 따라다니는 '꽂기 전' 미리보기 핀
+  const ghostRef = useRef<any>(null);
 
   // 최신 filters 를 idle 리스너에서 참조하기 위한 ref
   const filtersRef = useRef(filters);
@@ -105,13 +107,48 @@ export function MapExplorer() {
     kakao.maps.event.addListener(map, "idle", fetchStores);
     fetchStores();
 
+    // 등록 모드에서 커서를 따라다니는 미리보기 핀 (꽂기 전 시각화)
+    kakao.maps.event.addListener(map, "mousemove", (e: { latLng: any }) => {
+      if (!registerModeRef.current) {
+        if (ghostRef.current) ghostRef.current.setMap(null);
+        return;
+      }
+      if (!ghostRef.current) {
+        const el = document.createElement("div");
+        el.className = "pin-ghost";
+        el.textContent = "📍";
+        ghostRef.current = new kakao.maps.CustomOverlay({
+          content: el,
+          xAnchor: 0.5,
+          yAnchor: 1,
+          zIndex: 4,
+        });
+      }
+      ghostRef.current.setPosition(e.latLng);
+      ghostRef.current.setMap(map);
+    });
+    // 지도 밖으로 커서가 나가면 미리보기 핀 숨김
+    kakao.maps.event.addListener(map, "mouseout", () => {
+      if (ghostRef.current) ghostRef.current.setMap(null);
+    });
+
     // 가게 등록 모드: 지도 탭 → 좌표 선택 + 역지오코딩으로 주소 자동
     kakao.maps.event.addListener(map, "click", (e: { latLng: { getLat(): number; getLng(): number } }) => {
       if (!registerModeRef.current) return;
       const lat = e.latLng.getLat();
       const lng = e.latLng.getLng();
       if (registerMarkerRef.current) registerMarkerRef.current.setMap(null);
-      registerMarkerRef.current = new kakao.maps.Marker({ position: e.latLng });
+      // 떨어지듯 꽂히는 핀(CustomOverlay) — 클릭 위치에 드롭 애니메이션
+      const pinEl = document.createElement("div");
+      pinEl.className = "pin-drop";
+      pinEl.textContent = "📍";
+      registerMarkerRef.current = new kakao.maps.CustomOverlay({
+        position: e.latLng,
+        content: pinEl,
+        xAnchor: 0.5,
+        yAnchor: 1,
+        zIndex: 6,
+      });
       registerMarkerRef.current.setMap(map);
       try {
         const geocoder = new kakao.maps.services.Geocoder();
@@ -148,6 +185,7 @@ export function MapExplorer() {
       registerMarkerRef.current.setMap(null);
       registerMarkerRef.current = null;
     }
+    if (ghostRef.current) ghostRef.current.setMap(null);
   }, []);
 
   // 필터 변경 시 재조회
