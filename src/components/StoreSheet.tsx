@@ -57,7 +57,17 @@ export function StoreSheet({
   const [composing, setComposing] = useState<Composing>(null);
   const [bannerEditFile, setBannerEditFile] = useState<File | null>(null);
 
-  // 시트 세로 위치(px). 작을수록 위로 펼쳐짐.
+  // 태블릿/PC(>=768px)에서는 왼쪽 사이드 패널, 모바일에서는 하단 바텀시트
+  const [isDesktop, setIsDesktop] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    const apply = () => setIsDesktop(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+
+  // 시트 세로 위치(px). 작을수록 위로 펼쳐짐. (모바일 바텀시트 전용)
   const [translateY, setTranslateY] = useState(0);
   const vhRef = useRef(0);
   const dragRef = useRef<{ startY: number; startT: number } | null>(null);
@@ -142,6 +152,7 @@ export function StoreSheet({
   }, [storeId, onToast, refresh]);
 
   const onPointerDown = (e: ReactPointerEvent) => {
+    if (isDesktop) return; // 데스크톱은 고정 사이드 패널 — 드래그 없음
     dragRef.current = { startY: e.clientY, startT: translateY };
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
   };
@@ -178,31 +189,41 @@ export function StoreSheet({
   const meta = detail ? CATEGORY_META[detail.category] : null;
 
   return (
-    <div className="absolute inset-0 z-40">
-      {/* 백드롭 (탭하면 닫힘) */}
+    <div className="absolute inset-0 z-40 md:pointer-events-none">
+      {/* 백드롭 (탭하면 닫힘) — 데스크톱 사이드 패널에서는 지도를 가리지 않도록 숨김 */}
       <div
-        className="absolute inset-0 bg-black transition-opacity"
+        className="absolute inset-0 bg-black transition-opacity md:hidden"
         style={{ opacity: backdropOpacity }}
         onClick={onClose}
       />
 
-      {/* 시트 */}
+      {/* 시트: 모바일=하단 바텀시트(드래그) / 데스크톱=왼쪽 전체높이 사이드 패널 */}
       <div
-        className="absolute inset-x-0 top-0 flex h-full touch-none flex-col rounded-t-2xl bg-white shadow-2xl will-change-transform"
+        className="absolute inset-x-0 top-0 flex h-full touch-none flex-col rounded-t-2xl bg-white shadow-2xl will-change-transform md:pointer-events-auto md:inset-x-auto md:left-0 md:w-[400px] md:max-w-[88vw] md:touch-auto md:rounded-t-none md:rounded-r-2xl"
         style={{
-          transform: `translateY(${translateY}px)`,
+          transform: isDesktop ? undefined : `translateY(${translateY}px)`,
           transition: dragRef.current ? "none" : "transform 0.25s ease-out",
         }}
       >
+        {/* 데스크톱 전용 닫기 버튼 (모바일은 아래로 드래그해 닫음) */}
+        <button
+          type="button"
+          aria-label="닫기"
+          onClick={onClose}
+          className="absolute left-3 top-3 z-20 hidden size-8 items-center justify-center rounded-full bg-white/90 text-gray-600 shadow md:flex"
+        >
+          ✕
+        </button>
+
         {/* 드래그 핸들 + 헤더 */}
         <div
-          className="shrink-0 cursor-grab touch-none rounded-t-2xl px-4 pt-2 pb-3 active:cursor-grabbing"
+          className="shrink-0 cursor-grab touch-none rounded-t-2xl px-4 pt-2 pb-3 active:cursor-grabbing md:cursor-default md:touch-auto"
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerUp}
         >
-          <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-gray-300" />
+          <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-gray-300 md:hidden" />
 
           {detail ? (
             <>
