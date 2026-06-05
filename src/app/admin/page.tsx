@@ -32,6 +32,13 @@ export default async function AdminHome() {
         <span className="text-sm text-gray-400">오늘 가입·등록·리뷰 현황 →</span>
       </Link>
       <Link
+        href="/admin/members"
+        className="flex items-center justify-between rounded-xl border border-gray-200 p-4"
+      >
+        <span className="font-medium">👥 회원 정보</span>
+        <span className="text-sm text-gray-400">가입·포인트·계정잠금/탈퇴 →</span>
+      </Link>
+      <Link
         href="/admin/reports"
         className="flex items-center justify-between rounded-xl border border-gray-200 p-4"
       >

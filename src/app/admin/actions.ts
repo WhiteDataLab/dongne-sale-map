@@ -116,6 +116,54 @@ export async function unbanUser(formData: FormData) {
   revalidatePath("/admin/users");
 }
 
+/** 회원 관리(계정잠금) — 관리자 계정은 잠그지 않음. 회원 정보 화면용. */
+export async function lockUser(formData: FormData) {
+  await ensureAdmin();
+  const id = String(formData.get("id"));
+  const u = await prisma.user.findUnique({ where: { id }, select: { role: true } });
+  if (u && u.role !== "admin") {
+    await prisma.user.update({ where: { id }, data: { status: "banned" } });
+  }
+  revalidatePath("/admin/members");
+}
+
+/** 계정잠금 해제. 회원 정보 화면용. */
+export async function unlockUser(formData: FormData) {
+  await ensureAdmin();
+  const id = String(formData.get("id"));
+  await prisma.user.update({ where: { id }, data: { status: "active" } });
+  revalidatePath("/admin/members");
+}
+
+/**
+ * 강제 탈퇴(관리자) — 본인 탈퇴(deleteAccount)와 동일하게 콘텐츠는 sentinel 로 익명화하고
+ * User 행을 삭제(PII 파기)한다. 관리자 계정은 보호. 탈퇴 통계 로그 기록.
+ */
+export async function forceDeleteUser(formData: FormData) {
+  await ensureAdmin();
+  const id = String(formData.get("id"));
+  const target = await prisma.user.findUnique({ where: { id }, select: { role: true, provider: true } });
+  if (!target || target.role === "admin") {
+    return; // 관리자 계정은 강제 탈퇴 불가
+  }
+
+  const ghost =
+    (await prisma.user.findFirst({ where: { providerId: "deleted-user" } })) ??
+    (await prisma.user.create({
+      data: { provider: "kakao", providerId: "deleted-user", nickname: "탈퇴한 사용자" },
+    }));
+
+  await prisma.withdrawalLog.create({ data: { provider: target.provider ?? null } });
+
+  await prisma.$transaction([
+    prisma.store.updateMany({ where: { createdById: id }, data: { createdById: ghost.id } }),
+    prisma.product.updateMany({ where: { createdById: id }, data: { createdById: ghost.id } }),
+    prisma.sale.updateMany({ where: { createdById: id }, data: { createdById: ghost.id } }),
+  ]);
+  await prisma.user.delete({ where: { id } });
+  revalidatePath("/admin/members");
+}
+
 export async function approveStore(formData: FormData) {
   await ensureAdmin();
   const id = String(formData.get("id"));
