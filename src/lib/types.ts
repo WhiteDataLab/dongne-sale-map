@@ -55,6 +55,7 @@ export type ReviewDTO = {
 export type StoreDetailDTO = StoreDTO & {
   phone: string | null;
   description: string | null;
+  notice: string | null; // 가게 공지사항 (사장님/관리자만 편집)
   hours: StoreHours | null;
   isOpenNow: boolean | null;
   avgRating: number | null;

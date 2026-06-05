@@ -206,6 +206,17 @@ export function MapExplorer() {
     if (ghostRef.current) ghostRef.current.setMap(null);
   }, []);
 
+  // 프로필 사진(메뉴) 열 때 → 지도에 열린 가게 등록/상세 패널 닫기
+  useEffect(() => {
+    const closeAll = () => {
+      setSelectedStoreId(null);
+      setResults(null);
+      exitRegister();
+    };
+    window.addEventListener("app:overlay-close", closeAll);
+    return () => window.removeEventListener("app:overlay-close", closeAll);
+  }, [exitRegister]);
+
   // 필터 변경 시 재조회
   useEffect(() => {
     if (mapRef.current) fetchStores();

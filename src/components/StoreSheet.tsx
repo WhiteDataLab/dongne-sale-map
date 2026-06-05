@@ -405,7 +405,7 @@ export function StoreSheet({
               onToast={onToast}
             />
           ) : tab === "notice" ? (
-            <NoticeTab detail={detail} onToast={onToast} onClose={onClose} />
+            <NoticeTab detail={detail} onToast={onToast} onClose={onClose} onDone={refresh} />
           ) : (
             <ReviewsTab
               detail={detail}
@@ -662,17 +662,138 @@ function SalesTab({
   );
 }
 
+/**
+ * 가게 공지사항 — 사장님/관리자(canManageStore)만 추가·수정·삭제, 소비자는 조회만.
+ */
+function NoticeSection({
+  detail,
+  onToast,
+  onDone,
+}: {
+  detail: StoreDetailDTO;
+  onToast: (msg: string) => void;
+  onDone: () => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [text, setText] = useState(detail.notice ?? "");
+  const [busy, setBusy] = useState(false);
+
+  const save = async (value: string) => {
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/stores/${detail.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notice: value }),
+      });
+      if (res.ok) {
+        onToast(value.trim() ? "공지를 저장했어요." : "공지를 삭제했어요.");
+        setEditing(false);
+        onDone();
+      } else {
+        onToast(res.status === 403 ? "사장님·관리자만 가능해요." : "저장에 실패했어요.");
+      }
+    } catch {
+      onToast("네트워크 오류가 발생했어요.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // 소비자(권한 없음): 공지가 있을 때만 표시
+  if (!detail.canManageStore) {
+    if (!detail.notice?.trim()) return null;
+    return (
+      <section className="rounded-xl border border-amber-200 bg-amber-50 p-3">
+        <h3 className="mb-1 flex items-center gap-1 font-semibold text-amber-800">📢 공지사항</h3>
+        <p className="whitespace-pre-wrap text-amber-900">{detail.notice}</p>
+      </section>
+    );
+  }
+
+  // 사장님/관리자: 편집 가능
+  return (
+    <section className="rounded-xl border border-amber-200 bg-amber-50 p-3">
+      <div className="mb-1 flex items-center justify-between">
+        <h3 className="flex items-center gap-1 font-semibold text-amber-800">📢 공지사항</h3>
+        {!editing && (
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setText(detail.notice ?? "");
+                setEditing(true);
+              }}
+              className="text-xs font-medium text-amber-700"
+            >
+              {detail.notice?.trim() ? "수정" : "＋ 추가"}
+            </button>
+            {detail.notice?.trim() && (
+              <button
+                type="button"
+                onClick={() => save("")}
+                disabled={busy}
+                className="text-xs text-red-500 disabled:text-gray-300"
+              >
+                삭제
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
+      {editing ? (
+        <div className="flex flex-col gap-2">
+          <textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            rows={3}
+            autoFocus
+            placeholder="예: 오늘 신선한 딸기 입고했어요! 매주 화요일 휴무"
+            className="w-full resize-none rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm outline-none focus:border-amber-500"
+          />
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => save(text)}
+              disabled={busy || !text.trim()}
+              className="rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white disabled:bg-gray-300"
+            >
+              {busy ? "저장 중…" : "저장"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditing(false)}
+              className="text-xs text-gray-500"
+            >
+              취소
+            </button>
+          </div>
+        </div>
+      ) : detail.notice?.trim() ? (
+        <p className="whitespace-pre-wrap text-amber-900">{detail.notice}</p>
+      ) : (
+        <p className="text-xs text-amber-700/70">아직 등록된 공지가 없어요. 손님에게 알릴 내용을 추가해 보세요.</p>
+      )}
+    </section>
+  );
+}
+
 function NoticeTab({
   detail,
   onToast,
   onClose,
+  onDone,
 }: {
   detail: StoreDetailDTO;
   onToast: (msg: string) => void;
   onClose: () => void;
+  onDone: () => void;
 }) {
   return (
     <div className="flex flex-col gap-4 text-sm">
+      <NoticeSection detail={detail} onToast={onToast} onDone={onDone} />
+
       <section>
         <h3 className="mb-1 font-semibold">가게 소개</h3>
         <p className="whitespace-pre-wrap text-gray-600">

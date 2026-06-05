@@ -27,7 +27,11 @@ export function SideNav({
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          setOpen(true);
+          // 지도에 열려있는 가게 등록/상세 패널 닫기 (MapExplorer가 수신)
+          window.dispatchEvent(new CustomEvent("app:overlay-close"));
+        }}
         aria-label="메뉴 열기"
         className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full text-xl text-gray-700 transition-colors hover:bg-gray-100 active:bg-gray-200"
       >

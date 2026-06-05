@@ -73,6 +73,7 @@ export async function GET(
       source: store.source as StoreSource,
       phone: store.phone,
       description: store.description,
+      notice: store.notice,
       hours,
       isOpenNow: isOpenNow(hours, now),
       hasActiveSale: store.sales.length > 0,
@@ -139,7 +140,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "login_required" }, { status: 401 });
 
-  let body: { bannerUrl?: string | null };
+  let body: { bannerUrl?: string | null; notice?: string | null };
   try {
     body = await req.json();
   } catch {
@@ -157,7 +158,14 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
         { status: 403 },
       );
     }
-    await prisma.store.update({ where: { id }, data: { bannerUrl: body.bannerUrl ?? null } });
+    // 전달된 필드만 부분 수정 (배너 / 공지)
+    const data: { bannerUrl?: string | null; notice?: string | null } = {};
+    if ("bannerUrl" in body) data.bannerUrl = body.bannerUrl ?? null;
+    if ("notice" in body) {
+      const n = typeof body.notice === "string" ? body.notice.trim() : "";
+      data.notice = n || null; // 빈 문자열 = 삭제
+    }
+    await prisma.store.update({ where: { id }, data });
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ error: "변경에 실패했어요." }, { status: 500 });

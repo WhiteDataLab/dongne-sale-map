@@ -59,9 +59,20 @@ export function ReportButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="text-xs text-gray-400 underline-offset-2 hover:underline"
+        aria-label={label}
+        title={label}
+        className="inline-flex items-center text-gray-400 transition-colors hover:text-red-500"
       >
-        {label}
+        {/* 신고 아이콘 (깃발) */}
+        <svg viewBox="0 0 24 24" fill="none" className="size-4" aria-hidden>
+          <path
+            d="M5 21V4m0 0h11l-1.5 3L16 10H5"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
       </button>
     );
   }
