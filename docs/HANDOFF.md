@@ -20,6 +20,7 @@ Next.js 15(App Router)·React 19·TS strict · Tailwind v4 · NextAuth v5(JWT) �
 - **반응형 패널**: 가게 등록 폼·가게 상세시트가 모바일=하단 바텀시트(드래그/탭 높이조절), 태블릿·PC(≥768px)=왼쪽 전체높이 사이드 패널. 등록 시트는 그립 탭으로 필터바 직전까지 최대화 토글. 지도 핀 찍기 전 커서 따라다니는 미리보기 핀(ghost)+드롭 애니메이션.
 - **가게 공지사항(notice)**: 공지 탭에서 사장님/관리자(`canManageStore`)만 추가·수정·삭제, 소비자는 조회만(`Store.notice`, PATCH `/api/stores/[id]`). 같은 탭의 **가게 소개·기본정보(주소/전화)·영업시간(요일별)도 동일 권한으로 인라인 편집**(PATCH 부분수정).
 - **신고 버튼**: 텍스트 → 깃발 아이콘(`ReportButton`).
+- **서비스 소개(/about) 관리자 편집(CMS-lite)**: 콘텐츠를 `SiteConfig(about_content)` JSON으로 저장(`src/lib/about.ts` 모델+기본값, 없으면 폴백). `/about`에서 관리자에게만 '✏️ 소개 편집' 버튼(`AboutEditor`) → 히어로 글·콘텐츠 섹션(추가/삭제/순서/이미지 업로드/이모지·다크)·영상·마무리 편집. 저장 `POST /api/admin/about`(admin), 이미지=`/api/upload`(sale-photos), 영상=`/api/admin/intro-video`. '믿을 수 있게' 가치 카드 3개는 고정.
 - 프로필 사진(메뉴) 열면 지도에 열린 등록/상세 패널 자동 닫힘(`window` `app:overlay-close` 이벤트).
 
 ## 4. 데이터 모델 (Prisma, migrations 0~11 적용 완료)
