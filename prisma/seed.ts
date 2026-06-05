@@ -133,6 +133,16 @@ async function main() {
       identities: { create: { provider: "naver", providerId: "seed-reviewer" } },
     },
   });
+  // 데모용 사장님(merchant) — '행복 정육점' 소유자. source=merchant 는 항상 소유자와 함께여야 정합.
+  const merchant = await prisma.user.create({
+    data: {
+      provider: "kakao",
+      providerId: "seed-merchant",
+      nickname: "행복정육사장",
+      role: "merchant",
+      identities: { create: { provider: "kakao", providerId: "seed-merchant" } },
+    },
+  });
 
   for (const s of STORES) {
     const store = await prisma.store.create({
@@ -143,8 +153,9 @@ async function main() {
         lat: s.lat,
         lng: s.lng,
         verified: s.verified,
-        // 데모: '행복 정육점'은 사장님 직접 등록(merchant)으로 표시해 UI 구분 확인
+        // 데모: '행복 정육점'은 사장님 가게 — source=merchant + 소유자(ownerId) 함께 지정(정합)
         source: s.name === "행복 정육점" ? "merchant" : "user",
+        ownerId: s.name === "행복 정육점" ? merchant.id : null,
         phone: s.phone,
         description: s.description,
         hoursJson: s.hours,

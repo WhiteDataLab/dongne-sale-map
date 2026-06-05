@@ -290,7 +290,9 @@ export function StoreSheet({
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <h2 className="truncate text-lg font-bold">{detail.name}</h2>
-                  {detail.source === "merchant" ? (
+                  {/* '사장님 가게'는 인증된 소유자(ownerId) 유무로 판정 — source(등록 출처)만으로는
+                      소유자 없는 상태와 어긋나므로(상품 탭 "사장님 미등록"과 모순) hasOwner 기준으로 통일 */}
+                  {detail.hasOwner ? (
                     <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
                       👑 사장님 가게
                     </span>
