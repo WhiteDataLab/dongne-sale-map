@@ -294,7 +294,7 @@ export function StoreSheet({
                       소유자 없는 상태와 어긋나므로(상품 탭 "사장님 미등록"과 모순) hasOwner 기준으로 통일 */}
                   {detail.hasOwner ? (
                     <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
-                      👑 사장님 가게
+                      👑 사장님 직접 관리
                     </span>
                   ) : (
                     <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">
@@ -318,23 +318,8 @@ export function StoreSheet({
                   <span className="truncate text-gray-400">{detail.address}</span>
                 </div>
                 <div className="mt-1 flex items-center gap-1.5 text-xs">
-                  {detail.owner ? (
-                    <>
-                      <span className="rounded bg-amber-100 px-1.5 py-0.5 font-medium text-amber-700">
-                        👑 사장님 관리
-                      </span>
-                      <Avatar img={detail.owner.img} />
-                      <span className="text-gray-600">{detail.owner.nickname}</span>
-                      {detail.registeredBy.nickname !== detail.owner.nickname && (
-                        <span className="text-gray-300">· 최초등록 {detail.registeredBy.nickname}</span>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      <Avatar img={detail.registeredBy.img} />
-                      <span className="text-gray-500">{detail.registeredBy.nickname}님이 등록</span>
-                    </>
-                  )}
+                  <Avatar img={detail.registeredBy.img} />
+                  <span className="text-gray-500">{detail.registeredBy.nickname}님이 등록</span>
                 </div>
               </div>
               <button
