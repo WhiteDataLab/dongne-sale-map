@@ -23,6 +23,46 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* ── 버튼/링크 마이크로 인터랙션 (전역) ──
+   모든 버튼·링크에 부드러운 트랜지션 + 누름(press) 축소 + hover 피드백.
+   접근성: prefers-reduced-motion 사용자는 애니메이션 제외. */
+@media (prefers-reduced-motion: no-preference) {
+  button,
+  a,
+  summary,
+  [role="button"],
+  label[role="button"] {
+    transition:
+      transform 0.12s ease,
+      filter 0.15s ease,
+      background-color 0.15s ease,
+      border-color 0.15s ease,
+      box-shadow 0.15s ease,
+      opacity 0.15s ease;
+  }
+  /* 누르는 순간(마우스 다운/터치) 살짝 눌리는 효과 */
+  button:not(:disabled):active,
+  a:active,
+  [role="button"]:active {
+    transform: scale(0.95);
+  }
+}
+
+/* hover 가능한 기기에서만 — 비활성 버튼 제외 */
+@media (hover: hover) {
+  button:not(:disabled):hover,
+  [role="button"]:hover {
+    filter: brightness(0.97);
+  }
+  a:hover {
+    opacity: 0.9;
+  }
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
 /* ── 지도 핀 (CustomOverlay 로 주입되는 raw DOM → 전역 CSS 로 스타일) ── */
 .store-pin {
   display: inline-flex;
