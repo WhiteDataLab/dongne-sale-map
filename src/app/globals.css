@@ -185,15 +185,6 @@ button:disabled {
   color: #6b7280;
   border-style: dashed;
 }
-.store-pin--owner {
-  border-color: #d97706;
-  border-width: 2px;
-  box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.18), 0 2px 6px rgba(0, 0, 0, 0.18);
-}
-.store-pin__crown {
-  font-size: 12px;
-  line-height: 1;
-}
 .store-pin__icon {
   font-size: 13px;
   line-height: 1;

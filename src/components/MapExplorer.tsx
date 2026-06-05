@@ -492,24 +492,13 @@ export function MapExplorer() {
   );
 }
 
-/** 핀(커스텀 오버레이) DOM 생성: [카테고리 아이콘 | 가게명]. 미인증=회색. */
+/** 핀(커스텀 오버레이) DOM 생성: [카테고리 아이콘 | 가게명]. 미인증=회색.
+ *  사장님(merchant) 등록/인증 가게도 지도에선 카테고리 아이콘만 — 구분 표시는 가게 상세에서만. */
 function buildPinElement(store: StoreDTO, onClick: () => void): HTMLElement {
   const meta = CATEGORY_META[store.category];
-  const isOwner = store.source === "merchant";
   const wrap = document.createElement("div");
-  wrap.className =
-    "store-pin" +
-    (store.verified ? "" : " store-pin--gray") +
-    (isOwner ? " store-pin--owner" : "");
+  wrap.className = "store-pin" + (store.verified ? "" : " store-pin--gray");
   wrap.style.setProperty("--pin-color", store.verified ? meta.color : "#9ca3af");
-
-  // 사장님 등록 가게는 왕관 마크로 구분
-  if (isOwner) {
-    const crown = document.createElement("span");
-    crown.className = "store-pin__crown";
-    crown.textContent = "👑";
-    wrap.appendChild(crown);
-  }
 
   const icon = document.createElement("span");
   icon.className = "store-pin__icon";
