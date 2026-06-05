@@ -1,13 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { haversineMeters } from "@/lib/geo";
 import { useKakaoLoader } from "./useKakaoLoader";
 import { SearchBar } from "./SearchBar";
 import { FilterBar, type Filters } from "./FilterBar";
 import { StoreSheet } from "./StoreSheet";
+import { StoreRegisterForm } from "./StoreRegisterForm";
 import { DEFAULT_CENTER, DEFAULT_LEVEL, CATEGORY_META } from "@/lib/constants";
 import type { StoreDTO } from "@/lib/types";
 
@@ -46,7 +46,13 @@ export function MapExplorer() {
   const [notice, setNotice] = useState<string | null>(null);
   const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
   const [results, setResults] = useState<Place[] | null>(null);
+  const [registerMode, setRegisterMode] = useState(false);
+  const [picked, setPicked] = useState<{ lat: number; lng: number; address: string } | null>(null);
   const router = useRouter();
+
+  const registerModeRef = useRef(false);
+  registerModeRef.current = registerMode;
+  const registerMarkerRef = useRef<any>(null);
 
   // 최신 filters 를 idle 리스너에서 참조하기 위한 ref
   const filtersRef = useRef(filters);
@@ -99,6 +105,28 @@ export function MapExplorer() {
     kakao.maps.event.addListener(map, "idle", fetchStores);
     fetchStores();
 
+    // 가게 등록 모드: 지도 탭 → 좌표 선택 + 역지오코딩으로 주소 자동
+    kakao.maps.event.addListener(map, "click", (e: { latLng: { getLat(): number; getLng(): number } }) => {
+      if (!registerModeRef.current) return;
+      const lat = e.latLng.getLat();
+      const lng = e.latLng.getLng();
+      if (registerMarkerRef.current) registerMarkerRef.current.setMap(null);
+      registerMarkerRef.current = new kakao.maps.Marker({ position: e.latLng });
+      registerMarkerRef.current.setMap(map);
+      try {
+        const geocoder = new kakao.maps.services.Geocoder();
+        geocoder.coord2Address(lng, lat, (result: { road_address?: { address_name?: string }; address?: { address_name?: string } }[], status: string) => {
+          let address = "";
+          if (status === kakao.maps.services.Status.OK && result[0]) {
+            address = result[0].road_address?.address_name || result[0].address?.address_name || "";
+          }
+          setPicked({ lat, lng, address });
+        });
+      } catch {
+        setPicked({ lat, lng, address: "" });
+      }
+    });
+
     // 딥링크(/?store=&lat=&lng=) — 즐겨찾기 등에서 위치 무관하게 바로 상세 열기
     const params = new URLSearchParams(window.location.search);
     const qStore = params.get("store");
@@ -110,7 +138,17 @@ export function MapExplorer() {
       }
       setSelectedStoreId(qStore);
     }
+    if (params.get("register") === "1") setRegisterMode(true);
   }, [loaded, fetchStores]);
+
+  const exitRegister = useCallback(() => {
+    setRegisterMode(false);
+    setPicked(null);
+    if (registerMarkerRef.current) {
+      registerMarkerRef.current.setMap(null);
+      registerMarkerRef.current = null;
+    }
+  }, []);
 
   // 필터 변경 시 재조회
   useEffect(() => {
@@ -336,14 +374,44 @@ export function MapExplorer() {
         </div>
       )}
 
-      {/* 가게 등록 FAB (Phase 6) */}
-      {!error && !selectedStoreId && (
-        <Link
-          href="/stores/new"
+      {/* 가게 등록 FAB → 지도에서 바로 좌표 찍어 등록 */}
+      {!error && !selectedStoreId && !registerMode && (
+        <button
+          type="button"
+          onClick={() => {
+            setResults(null);
+            setSelectedStoreId(null);
+            setRegisterMode(true);
+          }}
           className="absolute bottom-5 right-4 z-20 flex items-center gap-1 rounded-full bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-blue-700 active:bg-blue-800"
         >
           ➕ 가게 등록
-        </Link>
+        </button>
+      )}
+
+      {/* 등록 모드 안내 배너 */}
+      {registerMode && !picked && (
+        <div className="pointer-events-none absolute inset-x-0 top-28 z-30 flex justify-center px-4">
+          <div className="pointer-events-auto flex items-center gap-3 rounded-full bg-blue-600 px-4 py-2 text-sm text-white shadow-lg">
+            📍 지도를 눌러 가게 위치를 선택하세요
+            <button type="button" onClick={exitRegister} className="font-semibold underline-offset-2">
+              취소
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 인라인 가게 등록 폼 */}
+      {registerMode && picked && (
+        <StoreRegisterForm
+          point={picked}
+          onCancel={exitRegister}
+          onToast={flashNotice}
+          onDone={() => {
+            exitRegister();
+            fetchStores();
+          }}
+        />
       )}
 
       {/* 가게 상세 바텀시트 (Phase 2) */}

@@ -77,7 +77,7 @@ export function SideNav({
             <Link href="/" onClick={close} className={itemClass}>
               🗺️ 지도
             </Link>
-            <Link href="/stores/new" onClick={close} className={itemClass}>
+            <Link href="/?register=1" onClick={close} className={itemClass}>
               ➕ 가게 등록
             </Link>
             <Link href="/about" onClick={close} className={itemClass}>
