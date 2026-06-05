@@ -20,6 +20,7 @@ Next.js 15(App Router)·React 19·TS strict · Tailwind v4 · NextAuth v5(JWT) �
 - **반응형 패널**: 가게 등록 폼·가게 상세시트가 모바일=하단 바텀시트(드래그/탭 높이조절), 태블릿·PC(≥768px)=왼쪽 전체높이 사이드 패널. 등록 시트는 그립 탭으로 필터바 직전까지 최대화 토글. 지도 핀 찍기 전 커서 따라다니는 미리보기 핀(ghost)+드롭 애니메이션.
 - **가게 공지사항(notice)**: 공지 탭에서 사장님/관리자(`canManageStore`)만 추가·수정·삭제, 소비자는 조회만(`Store.notice`, PATCH `/api/stores/[id]`). 같은 탭의 **가게 소개·기본정보(주소/전화)·영업시간(요일별)도 동일 권한으로 인라인 편집**(PATCH 부분수정).
 - **신고 버튼**: 텍스트 → 깃발 아이콘(`ReportButton`).
+- **회원 활동 분석(`/admin/activity`)**: 콘텐츠 기여(가게/세일/리뷰/즐겨찾기) groupBy로 **활발한 회원(가중 활동점수=가게×4+세일×2+리뷰×2+즐겨찾기×1)+마지막 활동일**, 가게등록/리뷰/세일 **랭킹**. ⚠️ 순수 페이지뷰 트래픽은 **미수집** → 활동점수로 추정(화면에 명시). 실트래픽은 방문 이벤트 로깅/GA4 연동 필요(미구현).
 - **회원 정보 관리(`/admin/members`)**: 가입일·**연결된 로그인수단 전체(Identity 기준, 예 "네이버 · 카카오")**·**ID값(accountId)**·닉네임·**적립포인트(PointLog 5년 합계 groupBy)** 목록 + **계정 잠금/해제(`lockUser`/`unlockUser`)**·**강제 탈퇴(`forceDeleteUser` — 콘텐츠 익명화+탈퇴로그+User 삭제)**. 관리자 계정은 보호. 파괴적 액션은 `ConfirmSubmit`로 확인.
 - **계정 식별자 accountId(ID값, migration 13)**: 소셜=이메일(소문자, OAuth `user.email`), 이메일 없으면 `영문4+YYYYMMDDHHmmss(KST)`, 전화=전화번호(`makeAccountId`). 닉네임 중복과 무관한 안정 식별자(신원 매칭은 여전히 Identity). 로그인 시 비어있으면 backfill(`resolveSocialUser`/`resolvePhoneUser`). 기존 계정은 **다음 로그인 때** 채워짐.
 - **관리자 대시보드(`/admin/dashboard`)**: 회원가입·가게등록·세일제보·리뷰·신고·**회원탈퇴**의 **오늘/어제/최근7일/누적** 집계(각 모델 `createdAt` count). 일자 경계는 **KST 자정**(`kstDayStart` 헬퍼). **가입 경로별(카카오/네이버/전화) 현재 회원 수**(User.provider groupBy, sentinel 제외). 회원수 집계는 고스트 sentinel(`providerId="deleted-user"`) 제외. 관리 네비/홈에 진입 카드 추가.

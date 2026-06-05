@@ -39,6 +39,13 @@ export default async function AdminHome() {
         <span className="text-sm text-gray-400">가입·포인트·계정잠금/탈퇴 →</span>
       </Link>
       <Link
+        href="/admin/activity"
+        className="flex items-center justify-between rounded-xl border border-gray-200 p-4"
+      >
+        <span className="font-medium">🔥 활동 분석</span>
+        <span className="text-sm text-gray-400">활발한 회원·가게등록·리뷰 랭킹 →</span>
+      </Link>
+      <Link
         href="/admin/reports"
         className="flex items-center justify-between rounded-xl border border-gray-200 p-4"
       >
