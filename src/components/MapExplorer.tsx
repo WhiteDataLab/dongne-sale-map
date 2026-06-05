@@ -34,6 +34,7 @@ export function MapExplorer() {
   // 카카오맵 인스턴스/오버레이는 무타입 SDK 라 any. (사유: 공식 타입 미제공)
   const mapRef = useRef<any>(null);
   const overlaysRef = useRef<any[]>([]);
+  const myLocRef = useRef<any>(null);
 
   const [stores, setStores] = useState<StoreDTO[]>([]);
   const [filters, setFilters] = useState<Filters>({
@@ -154,10 +155,25 @@ export function MapExplorer() {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const map = mapRef.current;
-        if (map) {
-          map.setCenter(new window.kakao.maps.LatLng(pos.coords.latitude, pos.coords.longitude));
-          fetchStores();
+        if (!map) return;
+        const { kakao } = window;
+        const ll = new kakao.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
+        map.setCenter(ll);
+        // 현재 위치 파란 점 표시 (좌표 저장 안 함 — 화면 표시용)
+        if (!myLocRef.current) {
+          const el = document.createElement("div");
+          el.className = "geo-dot";
+          myLocRef.current = new kakao.maps.CustomOverlay({
+            position: ll,
+            content: el,
+            xAnchor: 0.5,
+            yAnchor: 0.5,
+            zIndex: 5,
+          });
         }
+        myLocRef.current.setPosition(ll);
+        myLocRef.current.setMap(map);
+        fetchStores();
       },
       (err) => {
         flashNotice(
