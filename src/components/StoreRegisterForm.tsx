@@ -41,6 +41,16 @@ export function StoreRegisterForm({
   const [needLogin, setNeedLogin] = useState(false);
   const [busy, setBusy] = useState(false);
 
+  // 태블릿/PC(>=768px)에서는 왼쪽 사이드 패널, 모바일에서는 하단 바텀시트
+  const [isDesktop, setIsDesktop] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    const apply = () => setIsDesktop(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+
   // 바텀 시트 높이(vh) — 그립을 드래그해 조절, 그립을 한 번 탭하면 최대/기본 토글
   const MIN_VH = 24;
   const DEFAULT_VH = 58;
@@ -61,6 +71,7 @@ export function StoreRegisterForm({
   }, [maxVh]);
 
   const onGripDown = (e: React.PointerEvent) => {
+    if (isDesktop) return; // 데스크톱은 고정 사이드 패널 — 드래그 없음
     (e.target as Element).setPointerCapture?.(e.pointerId);
     dragRef.current = { startY: e.clientY, startVh: sheetVh, moved: false };
   };
@@ -128,22 +139,25 @@ export function StoreRegisterForm({
   return (
     <div
       className={[
-        "pointer-events-auto absolute inset-x-0 bottom-0 z-30 flex flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl",
+        "pointer-events-auto absolute z-30 flex flex-col overflow-hidden bg-white shadow-2xl",
+        // 모바일: 하단 바텀시트 / 데스크톱: 왼쪽 전체높이 사이드 패널
+        "inset-x-0 bottom-0 rounded-t-2xl",
+        "md:inset-x-auto md:inset-y-0 md:left-0 md:h-full md:w-[380px] md:max-w-[86vw] md:rounded-t-none md:rounded-r-2xl",
         dragging ? "" : "transition-[height] duration-300 ease-out",
       ].join(" ")}
-      style={{ height: `${sheetVh}vh` }}
+      style={isDesktop ? undefined : { height: `${sheetVh}vh` }}
     >
-      {/* 드래그 그립 — 위아래로 끌어 시트 높이 조절(지도를 더 넓게 보기) */}
+      {/* 드래그 그립(모바일) — 위아래로 끌거나 탭해 시트 높이 조절 */}
       <div
         onPointerDown={onGripDown}
         onPointerMove={onGripMove}
         onPointerUp={onGripUp}
         onPointerCancel={onGripUp}
-        className="shrink-0 cursor-row-resize touch-none px-4 pb-1 pt-3"
+        className="shrink-0 cursor-row-resize touch-none px-4 pb-1 pt-3 md:cursor-default md:touch-auto md:pt-4"
         role="separator"
         aria-label="등록 창 높이 조절"
       >
-        <div className="mx-auto mb-2 h-1.5 w-12 rounded-full bg-gray-300" />
+        <div className="mx-auto mb-2 h-1.5 w-12 rounded-full bg-gray-300 md:hidden" />
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold">이 위치에 가게 등록</h2>
           <button type="button" onClick={onCancel} className="text-sm text-gray-400">
