@@ -33,7 +33,10 @@ export async function GET(
         },
         reviews: {
           where: { hidden: false }, // 자동 숨김된 리뷰 제외 (Phase 4)
-          include: { user: { select: { nickname: true } } },
+          include: {
+            user: { select: { nickname: true } },
+            reactions: { select: { kind: true, userId: true } },
+          },
           orderBy: { createdAt: "desc" },
         },
         createdBy: { select: { nickname: true, profileImgUrl: true } },
@@ -138,6 +141,13 @@ export async function GET(
         photoUrls: r.photoUrls,
         nickname: r.user.nickname,
         createdAt: r.createdAt.toISOString(),
+        likeCount: r.reactions.filter((x) => x.kind === "like").length,
+        dislikeCount: r.reactions.filter((x) => x.kind === "dislike").length,
+        myReaction: (r.reactions.find((x) => x.userId === userId)?.kind ?? null) as
+          | "like"
+          | "dislike"
+          | null,
+        isMine: Boolean(userId && r.userId === userId),
       })),
       closureReports: store.closureReports.map((c) => ({
         id: c.id,

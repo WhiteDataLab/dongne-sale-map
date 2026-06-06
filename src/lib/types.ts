@@ -83,6 +83,10 @@ export type ReviewDTO = {
   photoUrls: string[];
   nickname: string;
   createdAt: string;
+  likeCount: number;
+  dislikeCount: number;
+  myReaction: "like" | "dislike" | null;
+  isMine: boolean;
 };
 
 /** 가게 상세(바텀시트)용 DTO. (source 는 StoreDTO 에서 상속) */

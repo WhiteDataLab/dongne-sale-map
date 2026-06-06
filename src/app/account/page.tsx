@@ -5,6 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { POINT_EXPIRY_YEARS, POINT_HISTORY_YEARS, yearsAgo } from "@/lib/points";
 import { deleteAccount, startLink, updateNickname, updateContact } from "./actions";
 import { ProfileAvatarEditor } from "@/components/ProfileAvatarEditor";
+import { DeleteReviewButton } from "@/components/DeleteReviewButton";
+import { starString } from "@/lib/format";
 
 const REDEMPTION_LABEL: Record<string, string> = {
   requested: "발송 대기",
@@ -88,6 +90,32 @@ export default async function AccountPage() {
       orderBy: { createdAt: "desc" },
       take: 30,
       select: { id: true, itemName: true, points: true, status: true, createdAt: true },
+    });
+  } catch {
+    // DB 미연결
+  }
+
+  let myReviews: {
+    id: string;
+    rating: number;
+    content: string;
+    createdAt: Date;
+    store: { name: string };
+    reactions: { kind: string }[];
+  }[] = [];
+  try {
+    myReviews = await prisma.review.findMany({
+      where: { userId: session.user.id, hidden: false },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+      select: {
+        id: true,
+        rating: true,
+        content: true,
+        createdAt: true,
+        store: { select: { name: true } },
+        reactions: { select: { kind: true } },
+      },
     });
   } catch {
     // DB 미연결
@@ -178,6 +206,38 @@ export default async function AccountPage() {
               {contactPhone ? `현재 등록: ${contactPhone}` : "아직 등록된 연락처가 없어요."}
             </p>
           </div>
+        </section>
+
+        {/* 내가 쓴 리뷰 */}
+        <section>
+          <h2 className="mb-2 text-sm font-semibold text-gray-700">내가 쓴 리뷰 ({myReviews.length})</h2>
+          {myReviews.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-gray-200 p-4 text-center text-sm text-gray-400">
+              아직 작성한 리뷰가 없어요.
+            </p>
+          ) : (
+            <ul className="flex flex-col gap-2">
+              {myReviews.map((r) => {
+                const likes = r.reactions.filter((x) => x.kind === "like").length;
+                const dislikes = r.reactions.filter((x) => x.kind === "dislike").length;
+                return (
+                  <li key={r.id} className="rounded-xl border border-gray-200 p-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">🏪 {r.store.name}</p>
+                        <p className="text-amber-500 text-xs">{starString(r.rating)}</p>
+                      </div>
+                      <DeleteReviewButton reviewId={r.id} />
+                    </div>
+                    <p className="mt-1 whitespace-pre-wrap text-sm text-gray-700">{r.content}</p>
+                    <p className="mt-1 text-xs text-gray-400">
+                      {new Date(r.createdAt).toLocaleDateString("ko-KR")} · 👍 {likes} · 👎 {dislikes}
+                    </p>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </section>
 
         {/* 기프티콘 교환 내역 */}

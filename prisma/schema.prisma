@@ -126,6 +126,7 @@ model User {
   products   Product[]  @relation("ProductCreatedBy")
   sales      Sale[]     @relation("SaleCreatedBy")
   reviews    Review[]
+  reviewReactions ReviewReaction[]
   favorites  Favorite[]
   reports    Report[]   @relation("ReportReporter")
   pointLogs  PointLog[]
@@ -297,8 +298,24 @@ model Review {
 
   store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reactions ReviewReaction[]
 
   @@index([storeId])
+}
+
+// 리뷰 좋아요/싫어요 (1인 1리뷰 1반응, 토글)
+model ReviewReaction {
+  id        String       @id @default(cuid())
+  reviewId  String
+  userId    String
+  kind      ReactionKind
+  createdAt DateTime     @default(now())
+
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([reviewId, userId])
+  @@index([reviewId])
 }
 
 model Favorite {
@@ -326,6 +343,11 @@ model Report {
   // 신고 N건 자동 숨김 판정용 (Phase 4)
   @@index([targetType, targetId])
   @@index([status])
+}
+
+enum ReactionKind {
+  like
+  dislike
 }
 
 enum RedemptionStatus {

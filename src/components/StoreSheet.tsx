@@ -22,6 +22,7 @@ import { SaleReportForm } from "./SaleReportForm";
 import { ClosureReportForm } from "./ClosureReportForm";
 import { ReviewForm } from "./ReviewForm";
 import { ReportButton } from "./ReportButton";
+import { ReviewReactions } from "./ReviewReactions";
 import { MerchantApply } from "./MerchantApply";
 import { ProductForm } from "./ProductForm";
 import { PhotoEditor } from "./PhotoEditor";
@@ -1355,7 +1356,14 @@ function ReviewsTab({
                   ))}
                 </div>
               )}
-              <div className="mt-1">
+              <div className="mt-1.5 flex items-center justify-between">
+                <ReviewReactions
+                  reviewId={r.id}
+                  likeCount={r.likeCount}
+                  dislikeCount={r.dislikeCount}
+                  myReaction={r.myReaction}
+                  onToast={onToast}
+                />
                 <ReportButton
                   targetType="review"
                   targetId={r.id}
