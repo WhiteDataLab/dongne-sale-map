@@ -29,8 +29,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "잘못된 요청이에요." }, { status: 400 });
   }
   const { storeId, name, qtyUnit, photoUrl, origin } = body;
-  if (!storeId || !name?.trim() || !qtyUnit?.trim()) {
-    return NextResponse.json({ error: "메뉴명·단위는 필수예요." }, { status: 400 });
+  if (!storeId || !name?.trim()) {
+    return NextResponse.json({ error: "메뉴명은 필수예요." }, { status: 400 });
   }
   if (!photoUrl) {
     return NextResponse.json({ error: "메뉴 사진은 필수예요." }, { status: 400 });
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
           storeId,
           name: name.trim(),
           price,
-          qtyUnit: qtyUnit.trim(),
+          qtyUnit: qtyUnit?.trim() || "",
           photoUrl,
           origin: origin?.trim() || null,
           stock,

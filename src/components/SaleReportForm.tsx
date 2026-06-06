@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { won } from "@/lib/format";
 import type { ProductDTO } from "@/lib/types";
+import { categoryHasQuantity, type Category } from "@/lib/constants";
 import { PhotoEditor } from "./PhotoEditor";
 
 type ExpiresOption = "1h" | "2h" | "close" | "custom";
@@ -25,17 +26,20 @@ function buildCustomISO(hhmm: string): string | null {
  */
 export function SaleReportForm({
   storeId,
+  category,
   products,
   onDone,
   onCancel,
   onToast,
 }: {
   storeId: string;
+  category: Category;
   products: ProductDTO[];
   onDone: () => void;
   onCancel: () => void;
   onToast: (msg: string) => void;
 }) {
+  const hasQty = categoryHasQuantity(category);
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [title, setTitle] = useState("");
@@ -97,8 +101,8 @@ export function SaleReportForm({
 
   const submit = async () => {
     if (files.length === 0) return onToast("사진은 1장 이상 필요해요.");
-    if (!title.trim()) return onToast("세일 내용을 입력해 주세요.");
-    if (!qty.trim()) return onToast("수량을 입력해 주세요.");
+    if (!title.trim()) return onToast("세일/행사 내용을 입력해 주세요.");
+    if (hasQty && !qty.trim()) return onToast("수량을 입력해 주세요.");
     const price = Number(salePrice);
     if (!Number.isFinite(price) || price < 0) return onToast("세일가를 확인해 주세요.");
 
@@ -236,7 +240,7 @@ export function SaleReportForm({
       <input
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        placeholder="세일 내용 (예: 딸기 1박스 떨이)"
+        placeholder={hasQty ? "세일 내용 (예: 딸기 1박스 떨이)" : "세일/행사 내용 (예: 이번 주 펌 20% 할인)"}
         className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
       />
       <div className="flex gap-2">
@@ -245,14 +249,16 @@ export function SaleReportForm({
           onChange={(e) => setSalePrice(e.target.value)}
           inputMode="numeric"
           placeholder="세일가(원)"
-          className="w-1/2 rounded-lg border border-gray-200 px-3 py-2 text-sm"
+          className={`${hasQty ? "w-1/2" : "w-full"} rounded-lg border border-gray-200 px-3 py-2 text-sm`}
         />
-        <input
-          value={qty}
-          onChange={(e) => setQty(e.target.value)}
-          placeholder="수량 (예: 1박스)"
-          className="w-1/2 rounded-lg border border-gray-200 px-3 py-2 text-sm"
-        />
+        {hasQty && (
+          <input
+            value={qty}
+            onChange={(e) => setQty(e.target.value)}
+            placeholder="수량 (예: 1박스)"
+            className="w-1/2 rounded-lg border border-gray-200 px-3 py-2 text-sm"
+          />
+        )}
       </div>
 
       {/* 만료 */}

@@ -44,7 +44,7 @@ export function SaleMarquee({
             <span className="font-semibold">{s.storeName}</span>
             <span className="text-white/85">{s.title}</span>
             <span className="font-bold text-amber-300">{won(s.salePrice)}</span>
-            <span className="text-white/50">· {s.qty}</span>
+            {s.qty?.trim() && <span className="text-white/50">· {s.qty}</span>}
           </button>
         ))}
       </div>

@@ -57,9 +57,9 @@ export async function POST(req: NextRequest) {
     .filter((u) => typeof u === "string" && u.length > 0)
     .slice(0, MAX_PHOTOS);
 
-  if (!storeId || !title?.trim() || !qty?.trim() || photos.length === 0) {
+  if (!storeId || !title?.trim() || photos.length === 0) {
     return NextResponse.json(
-      { error: "사진·제목·수량은 필수예요." },
+      { error: "사진·제목은 필수예요." },
       { status: 400 },
     );
   }
@@ -136,7 +136,7 @@ export async function POST(req: NextRequest) {
           photoUrl: photos[0],
           photoUrls: photos,
           salePrice,
-          qty: qty.trim(),
+          qty: qty?.trim() || "",
           expiresAt,
           createdById: userId,
         },

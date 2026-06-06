@@ -32,8 +32,8 @@ type Composing = "sale" | "review" | null;
 type TabKey = "products" | "sales" | "notice" | "reviews";
 
 const TABS: { key: TabKey; label: string }[] = [
-  { key: "products", label: "상품" },
-  { key: "sales", label: "세일" },
+  { key: "products", label: "메뉴" },
+  { key: "sales", label: "세일/행사" },
   { key: "notice", label: "공지" },
   { key: "reviews", label: "리뷰" },
 ];
@@ -599,6 +599,7 @@ function ProductsTab({
         (composing ? (
           <ProductForm
             storeId={detail.id}
+            category={detail.category}
             product={composing.mode === "edit" ? composing.product : undefined}
             onDone={() => {
               setComposing(null);
@@ -635,11 +636,16 @@ function ProductsTab({
                   <p className="truncate font-medium">{p.name}</p>
                   <p className="shrink-0 font-bold">{won(p.price)}</p>
                 </div>
-                <p className="text-xs text-gray-500">
-                  {p.qtyUnit}
-                  {p.origin ? ` · ${p.origin}` : ""}
-                  {p.stock !== null ? ` · 재고 ${p.stock}` : ""}
-                </p>
+                {(() => {
+                  const meta = [
+                    p.qtyUnit,
+                    p.origin,
+                    p.stock !== null ? `재고 ${p.stock}` : null,
+                  ]
+                    .filter((x) => x && String(x).trim())
+                    .join(" · ");
+                  return meta ? <p className="text-xs text-gray-500">{meta}</p> : null;
+                })()}
                 <div className="mt-1 flex items-center gap-1.5">
                   <Avatar img={p.contributorImg} />
                   <span className="text-xs text-gray-500">{p.contributorNickname}</span>
@@ -714,6 +720,7 @@ function SalesTab({
       {composing ? (
         <SaleReportForm
           storeId={detail.id}
+          category={detail.category}
           products={detail.products}
           onDone={onDone}
           onCancel={onClose}
@@ -741,7 +748,7 @@ function SalesTab({
               <p className="truncate font-medium">{s.title}</p>
               <p className="shrink-0 font-bold text-red-600">{won(s.salePrice)}</p>
             </div>
-            <p className="text-xs text-gray-500">{s.qty}</p>
+            {s.qty?.trim() && <p className="text-xs text-gray-500">{s.qty}</p>}
             <div className="mt-0.5 flex items-center gap-2 text-xs">
               <span className="rounded bg-red-50 px-1.5 py-0.5 font-medium text-red-600">
                 {untilLabel(s.expiresAt)}

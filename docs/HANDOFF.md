@@ -19,6 +19,7 @@ Next.js 15(App Router)·React 19·TS strict · Tailwind v4 · NextAuth v5(JWT) �
 - ❌ 제거됨: 외부(YouTube) 영상 링크 — 영상은 소개페이지 업로드만.
 - **가게별 공유 URL(`/s/[id]`)**: 지도 없이 가게 세일 정보 바로 노출하는 공개 랜딩(서버 렌더). `generateMetadata`로 OG/트위터 카드(제목·세일·대표사진) → 카톡 등 링크 미리보기. "지도에서 자세히 보기"=딥링크(`/?store=&lat=&lng=`). `ShareButton`(Web Share API→클립보드 폴백)을 공유 페이지·가게 상세 헤더에 배치.
 - **실시간 피드 오버레이(`/api/feed`)**: 현 지도 bounds의 최신 세일을 **상단 가로 광고판(마퀴 `SaleMarquee`)**, 최신 리뷰를 **좌측 유튜브 채팅식 상승+페이드 스트림(`ReviewStream`)**으로 표시. 줌아웃→bounds 확대→더 많은 데이터. idle + 18초 폴링 갱신. CSS `marquee-x`/`stream-up`+mask, `prefers-reduced-motion` 정지.
+- **탭 라벨/업종별 수량**: 가게 상세 탭 `상품→메뉴`, `세일→세일/행사`. **식품 업종(`FOOD_CATEGORIES`=야채/정육/과일/반찬)만 수량·단위 입력**, 세탁/미용/기타는 `categoryHasQuantity()`로 수량 필드 숨김(폼/표시 모두). 서버(`/api/products`,`/api/sales`)도 qty/qtyUnit 필수 해제(빈값 허용).
 - **리뷰→상품 등록 퍼널**: 리뷰 작성 시 "어떤 걸 구매하셨나요?"로 메뉴 선택 유도. '메뉴에 없어요' 선택 시 "상품부터 등록(+5P)" 안내→`onGoRegisterProduct`로 상품 탭+추가폼 자동 오픈(`ProductsTab requestAdd`). **메뉴 등록 시 +5P 적립**(`/api/products`, pending, refType=product, 숨김 시 회수). 등록 후 리뷰 다시 쓰면 리뷰 포인트(첫/사진 정책).
 - **리뷰 사진+포인트(migration 15, `Review.photoUrls`)**: 리뷰에 사진 최대 5장(업로드+PhotoEditor). 포인트(pending +10): **첫 리뷰는 글만 써도 지급, 2번째부터는 사진 있어야 지급**(`/api/reviews`에서 `review.count`로 판정). 리뷰 숨김(신고 자동/관리자) 시 `refType="review"` PointLog **회수**. 리뷰 목록에 사진 썸네일(zoomable).
 - **리뷰 태깅**: `ReviewForm`이 프리셋 버튼(재료 신선/양 많음/가성비/메뉴 알참/고기 질/가치있음/인테리어, 다중선택)+별점, **‘기타’ 토글 시 직접 입력**. 내용은 선택 태그+커스텀을 합쳐 저장(API 변경 없음).

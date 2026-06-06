@@ -21,5 +21,13 @@ export type Category = keyof typeof CATEGORY_META;
 
 export const CATEGORIES = Object.keys(CATEGORY_META) as Category[];
 
+/** 수량/단위 개념이 있는 식품 업종. (세탁·미용·기타 서비스는 수량 무의미) */
+export const FOOD_CATEGORIES: Category[] = ["vegetable", "meat", "fruit", "sidedish"];
+
+/** 해당 카테고리에서 수량(단위) 입력이 의미 있는지. */
+export function categoryHasQuantity(category: Category): boolean {
+  return FOOD_CATEGORIES.includes(category);
+}
+
 /** 신고 누적 N건 시 콘텐츠 자동 숨김(soft hide) 기준 (스펙 2장, 기본 3). */
 export const REPORT_HIDE_THRESHOLD = 3;

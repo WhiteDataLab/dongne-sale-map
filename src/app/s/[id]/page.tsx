@@ -131,7 +131,7 @@ export default async function StoreSharePage({ params }: { params: Promise<{ id:
                       <p className="truncate font-semibold">{s.title}</p>
                       <p className="shrink-0 font-bold text-red-600">{won(s.salePrice)}</p>
                     </div>
-                    <p className="text-xs text-gray-500">{s.qty}</p>
+                    {s.qty?.trim() && <p className="text-xs text-gray-500">{s.qty}</p>}
                     <div className="mt-1 flex items-center gap-2 text-xs">
                       <span className="rounded bg-red-50 px-1.5 py-0.5 font-medium text-red-600">
                         {untilLabel(s.expiresAt.toISOString())}

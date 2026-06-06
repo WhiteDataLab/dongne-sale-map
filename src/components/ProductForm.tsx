@@ -2,22 +2,26 @@
 
 import { useRef, useState } from "react";
 import type { ProductDTO } from "@/lib/types";
+import { categoryHasQuantity, type Category } from "@/lib/constants";
 import { PhotoEditor } from "./PhotoEditor";
 
 /** 메뉴(상품) 추가/수정 폼 (스펙 Phase 7b). 신규 등록 시 사진 필수. */
 export function ProductForm({
   storeId,
+  category,
   product,
   onDone,
   onCancel,
   onToast,
 }: {
   storeId: string;
+  category: Category;
   product?: ProductDTO;
   onDone: () => void;
   onCancel: () => void;
   onToast: (msg: string) => void;
 }) {
+  const hasQty = categoryHasQuantity(category);
   const editing = Boolean(product);
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(product?.photoUrl ?? null);
@@ -31,7 +35,7 @@ export function ProductForm({
 
   const submit = async () => {
     if (!name.trim()) return onToast("메뉴명을 입력해 주세요.");
-    if (!qtyUnit.trim()) return onToast("단위(예: 1kg)를 입력해 주세요.");
+    if (hasQty && !qtyUnit.trim()) return onToast("단위(예: 1kg)를 입력해 주세요.");
     const p = Number(price);
     if (!Number.isFinite(p) || p < 0) return onToast("가격을 확인해 주세요.");
     if (!editing && !file) return onToast("메뉴 사진은 필수예요.");
@@ -162,7 +166,7 @@ export function ProductForm({
       <input
         value={name}
         onChange={(e) => setName(e.target.value)}
-        placeholder="메뉴명 (예: 사과 부사)"
+        placeholder={hasQty ? "메뉴명 (예: 사과 부사)" : "메뉴/서비스명 (예: 커트, 드라이클리닝)"}
         className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
       />
       <div className="flex gap-2">
@@ -171,21 +175,25 @@ export function ProductForm({
           onChange={(e) => setPrice(e.target.value)}
           inputMode="numeric"
           placeholder="가격(원)"
-          className="w-1/2 rounded-lg border border-gray-200 px-3 py-2 text-sm"
+          className={`${hasQty ? "w-1/2" : "w-full"} rounded-lg border border-gray-200 px-3 py-2 text-sm`}
         />
-        <input
-          value={qtyUnit}
-          onChange={(e) => setQtyUnit(e.target.value)}
-          placeholder="단위 (예: 5개, 1kg)"
-          className="w-1/2 rounded-lg border border-gray-200 px-3 py-2 text-sm"
-        />
+        {hasQty && (
+          <input
+            value={qtyUnit}
+            onChange={(e) => setQtyUnit(e.target.value)}
+            placeholder="단위 (예: 5개, 1kg)"
+            className="w-1/2 rounded-lg border border-gray-200 px-3 py-2 text-sm"
+          />
+        )}
       </div>
-      <input
-        value={origin}
-        onChange={(e) => setOrigin(e.target.value)}
-        placeholder="원산지 (선택)"
-        className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
-      />
+      {hasQty && (
+        <input
+          value={origin}
+          onChange={(e) => setOrigin(e.target.value)}
+          placeholder="원산지 (선택)"
+          className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
+        />
+      )}
 
       <button
         type="button"
