@@ -99,6 +99,9 @@ export function SideNav({
             </Link>
             {user && (
               <>
+                <Link href="/checkin" onClick={close} className={itemClass}>
+                  ✅ 출석체크
+                </Link>
                 <Link href="/favorites" onClick={close} className={itemClass}>
                   ♥ 즐겨찾기
                 </Link>

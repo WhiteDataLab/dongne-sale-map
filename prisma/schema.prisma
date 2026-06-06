@@ -110,6 +110,8 @@ model User {
   role          UserRole   @default(user)
   status        UserStatus @default(active)
   points        Int        @default(0) // 표시용 (실지급 보류, 적립은 전부 PointLog.pending)
+  lastCheckInDate DateTime? // 마지막 출석체크 일자(KST 자정 기준 instant)
+  checkInStreak   Int      @default(0) // 연속 출석 일수
   createdAt     DateTime   @default(now())
 
   // 관계
