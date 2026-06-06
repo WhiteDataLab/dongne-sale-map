@@ -23,21 +23,20 @@ export function ShareButton({
 
   const onClick = async () => {
     const url = `${window.location.origin}${path}`;
-    try {
-      if (navigator.share) {
+    if (navigator.share) {
+      try {
         await navigator.share({ title, text, url });
         return;
+      } catch (e) {
+        // 사용자가 취소(AbortError)면 그대로 종료, 그 외 실패면 클립보드로 폴백
+        if (e instanceof DOMException && e.name === "AbortError") return;
       }
-    } catch {
-      // 사용자가 공유 취소 → 무시
-      return;
     }
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1800);
     } catch {
-      // 클립보드 실패 시 prompt 로 노출
       window.prompt("아래 링크를 복사하세요", url);
     }
   };

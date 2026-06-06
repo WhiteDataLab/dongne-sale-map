@@ -509,7 +509,11 @@ export function MapExplorer() {
             setSelectedStoreId(null);
             setRegisterMode(true);
           }}
-          className="absolute bottom-5 right-4 z-20 flex items-center gap-1 rounded-full bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-blue-700 active:bg-blue-800"
+          className={[
+            "absolute bottom-5 right-4 z-20 items-center gap-1 rounded-full bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-blue-700 active:bg-blue-800",
+            // 모바일에서 가게 상세(바텀시트)가 열리면 가려지므로 숨김. 데스크톱(좌측 패널)은 유지.
+            selectedStoreId ? "hidden sm:flex" : "flex",
+          ].join(" ")}
         >
           ➕ 가게 등록
         </button>
