@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import type { User } from "@prisma/client";
+import { applyReferral } from "@/lib/referral";
 
 /** KST 기준 YYYYMMDDHHmmss. */
 function ts14(d: Date): string {
@@ -35,6 +36,7 @@ export async function resolveSocialUser(
   provider: "kakao" | "naver",
   providerId: string,
   profile: { nickname: string; profileImgUrl: string | null; email: string | null },
+  refCode?: string | null,
 ): Promise<User> {
   const existing = await prisma.identity.findUnique({
     where: { provider_providerId: { provider, providerId } },
@@ -53,7 +55,7 @@ export async function resolveSocialUser(
     return existing.user;
   }
 
-  return prisma.user.create({
+  const created = await prisma.user.create({
     data: {
       provider, // 레거시 표시용 컬럼도 채워둠
       providerId,
@@ -63,6 +65,14 @@ export async function resolveSocialUser(
       identities: { create: { provider, providerId } },
     },
   });
+  if (refCode) {
+    try {
+      await applyReferral(created.id, refCode);
+    } catch {
+      // 추천 보상 실패는 가입을 막지 않음
+    }
+  }
+  return created;
 }
 
 /**
@@ -71,6 +81,7 @@ export async function resolveSocialUser(
 export async function resolvePhoneUser(
   phone: string,
   profile: { nickname: string | null; name: string | null },
+  refCode?: string | null,
 ): Promise<User> {
   const existing = await prisma.identity.findUnique({
     where: { provider_providerId: { provider: "phone", providerId: phone } },
@@ -83,7 +94,7 @@ export async function resolvePhoneUser(
       data: { phoneVerified: true, ...(existing.user.accountId ? {} : { accountId: phone }) },
     });
   }
-  return prisma.user.create({
+  const created = await prisma.user.create({
     data: {
       provider: "phone",
       providerId: phone,
@@ -95,6 +106,14 @@ export async function resolvePhoneUser(
       identities: { create: { provider: "phone", providerId: phone } },
     },
   });
+  if (refCode) {
+    try {
+      await applyReferral(created.id, refCode);
+    } catch {
+      // 추천 보상 실패는 가입을 막지 않음
+    }
+  }
+  return created;
 }
 
 /**

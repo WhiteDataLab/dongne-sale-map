@@ -56,10 +56,20 @@ providers.push(
       if (!rec || rec.codeHash !== hashCode(phone, code)) return null;
 
       await prisma.phoneVerification.deleteMany({ where: { phone } }); // 1회용 소비
-      const dbUser = await resolvePhoneUser(phone, {
-        nickname: creds?.nickname ? String(creds.nickname) : null,
-        name: creds?.name ? String(creds.name) : null,
-      });
+      let refCode: string | undefined;
+      try {
+        refCode = (await cookies()).get("ref_code")?.value;
+      } catch {
+        refCode = undefined;
+      }
+      const dbUser = await resolvePhoneUser(
+        phone,
+        {
+          nickname: creds?.nickname ? String(creds.nickname) : null,
+          name: creds?.name ? String(creds.name) : null,
+        },
+        refCode ?? null,
+      );
       return { id: dbUser.id, name: dbUser.nickname, image: dbUser.profileImgUrl };
     },
   }),
@@ -120,11 +130,29 @@ export const authConfig: NextAuthConfig = {
             return token;
           }
 
-          const dbUser = await resolveSocialUser(provider, providerId, {
-            nickname: user.name?.trim() || "이웃",
-            profileImgUrl: user.image ?? null,
-            email: user.email ?? null,
-          });
+          let refCode: string | undefined;
+          try {
+            refCode = (await cookies()).get("ref_code")?.value;
+          } catch {
+            refCode = undefined;
+          }
+          const dbUser = await resolveSocialUser(
+            provider,
+            providerId,
+            {
+              nickname: user.name?.trim() || "이웃",
+              profileImgUrl: user.image ?? null,
+              email: user.email ?? null,
+            },
+            refCode ?? null,
+          );
+          if (refCode) {
+            try {
+              (await cookies()).delete("ref_code");
+            } catch {
+              // 쿠키 정리 실패 무시(이미 추천받음 가드로 중복 방지)
+            }
+          }
           token.userId = dbUser.id;
           token.role = dbUser.role;
           token.points = dbUser.points;

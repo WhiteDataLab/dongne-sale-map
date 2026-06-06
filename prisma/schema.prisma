@@ -113,6 +113,8 @@ model User {
   points        Int        @default(0) // 표시용 (실지급 보류, 적립은 전부 PointLog.pending)
   lastCheckInDate DateTime? // 마지막 출석체크 일자(KST 자정 기준 instant)
   checkInStreak   Int      @default(0) // 연속 출석 일수
+  referralCode    String?  @unique // 내 추천인 코드(공유용, 지연 생성)
+  referredById    String? // 나를 추천한 사용자(가입 시 1회 설정)
   createdAt     DateTime   @default(now())
 
   // 관계
@@ -128,6 +130,8 @@ model User {
   pointLogs  PointLog[]
   closureReports ClosureReport[] @relation("ClosureReporter")
   redemptions Redemption[]
+  referredBy User?   @relation("UserReferrals", fields: [referredById], references: [id], onDelete: SetNull)
+  referrals  User[]  @relation("UserReferrals")
 }
 
 // 로그인 수단(소셜/전화) ↔ User 연결. 계정 연결(account linking)의 핵심 (Phase 5).

@@ -105,6 +105,9 @@ export function SideNav({
                 <Link href="/shop" onClick={close} className={itemClass}>
                   🎁 포인트샵
                 </Link>
+                <Link href="/invite" onClick={close} className={itemClass}>
+                  🎉 친구 초대 (+50P)
+                </Link>
                 <Link href="/favorites" onClick={close} className={itemClass}>
                   ♥ 즐겨찾기
                 </Link>
