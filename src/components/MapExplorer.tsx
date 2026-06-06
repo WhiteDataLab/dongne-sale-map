@@ -468,7 +468,7 @@ export function MapExplorer() {
 
       {/* 실시간 리뷰 스트림 (우측 상단, 아래→위로 올라가며 옅어짐) */}
       {!error && !registerMode && !selectedStoreId && feed.reviews.length > 0 && (
-        <div className="pointer-events-none absolute right-2 top-40 z-[5] h-[44%] w-[60%] max-w-[250px]">
+        <div className="pointer-events-none absolute right-1.5 top-36 z-[5] h-[32%] w-[46%] max-w-[150px] sm:right-2 sm:top-40 sm:h-[44%] sm:w-[60%] sm:max-w-[250px]">
           <ReviewStream reviews={feed.reviews} />
         </div>
       )}
