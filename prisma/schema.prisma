@@ -134,6 +134,7 @@ model User {
   redemptions Redemption[]
   referredBy User?   @relation("UserReferrals", fields: [referredById], references: [id], onDelete: SetNull)
   referrals  User[]  @relation("UserReferrals")
+  inquiries  Inquiry[]
 }
 
 // 로그인 수단(소셜/전화) ↔ User 연결. 계정 연결(account linking)의 핵심 (Phase 5).
@@ -166,6 +167,26 @@ model MerchantVerification {
 
   @@index([status])
   @@index([userId])
+}
+
+// 고객센터 1:1 문의. 관리자 답변 시 status=answered, 작성자에게 답변 노출.
+model Inquiry {
+  id            String        @id @default(cuid())
+  userId        String?
+  nickname      String // 작성 시 입력(스냅샷)
+  email         String // 회신 이메일
+  title         String
+  content       String
+  attachmentUrl String? // 첨부 이미지(선택)
+  status        InquiryStatus @default(open)
+  answer        String? // 관리자 답변
+  answeredAt    DateTime?
+  createdAt     DateTime      @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([status])
 }
 
 // 추천 보상 영구 원장: 이미 추천 보상에 사용된 연락처(해시). 탈퇴해도 남아 재가입 재적립 차단.
@@ -364,6 +385,11 @@ model Report {
 enum ReactionKind {
   like
   dislike
+}
+
+enum InquiryStatus {
+  open // 문의중
+  answered // 답변완료
 }
 
 enum RedemptionStatus {

@@ -121,6 +121,11 @@ export function SideNav({
                 🛠️ 관리
               </Link>
             )}
+            {user && (
+              <Link href="/support" onClick={close} className={itemClass}>
+                🎧 고객센터
+              </Link>
+            )}
             <Link href="/terms" onClick={close} className={itemClass}>
               📄 이용약관
             </Link>

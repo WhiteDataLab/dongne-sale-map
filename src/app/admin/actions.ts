@@ -192,6 +192,19 @@ export async function cancelRedemption(formData: FormData) {
   revalidatePath("/admin/redemptions");
 }
 
+/** 고객센터 문의 답변 등록 → 상태 answered. */
+export async function answerInquiry(formData: FormData) {
+  await ensureAdmin();
+  const id = String(formData.get("id"));
+  const answer = String(formData.get("answer") ?? "").trim();
+  if (!answer) return;
+  await prisma.inquiry.update({
+    where: { id },
+    data: { answer, status: "answered", answeredAt: new Date() },
+  });
+  revalidatePath("/admin/inquiries");
+}
+
 export async function approveStore(formData: FormData) {
   await ensureAdmin();
   const id = String(formData.get("id"));

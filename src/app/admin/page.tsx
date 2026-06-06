@@ -7,19 +7,22 @@ export default async function AdminHome() {
   let pendingStores = 0;
   let pendingMerchants = 0;
   let pendingRedemptions = 0;
+  let openInquiries = 0;
   let introVideo: string | null = null;
   try {
-    const [r, s, m, rd, cfg] = await Promise.all([
+    const [r, s, m, rd, iq, cfg] = await Promise.all([
       prisma.report.count({ where: { status: "open" } }),
       prisma.store.count({ where: { verified: false, status: "active" } }),
       prisma.merchantVerification.count({ where: { status: "pending" } }),
       prisma.redemption.count({ where: { status: "requested" } }),
+      prisma.inquiry.count({ where: { status: "open" } }),
       prisma.siteConfig.findUnique({ where: { key: "intro_video_url" } }),
     ]);
     openReports = r;
     pendingStores = s;
     pendingMerchants = m;
     pendingRedemptions = rd;
+    openInquiries = iq;
     introVideo = cfg?.value ?? null;
   } catch {
     // DB 미연결 시 0
@@ -63,6 +66,15 @@ export default async function AdminHome() {
       >
         <span className="font-medium">🏷️ 기프티콘 상품</span>
         <span className="text-sm text-gray-400">추가·수정·삭제·이미지 →</span>
+      </Link>
+      <Link
+        href="/admin/inquiries"
+        className="flex items-center justify-between rounded-xl border border-gray-200 p-4"
+      >
+        <span className="font-medium">🎧 고객센터</span>
+        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-sm text-amber-700">
+          미답변 {openInquiries}
+        </span>
       </Link>
       <Link
         href="/admin/reports"
