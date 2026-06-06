@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/session";
-import { asStoreHours, minutesUntilClose } from "@/lib/businessHours";
+import { asStoreHours, minutesUntilClose, kstTodayStart } from "@/lib/businessHours";
 import { isPublicStorageUrl } from "@/lib/supabaseStorage";
 
 /**
@@ -88,17 +88,25 @@ export async function POST(req: NextRequest) {
 
     // 중복 세일: 같은 가게에서 (상품 지정 시 동일 상품 / 아니면 동일 제목) 활성 세일 존재
     const now = new Date();
+    const itemMatch = productId ? { productId } : { title: title.trim() };
     const dup = await prisma.sale.findFirst({
-      where: {
-        storeId,
-        status: "active",
-        expiresAt: { gt: now },
-        ...(productId ? { productId } : { title: title.trim() }),
-      },
+      where: { storeId, status: "active", expiresAt: { gt: now }, ...itemMatch },
     });
     if (dup) {
       return NextResponse.json(
         { error: "이미 세일중이에요.", duplicate: true, saleId: dup.id },
+        { status: 409 },
+      );
+    }
+
+    // 하루 1회 제한(파밍 방지): 같은 사용자가 오늘(KST) 같은 가게·같은 항목으로 이미 올렸으면 차단.
+    // (예: '당근'을 올렸으면 오늘 '당근'은 더 못 올리고 '상추'만 가능. 1시간 만료 반복 적립도 차단)
+    const myToday = await prisma.sale.findFirst({
+      where: { createdById: userId, storeId, createdAt: { gte: kstTodayStart() }, ...itemMatch },
+    });
+    if (myToday) {
+      return NextResponse.json(
+        { error: "오늘은 이 항목으로 이미 세일을 올렸어요. (하루 1회)" },
         { status: 409 },
       );
     }
@@ -147,7 +155,7 @@ export async function POST(req: NextRequest) {
           userId,
           amount: POINT_SALE_REPORT,
           reason: "세일 제보",
-          status: "pending",
+          status: "granted", // 세일은 즉시 적립
           refType: "sale",
           refId: created.id,
         },
@@ -155,7 +163,7 @@ export async function POST(req: NextRequest) {
       return created;
     });
 
-    return NextResponse.json({ ok: true, saleId: sale.id, pointPending: POINT_SALE_REPORT });
+    return NextResponse.json({ ok: true, saleId: sale.id, pointGranted: POINT_SALE_REPORT });
   } catch {
     return NextResponse.json({ error: "제보 등록에 실패했어요." }, { status: 500 });
   }

@@ -254,7 +254,6 @@ export default async function AccountPage() {
               id: h.id,
               amount: h.amount,
               reason: h.reason,
-              status: h.status,
               date: new Date(h.createdAt).toLocaleDateString("ko-KR"),
             }))}
           />

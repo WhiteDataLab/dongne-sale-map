@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-type Item = { id: string; amount: number; reason: string; status: string; date: string };
+type Item = { id: string; amount: number; reason: string; date: string };
 
 const PREVIEW = 5; // 접힌 상태
 const PAGE = 10; // 펼친 뒤 한 페이지
@@ -30,9 +30,7 @@ export function PointHistory({ items }: { items: Item[] }) {
           <li key={h.id} className="flex items-center justify-between gap-2 px-3 py-2.5">
             <div className="min-w-0">
               <p className="truncate text-sm">{h.reason}</p>
-              <p className="text-xs text-gray-400">
-                {h.date} · {h.status === "granted" ? "지급" : "적립예정"}
-              </p>
+              <p className="text-xs text-gray-400">{h.date}</p>
             </div>
             <span className={`shrink-0 text-sm font-semibold ${h.amount < 0 ? "text-red-500" : "text-blue-600"}`}>
               {h.amount > 0 ? "+" : ""}

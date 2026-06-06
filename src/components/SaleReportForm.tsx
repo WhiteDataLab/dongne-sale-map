@@ -157,8 +157,8 @@ export function SaleReportForm({
         onToast(res.status === 401 ? "로그인이 필요해요." : e.error ?? "제보 등록 실패");
         return;
       }
-      const { pointPending } = (await res.json()) as { pointPending?: number };
-      onToast(`세일 제보 완료! 적립 대기 +${pointPending ?? 0}P`);
+      const { pointGranted } = (await res.json()) as { pointGranted?: number };
+      onToast(`세일 제보 완료! +${pointGranted ?? 0}P 적립됐어요`);
       onDone();
     } catch {
       onToast("네트워크 오류가 발생했어요.");
