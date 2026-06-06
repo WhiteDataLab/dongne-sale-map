@@ -63,11 +63,11 @@ export async function POST(req: NextRequest) {
       const created = await tx.product.create({
         data: {
           storeId,
-          name: name.trim(),
+          name: name.trim().slice(0, 100),
           price,
-          qtyUnit: qtyUnit?.trim() || "",
+          qtyUnit: (qtyUnit?.trim() || "").slice(0, 40),
           photoUrl,
-          origin: origin?.trim() || null,
+          origin: origin?.trim().slice(0, 60) || null,
           stock,
           createdById: user.id,
         },

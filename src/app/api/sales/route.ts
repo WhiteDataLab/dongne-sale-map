@@ -133,11 +133,11 @@ export async function POST(req: NextRequest) {
         data: {
           storeId,
           productId: productId ?? null,
-          title: title.trim(),
+          title: title.trim().slice(0, 200),
           photoUrl: photos[0],
           photoUrls: photos,
           salePrice,
-          qty: qty?.trim() || "",
+          qty: (qty?.trim() || "").slice(0, 100),
           expiresAt,
           createdById: userId,
         },

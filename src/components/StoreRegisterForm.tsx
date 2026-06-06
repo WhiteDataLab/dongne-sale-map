@@ -160,7 +160,11 @@ export function StoreRegisterForm({
         <div className="mx-auto mb-2 h-1.5 w-12 rounded-full bg-gray-300 md:hidden" />
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold">이 위치에 가게 등록</h2>
-          <button type="button" onClick={onCancel} className="text-sm text-gray-400">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="rounded-lg border border-gray-200 px-2.5 py-1 text-sm text-gray-500 hover:bg-gray-50"
+          >
             취소
           </button>
         </div>

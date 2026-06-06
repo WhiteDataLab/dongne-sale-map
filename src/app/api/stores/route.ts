@@ -153,6 +153,9 @@ export async function POST(req: NextRequest) {
       { status: 400 },
     );
   }
+  if (name.length > 100 || address.length > 200) {
+    return NextResponse.json({ error: "가게명·주소가 너무 길어요." }, { status: 400 });
+  }
 
   try {
     const recent = await prisma.store.count({
@@ -195,8 +198,8 @@ export async function POST(req: NextRequest) {
         address,
         lat,
         lng,
-        phone: body.phone?.trim() || null,
-        description: body.description?.trim() || null,
+        phone: body.phone?.trim().slice(0, 40) || null,
+        description: body.description?.trim().slice(0, 2000) || null,
         verified: false,
         source: "user",
         createdById: userId,

@@ -59,8 +59,42 @@ body {
   }
 }
 
+button:not(:disabled),
+[role="button"],
+summary {
+  cursor: pointer;
+}
 button:disabled {
   cursor: not-allowed;
+}
+
+/* 키보드 포커스 접근성: 또렷한 포커스 링 (마우스 클릭 시엔 안 보임) */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible,
+summary:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* 누름 상태를 조금 더 또렷하게(배경 어둡게) — bg 있는 버튼에 자연스러운 피드백 */
+@media (hover: hover) {
+  button:not(:disabled):active,
+  [role="button"]:active {
+    filter: brightness(0.92);
+  }
+}
+
+/* 글자만 있는 버튼(테두리/배경 클래스 없음)에 기본 테두리로 '버튼'임을 표시.
+   .btn-bare 를 붙이면 적용 — 공용 텍스트 버튼에 사용. */
+.btn-bare {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 0.25rem 0.625rem;
+}
+.btn-bare:hover {
+  background: #f9fafb;
 }
 
 /* ── 현재 위치 파란 점 (CustomOverlay 주입 DOM) ── */

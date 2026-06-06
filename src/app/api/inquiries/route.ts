@@ -27,6 +27,9 @@ export async function POST(req: NextRequest) {
   if (!nickname || !title || !content) {
     return NextResponse.json({ error: "닉네임·제목·내용은 필수예요." }, { status: 400 });
   }
+  if (nickname.length > 30 || title.length > 200 || content.length > 5000 || email.length > 200) {
+    return NextResponse.json({ error: "입력 길이가 너무 길어요." }, { status: 400 });
+  }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return NextResponse.json({ error: "이메일 형식을 확인해 주세요." }, { status: 400 });
   }

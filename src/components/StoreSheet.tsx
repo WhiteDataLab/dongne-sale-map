@@ -859,7 +859,11 @@ function SectionHead({
         {title}
       </h3>
       {canEdit && !editing && (
-        <button type="button" onClick={onEdit} className="text-xs font-medium text-blue-600">
+        <button
+          type="button"
+          onClick={onEdit}
+          className="rounded-lg border border-blue-200 px-2.5 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50"
+        >
           수정
         </button>
       )}
@@ -1125,7 +1129,11 @@ function SaveCancel({
       >
         {busy ? "저장 중…" : "저장"}
       </button>
-      <button type="button" onClick={onCancel} className="text-xs text-gray-500">
+      <button
+        type="button"
+        onClick={onCancel}
+        className="rounded-lg border border-gray-200 px-2.5 py-1 text-xs text-gray-500 hover:bg-gray-50"
+      >
         취소
       </button>
     </div>

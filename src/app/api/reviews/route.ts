@@ -40,6 +40,9 @@ export async function POST(req: NextRequest) {
   if (!storeId || !content?.trim()) {
     return NextResponse.json({ error: "내용을 입력해 주세요." }, { status: 400 });
   }
+  if (content.length > 1000) {
+    return NextResponse.json({ error: "리뷰가 너무 길어요. (최대 1000자)" }, { status: 400 });
+  }
   if (typeof rating !== "number" || !Number.isInteger(rating) || rating < 1 || rating > 5) {
     return NextResponse.json({ error: "평점은 1~5 사이여야 해요." }, { status: 400 });
   }

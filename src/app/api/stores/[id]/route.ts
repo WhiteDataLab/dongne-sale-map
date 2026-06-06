@@ -209,20 +209,20 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
       data.bannerUrl = b ?? null;
     }
     if ("notice" in body) {
-      const n = typeof body.notice === "string" ? body.notice.trim() : "";
+      const n = typeof body.notice === "string" ? body.notice.trim().slice(0, 2000) : "";
       data.notice = n || null; // 빈 문자열 = 삭제
     }
     if ("description" in body) {
-      const d = typeof body.description === "string" ? body.description.trim() : "";
+      const d = typeof body.description === "string" ? body.description.trim().slice(0, 2000) : "";
       data.description = d || null;
     }
     if ("address" in body) {
-      const a = typeof body.address === "string" ? body.address.trim() : "";
+      const a = typeof body.address === "string" ? body.address.trim().slice(0, 200) : "";
       if (!a) return NextResponse.json({ error: "주소를 입력해 주세요." }, { status: 400 });
       data.address = a;
     }
     if ("phone" in body) {
-      const p = typeof body.phone === "string" ? body.phone.trim() : "";
+      const p = typeof body.phone === "string" ? body.phone.trim().slice(0, 40) : "";
       data.phone = p || null;
     }
     if ("hoursJson" in body) {

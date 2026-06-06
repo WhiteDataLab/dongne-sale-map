@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
           typeof body.photoUrl === "string" && isPublicStorageUrl(body.photoUrl)
             ? body.photoUrl
             : null,
-        note: typeof body.note === "string" && body.note.trim() ? body.note.trim() : null,
+        note: typeof body.note === "string" && body.note.trim() ? body.note.trim().slice(0, 500) : null,
         createdById: userId,
       },
     });

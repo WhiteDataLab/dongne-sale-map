@@ -171,7 +171,11 @@ export function SaleReportForm({
     <div className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-gray-50 p-3">
       <div className="flex items-center justify-between">
         <h4 className="font-semibold">세일 제보하기</h4>
-        <button type="button" onClick={onCancel} className="text-sm text-gray-400">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="rounded-lg border border-gray-200 px-2.5 py-1 text-sm text-gray-500 hover:bg-gray-50"
+        >
           닫기
         </button>
       </div>
