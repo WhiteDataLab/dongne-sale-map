@@ -85,7 +85,16 @@ export function ProductForm({
         );
         return;
       }
-      onToast(editing ? "메뉴를 수정했어요." : "메뉴를 추가했어요.");
+      if (editing) {
+        onToast("메뉴를 수정했어요.");
+      } else {
+        const { pointPending } = (await res.json().catch(() => ({}))) as { pointPending?: number };
+        onToast(
+          pointPending && pointPending > 0
+            ? `메뉴를 등록했어요! 적립 대기 +${pointPending}P`
+            : "메뉴를 추가했어요.",
+        );
+      }
       onDone();
     } catch {
       onToast("네트워크 오류가 발생했어요.");

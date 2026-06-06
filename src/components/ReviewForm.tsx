@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import type { ProductDTO } from "@/lib/types";
 import { PhotoEditor } from "./PhotoEditor";
 
 /** 버튼/태깅 리뷰 프리셋. 누르면 선택되고, 여러 개 선택 가능. */
@@ -19,15 +20,21 @@ const MAX_PHOTOS = 5;
 /** 리뷰 작성 폼 (태깅 + 사진 + 포인트 정책). */
 export function ReviewForm({
   storeId,
+  products,
+  onGoRegisterProduct,
   onDone,
   onCancel,
   onToast,
 }: {
   storeId: string;
+  products: ProductDTO[];
+  onGoRegisterProduct: () => void;
   onDone: () => void;
   onCancel: () => void;
   onToast: (msg: string) => void;
 }) {
+  const [purchasedId, setPurchasedId] = useState<string | null>(null);
+  const [notInMenu, setNotInMenu] = useState(false);
   const [rating, setRating] = useState(5);
   const [selected, setSelected] = useState<string[]>([]);
   const [showCustom, setShowCustom] = useState(false);
@@ -123,6 +130,65 @@ export function ReviewForm({
         <button type="button" onClick={onCancel} className="text-sm text-gray-400">
           닫기
         </button>
+      </div>
+
+      {/* 구매 메뉴 선택 ("어떤 걸 구매하셨나요?") */}
+      <div>
+        <p className="mb-1.5 text-sm font-medium">어떤 걸 구매하셨나요?</p>
+        <div className="flex flex-wrap gap-2">
+          {products.map((p) => {
+            const on = purchasedId === p.id;
+            return (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => {
+                  setPurchasedId(on ? null : p.id);
+                  setNotInMenu(false);
+                }}
+                className={[
+                  "rounded-full border px-3 py-1.5 text-sm transition-colors",
+                  on
+                    ? "border-blue-600 bg-blue-600 text-white"
+                    : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50",
+                ].join(" ")}
+              >
+                {p.name}
+              </button>
+            );
+          })}
+          <button
+            type="button"
+            onClick={() => {
+              setNotInMenu(true);
+              setPurchasedId(null);
+            }}
+            className={[
+              "rounded-full border px-3 py-1.5 text-sm transition-colors",
+              notInMenu
+                ? "border-amber-600 bg-amber-600 text-white"
+                : "border-dashed border-gray-300 bg-white text-gray-500 hover:bg-gray-50",
+            ].join(" ")}
+          >
+            메뉴에 없어요
+          </button>
+        </div>
+
+        {notInMenu && (
+          <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
+            <p className="text-sm font-medium text-amber-800">상품부터 등록하시겠어요?</p>
+            <p className="mt-0.5 text-xs text-amber-700">
+              구매하신 메뉴를 먼저 등록하면 <b>추가 포인트(+5P)</b>를 받을 수 있어요. 등록 후 다시 리뷰를 쓰면 리뷰 포인트도 받아요!
+            </p>
+            <button
+              type="button"
+              onClick={onGoRegisterProduct}
+              className="mt-2 w-full rounded-lg bg-amber-600 py-2 text-sm font-semibold text-white hover:bg-amber-700"
+            >
+              ＋ 상품 등록하러 가기
+            </button>
+          </div>
+        )}
       </div>
 
       {/* 별점 */}

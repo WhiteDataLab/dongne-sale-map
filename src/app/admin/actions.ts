@@ -33,6 +33,7 @@ export async function hideAndResolve(formData: FormData) {
       await prisma.pointLog.deleteMany({ where: { refType: "sale", refId: targetId } });
     } else if (targetType === "product") {
       await prisma.product.update({ where: { id: targetId }, data: { hidden: true } });
+      await prisma.pointLog.deleteMany({ where: { refType: "product", refId: targetId } });
     } else if (targetType === "review") {
       await prisma.review.update({ where: { id: targetId }, data: { hidden: true } });
       // 관리자 숨김 시 해당 리뷰 적립 포인트 회수

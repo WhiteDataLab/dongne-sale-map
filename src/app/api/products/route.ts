@@ -6,6 +6,8 @@ import { canManageMenu } from "@/lib/menu";
 /** 메뉴(상품) 추가 (스펙 Phase 7b). 사진 필수. 권한: canManageMenu. */
 export const runtime = "nodejs";
 
+const POINT_PRODUCT = 5; // 메뉴 등록 적립(표시용, status=pending)
+
 type Body = {
   storeId?: string;
   name?: string;
@@ -36,6 +38,8 @@ export async function POST(req: NextRequest) {
   if (typeof body.price !== "number" || !Number.isFinite(body.price) || body.price < 0) {
     return NextResponse.json({ error: "가격을 확인해 주세요." }, { status: 400 });
   }
+  const price = body.price;
+  const stock = typeof body.stock === "number" ? body.stock : null;
 
   try {
     const store = await prisma.store.findUnique({ where: { id: storeId } });
@@ -45,19 +49,33 @@ export async function POST(req: NextRequest) {
     if (!canManageMenu(store, user)) {
       return NextResponse.json({ error: "메뉴를 등록할 권한이 없어요." }, { status: 403 });
     }
-    const product = await prisma.product.create({
-      data: {
-        storeId,
-        name: name.trim(),
-        price: body.price,
-        qtyUnit: qtyUnit.trim(),
-        photoUrl,
-        origin: origin?.trim() || null,
-        stock: typeof body.stock === "number" ? body.stock : null,
-        createdById: user.id,
-      },
+    const product = await prisma.$transaction(async (tx) => {
+      const created = await tx.product.create({
+        data: {
+          storeId,
+          name: name.trim(),
+          price,
+          qtyUnit: qtyUnit.trim(),
+          photoUrl,
+          origin: origin?.trim() || null,
+          stock,
+          createdById: user.id,
+        },
+      });
+      // 메뉴 등록 적립(pending) — 커뮤니티 메뉴 채우기 유도
+      await tx.pointLog.create({
+        data: {
+          userId: user.id,
+          amount: POINT_PRODUCT,
+          reason: "메뉴 등록",
+          status: "pending",
+          refType: "product",
+          refId: created.id,
+        },
+      });
+      return created;
     });
-    return NextResponse.json({ ok: true, productId: product.id });
+    return NextResponse.json({ ok: true, productId: product.id, pointPending: POINT_PRODUCT });
   } catch {
     return NextResponse.json({ error: "메뉴 등록에 실패했어요." }, { status: 500 });
   }

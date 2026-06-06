@@ -59,6 +59,7 @@ export async function POST(req: NextRequest) {
           await prisma.pointLog.deleteMany({ where: { refType: "sale", refId: targetId } });
         } else if (type === "product") {
           await prisma.product.update({ where: { id: targetId }, data: { hidden: true } });
+          await prisma.pointLog.deleteMany({ where: { refType: "product", refId: targetId } });
         } else {
           await prisma.review.update({ where: { id: targetId }, data: { hidden: true } });
           // 제재 시 해당 리뷰 적립 포인트 회수

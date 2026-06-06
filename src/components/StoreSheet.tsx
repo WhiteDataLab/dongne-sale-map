@@ -59,6 +59,7 @@ export function StoreSheet({
   const [composing, setComposing] = useState<Composing>(null);
   const [bannerEditFile, setBannerEditFile] = useState<File | null>(null);
   const [closureForm, setClosureForm] = useState(false);
+  const [productAddRequested, setProductAddRequested] = useState(false);
 
   // 태블릿/PC(>=768px)에서는 왼쪽 사이드 패널, 모바일에서는 하단 바텀시트
   const [isDesktop, setIsDesktop] = useState(false);
@@ -402,7 +403,13 @@ export function StoreSheet({
           {loading || !detail ? (
             <p className="py-10 text-center text-sm text-gray-400">불러오는 중…</p>
           ) : tab === "products" ? (
-            <ProductsTab detail={detail} onToast={onToast} onDone={refresh} />
+            <ProductsTab
+              detail={detail}
+              onToast={onToast}
+              onDone={refresh}
+              requestAdd={productAddRequested}
+              onAddHandled={() => setProductAddRequested(false)}
+            />
           ) : tab === "sales" ? (
             <SalesTab
               detail={detail}
@@ -422,6 +429,11 @@ export function StoreSheet({
               onClose={() => setComposing(null)}
               onDone={refresh}
               onToast={onToast}
+              onGoRegisterProduct={() => {
+                setComposing(null);
+                setTab("products");
+                setProductAddRequested(true);
+              }}
             />
           )}
         </div>
@@ -540,14 +552,27 @@ function ProductsTab({
   detail,
   onToast,
   onDone,
+  requestAdd = false,
+  onAddHandled,
 }: {
   detail: StoreDetailDTO;
   onToast: (msg: string) => void;
   onDone: () => void;
+  requestAdd?: boolean;
+  onAddHandled?: () => void;
 }) {
   const [composing, setComposing] = useState<{ mode: "add" } | { mode: "edit"; product: ProductDTO } | null>(
     null,
   );
+
+  // 리뷰 흐름에서 '상품 등록하러 가기'로 진입하면 추가 폼을 자동으로 연다.
+  useEffect(() => {
+    if (requestAdd) {
+      setComposing(detail.canManageMenu ? { mode: "add" } : null);
+      if (!detail.canManageMenu) onToast("이 가게는 사장님만 메뉴를 등록할 수 있어요.");
+      onAddHandled?.();
+    }
+  }, [requestAdd, detail.canManageMenu, onAddHandled, onToast]);
 
   const remove = async (id: string) => {
     const res = await fetch(`/api/products/${id}`, { method: "DELETE" });
@@ -1239,6 +1264,7 @@ function ReviewsTab({
   onClose,
   onDone,
   onToast,
+  onGoRegisterProduct,
 }: {
   detail: StoreDetailDTO;
   composing: boolean;
@@ -1246,12 +1272,15 @@ function ReviewsTab({
   onClose: () => void;
   onDone: () => void;
   onToast: (msg: string) => void;
+  onGoRegisterProduct: () => void;
 }) {
   return (
     <div className="flex flex-col gap-3">
       {composing ? (
         <ReviewForm
           storeId={detail.id}
+          products={detail.products}
+          onGoRegisterProduct={onGoRegisterProduct}
           onDone={onDone}
           onCancel={onClose}
           onToast={onToast}
