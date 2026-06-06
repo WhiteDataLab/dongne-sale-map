@@ -61,6 +61,8 @@ export async function POST(req: NextRequest) {
           await prisma.product.update({ where: { id: targetId }, data: { hidden: true } });
         } else {
           await prisma.review.update({ where: { id: targetId }, data: { hidden: true } });
+          // 제재 시 해당 리뷰 적립 포인트 회수
+          await prisma.pointLog.deleteMany({ where: { refType: "review", refId: targetId } });
         }
         hidden = true;
       } catch {

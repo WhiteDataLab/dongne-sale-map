@@ -80,6 +80,7 @@ export type ReviewDTO = {
   id: string;
   rating: number;
   content: string;
+  photoUrls: string[];
   nickname: string;
   createdAt: string;
 };

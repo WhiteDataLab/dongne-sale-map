@@ -35,6 +35,8 @@ export async function hideAndResolve(formData: FormData) {
       await prisma.product.update({ where: { id: targetId }, data: { hidden: true } });
     } else if (targetType === "review") {
       await prisma.review.update({ where: { id: targetId }, data: { hidden: true } });
+      // 관리자 숨김 시 해당 리뷰 적립 포인트 회수
+      await prisma.pointLog.deleteMany({ where: { refType: "review", refId: targetId } });
     }
   } catch {
     // 대상이 이미 삭제/숨김 → 무시하고 신고만 종료

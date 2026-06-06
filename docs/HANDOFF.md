@@ -18,6 +18,7 @@ Next.js 15(App Router)·React 19·TS strict · Tailwind v4 · NextAuth v5(JWT) �
 - **추가**: 전역 버튼 micro-interaction, 이미지 hover 확대(`.zoomable`), Apple풍 소개페이지 `/about`(긴 스크롤+등장 애니메이션), **사진 편집기**(PhotoEditor v3: 펜/지우개/모자이크/줌·박스 자르기/되돌리기), **GPS 현재위치**(파란 점, 좌표 미저장), **장소검색**(카카오 POI→기존가게 열기/빠른등록), **가게 등록을 메인 지도에서 직접 좌표 찍어 인라인 등록**, **소개페이지 업로드 영상**(관리자, `SiteConfig.intro_video_url`).
 - ❌ 제거됨: 외부(YouTube) 영상 링크 — 영상은 소개페이지 업로드만.
 - **실시간 피드 오버레이(`/api/feed`)**: 현 지도 bounds의 최신 세일을 **상단 가로 광고판(마퀴 `SaleMarquee`)**, 최신 리뷰를 **좌측 유튜브 채팅식 상승+페이드 스트림(`ReviewStream`)**으로 표시. 줌아웃→bounds 확대→더 많은 데이터. idle + 18초 폴링 갱신. CSS `marquee-x`/`stream-up`+mask, `prefers-reduced-motion` 정지.
+- **리뷰 사진+포인트(migration 15, `Review.photoUrls`)**: 리뷰에 사진 최대 5장(업로드+PhotoEditor). 포인트(pending +10): **첫 리뷰는 글만 써도 지급, 2번째부터는 사진 있어야 지급**(`/api/reviews`에서 `review.count`로 판정). 리뷰 숨김(신고 자동/관리자) 시 `refType="review"` PointLog **회수**. 리뷰 목록에 사진 썸네일(zoomable).
 - **리뷰 태깅**: `ReviewForm`이 프리셋 버튼(재료 신선/양 많음/가성비/메뉴 알참/고기 질/가치있음/인테리어, 다중선택)+별점, **‘기타’ 토글 시 직접 입력**. 내용은 선택 태그+커스텀을 합쳐 저장(API 변경 없음).
 - **휴업/폐업 커뮤니티 제보(`ClosureReport`, migration 14)**: 소비자가 '오늘 갑자기 휴업'/'폐업'을 **현장 사진+메모**로 제보(`POST /api/closures`, 로그인·24h내 동종 1회 가드). **지도 핀 시각효과**: 폐업제보=검정 "폐업?"+취소선·흐림, 오늘휴업제보=주황 "오늘 휴업?"+강조테두리, 영업시간상 영업종료=회색 "영업종료"+흐림(우선순위 폐업>휴업>영업종료>세일). 목록 API가 isOpenNow·오늘휴업수·폐업수(최근14일) 계산해 StoreDTO로 전달. 가게 상세 상단에 **경고 배너(사진·제보수)+제보 버튼**(`ClosureBanner`/`ClosureReportForm`). 푸시는 Out of Scope라 '알림'=지도/상세 시각 노출.
 - **반응형 패널**: 가게 등록 폼·가게 상세시트가 모바일=하단 바텀시트(드래그/탭 높이조절), 태블릿·PC(≥768px)=왼쪽 전체높이 사이드 패널. 등록 시트는 그립 탭으로 필터바 직전까지 최대화 토글. 지도 핀 찍기 전 커서 따라다니는 미리보기 핀(ghost)+드롭 애니메이션.
@@ -31,7 +32,7 @@ Next.js 15(App Router)·React 19·TS strict · Tailwind v4 · NextAuth v5(JWT) �
 - **서비스 소개(/about) 관리자 편집(CMS-lite)**: 콘텐츠를 `SiteConfig(about_content)` JSON으로 저장(`src/lib/about.ts` 모델+기본값, 없으면 폴백). `/about`에서 관리자에게만 '✏️ 소개 편집' 버튼(`AboutEditor`) → 히어로 글·콘텐츠 섹션(추가/삭제/순서/이미지 업로드/이모지·다크)·영상·마무리 편집. 저장 `POST /api/admin/about`(admin), 이미지=`/api/upload`(sale-photos), 영상=`/api/admin/intro-video`. '믿을 수 있게' 가치 카드 3개는 고정.
 - 프로필 사진(메뉴) 열면 지도에 열린 등록/상세 패널 자동 닫힘(`window` `app:overlay-close` 이벤트).
 
-## 4. 데이터 모델 (Prisma, migrations 0~14 적용 완료)
+## 4. 데이터 모델 (Prisma, migrations 0~15 적용 완료)
 User(provider?/providerId? nullable, name?, nickname, phone? unique, phoneVerified, role `user|admin|merchant`, status `active|banned`, points) · **Identity**(provider/providerId→user, 계정연결 단일출처) · Store(category `vegetable|meat|fruit|laundry|sidedish|salon|etc`, lat/lng, verified, **source `user|merchant`**, **ownerId?**, bannerUrl?, **notice?**(공지사항, 소유자/관리자만 편집), hoursJson?, status) · Product(photoUrl?, hidden, updatedAt) · Sale(photoUrls[], status, expiresAt) · Review(hidden) · Favorite · Report(targetType `store|sale|review|product`, 누적 3건 자동숨김) · PointLog(status pending|granted, refType/refId) · MerchantVerification(docPath) · PhoneVerification(codeHash) · **SiteConfig**(key/value).
 - 포인트 잔액 출처 = PointLog 합계(<5년). 세일 삭제/숨김/제재 시 해당 PointLog **회수**.
 - ⚠️ **정합 규칙**: "사장님 가게" 판정·표시는 **`ownerId`(hasOwner) 기준**(인증 소유자 유무). `source`는 등록 출처 메타일 뿐. `approveMerchant`는 `ownerId+source=merchant+verified`를 **함께** 세팅하므로 둘이 항상 일치해야 함. (과거 시드가 `source=merchant`만 주고 ownerId 누락 → 상세는 "사장님 가게", 상품탭은 "사장님 미등록" 모순. 시드/라이브 데이터 모두 소유자 지정으로 복구함.)

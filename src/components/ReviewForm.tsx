@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { PhotoEditor } from "./PhotoEditor";
 
 /** 버튼/태깅 리뷰 프리셋. 누르면 선택되고, 여러 개 선택 가능. */
 const REVIEW_TAGS = [
@@ -13,7 +14,9 @@ const REVIEW_TAGS = [
   "인테리어가 멋져요",
 ];
 
-/** 리뷰 작성/평점 폼 (스펙 Phase 3 + 태깅 리뷰). */
+const MAX_PHOTOS = 5;
+
+/** 리뷰 작성 폼 (태깅 + 사진 + 포인트 정책). */
 export function ReviewForm({
   storeId,
   onDone,
@@ -29,16 +32,44 @@ export function ReviewForm({
   const [selected, setSelected] = useState<string[]>([]);
   const [showCustom, setShowCustom] = useState(false);
   const [custom, setCustom] = useState("");
+  const [files, setFiles] = useState<File[]>([]);
+  const [previews, setPreviews] = useState<string[]>([]);
+  const [editIdx, setEditIdx] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const toggle = (tag: string) =>
     setSelected((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]));
 
-  // 최종 리뷰 내용 = 선택 태그 + (기타) 직접 입력
   const buildContent = () => {
     const parts = [...selected];
     if (showCustom && custom.trim()) parts.push(custom.trim());
     return parts.join(", ");
+  };
+
+  const addFiles = (list: FileList | null) => {
+    if (!list) return;
+    const room = MAX_PHOTOS - files.length;
+    if (room <= 0) return onToast(`사진은 최대 ${MAX_PHOTOS}장이에요.`);
+    const picked = Array.from(list).slice(0, room);
+    const firstNew = files.length;
+    setFiles((f) => [...f, ...picked]);
+    setPreviews((p) => [...p, ...picked.map((f) => URL.createObjectURL(f))]);
+    setEditIdx(firstNew);
+  };
+  const replaceAt = (i: number, f: File) => {
+    setFiles((arr) => arr.map((x, idx) => (idx === i ? f : x)));
+    setPreviews((arr) => {
+      URL.revokeObjectURL(arr[i]);
+      return arr.map((x, idx) => (idx === i ? URL.createObjectURL(f) : x));
+    });
+  };
+  const removeAt = (i: number) => {
+    setFiles((f) => f.filter((_, idx) => idx !== i));
+    setPreviews((p) => {
+      URL.revokeObjectURL(p[i]);
+      return p.filter((_, idx) => idx !== i);
+    });
   };
 
   const submit = async () => {
@@ -46,17 +77,37 @@ export function ReviewForm({
     if (!content) return onToast("태그를 고르거나 ‘기타’로 직접 입력해 주세요.");
     setSubmitting(true);
     try {
+      // 사진 업로드(개별)
+      const photoUrls: string[] = [];
+      for (const f of files) {
+        const fd = new FormData();
+        fd.append("file", f);
+        const up = await fetch("/api/upload", { method: "POST", body: fd });
+        if (!up.ok) {
+          const e = (await up.json().catch(() => ({}))) as { error?: string };
+          onToast(up.status === 401 ? "로그인이 필요해요." : e.error ?? "사진 업로드 실패");
+          return;
+        }
+        const { url } = (await up.json()) as { url: string };
+        photoUrls.push(url);
+      }
+
       const res = await fetch("/api/reviews", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ storeId, rating, content }),
+        body: JSON.stringify({ storeId, rating, content, photoUrls }),
       });
       if (!res.ok) {
         const e = (await res.json().catch(() => ({}))) as { error?: string };
         onToast(res.status === 401 ? "로그인이 필요해요." : e.error ?? "등록 실패");
         return;
       }
-      onToast("리뷰가 등록됐어요. 고마워요!");
+      const { pointPending } = (await res.json()) as { pointPending?: number };
+      onToast(
+        pointPending && pointPending > 0
+          ? `리뷰 등록! 적립 대기 +${pointPending}P`
+          : "리뷰 등록 완료! 다음부터는 사진을 함께 올리면 10P 받아요.",
+      );
       onDone();
     } catch {
       onToast("네트워크 오류가 발생했어요.");
@@ -123,7 +174,6 @@ export function ReviewForm({
         </button>
       </div>
 
-      {/* 기타: 직접 입력 */}
       {showCustom && (
         <textarea
           value={custom}
@@ -135,6 +185,56 @@ export function ReviewForm({
         />
       )}
 
+      {/* 사진 (선택, 최대 5장) */}
+      <div className="grid grid-cols-4 gap-2">
+        {previews.map((src, i) => (
+          <div key={src} className="relative aspect-square overflow-hidden rounded-lg bg-gray-100">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={src} alt="" className="h-full w-full object-cover" />
+            <button
+              type="button"
+              onClick={() => removeAt(i)}
+              aria-label="삭제"
+              className="absolute right-1 top-1 flex size-5 items-center justify-center rounded-full bg-black/60 text-xs text-white"
+            >
+              ×
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditIdx(i)}
+              className="absolute bottom-1 left-1 rounded bg-black/60 px-1 py-0.5 text-[9px] text-white"
+            >
+              편집
+            </button>
+          </div>
+        ))}
+        {files.length < MAX_PHOTOS && (
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            className="flex aspect-square flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-white text-[10px] text-gray-400"
+          >
+            <span className="text-lg">📷</span>
+            사진
+          </button>
+        )}
+      </div>
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        multiple
+        className="hidden"
+        onChange={(e) => {
+          addFiles(e.target.files);
+          e.target.value = "";
+        }}
+      />
+
+      <p className="rounded-lg bg-blue-50 px-3 py-2 text-xs text-blue-700">
+        💡 첫 리뷰는 글만 써도 10P! 그 다음부터는 <b>사진과 함께</b> 작성하면 10P를 받아요.
+      </p>
+
       <button
         type="button"
         onClick={submit}
@@ -143,6 +243,17 @@ export function ReviewForm({
       >
         {submitting ? "등록 중…" : "리뷰 등록"}
       </button>
+
+      {editIdx !== null && files[editIdx] && (
+        <PhotoEditor
+          file={files[editIdx]}
+          onSave={(f) => {
+            replaceAt(editIdx, f);
+            setEditIdx(null);
+          }}
+          onCancel={() => setEditIdx(null)}
+        />
+      )}
     </div>
   );
 }

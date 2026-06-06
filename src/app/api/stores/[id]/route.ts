@@ -134,6 +134,7 @@ export async function GET(
         id: r.id,
         rating: r.rating,
         content: r.content,
+        photoUrls: r.photoUrls,
         nickname: r.user.nickname,
         createdAt: r.createdAt.toISOString(),
       })),

@@ -1284,6 +1284,16 @@ function ReviewsTab({
                 <span className="text-amber-500 text-sm">{starString(r.rating)}</span>
               </div>
               <p className="mt-1 text-sm text-gray-700">{r.content}</p>
+              {r.photoUrls?.length > 0 && (
+                <div className="mt-1.5 flex gap-1.5 overflow-x-auto">
+                  {r.photoUrls.map((u, i) => (
+                    <div key={i} className="zoomable size-20 shrink-0 overflow-hidden rounded-lg bg-gray-100">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={u} alt="" className="size-full object-cover" />
+                    </div>
+                  ))}
+                </div>
+              )}
               <div className="mt-1">
                 <ReportButton
                   targetType="review"
