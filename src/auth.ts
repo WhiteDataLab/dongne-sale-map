@@ -115,6 +115,7 @@ export const authConfig: NextAuthConfig = {
               token.role = u.role;
               token.points = u.points;
               token.nickname = u.nickname;
+              token.picture = u.profileImgUrl ?? null;
             }
             return token;
           }

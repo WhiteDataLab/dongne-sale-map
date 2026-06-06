@@ -54,6 +54,7 @@ export function MapExplorer() {
   const [registerMode, setRegisterMode] = useState(false);
   const [picked, setPicked] = useState<{ lat: number; lng: number; address: string } | null>(null);
   const [feed, setFeed] = useState<{ sales: FeedSale[]; reviews: FeedReview[] }>({ sales: [], reviews: [] });
+  const feedSigRef = useRef("");
   const router = useRouter();
 
   const registerModeRef = useRef(false);
@@ -116,7 +117,14 @@ export function MapExplorer() {
     try {
       const res = await fetch(`/api/feed?${params.toString()}`);
       const data = (await res.json()) as { sales?: FeedSale[]; reviews?: FeedReview[] };
-      setFeed({ sales: data.sales ?? [], reviews: data.reviews ?? [] });
+      const sales = data.sales ?? [];
+      const reviews = data.reviews ?? [];
+      // 데이터가 동일하면 갱신 생략 → 마퀴/스트림 애니메이션이 폴링마다 끊기지 않게
+      const sig = `${sales.map((s) => s.id).join(",")}|${reviews.map((r) => r.id).join(",")}`;
+      if (sig !== feedSigRef.current) {
+        feedSigRef.current = sig;
+        setFeed({ sales, reviews });
+      }
     } catch {
       // 무시(피드는 부가 효과)
     }

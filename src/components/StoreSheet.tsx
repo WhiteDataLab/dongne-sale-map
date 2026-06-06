@@ -475,62 +475,58 @@ function ClosureBanner({
   const today = reports.filter((r) => r.kind === "closed_today");
   const has = reports.length > 0;
 
+  // 제보가 없으면 공간을 적게 차지하는 작은 링크만 노출
+  if (!has) {
+    return (
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={onReport}
+          className="text-xs text-gray-400 underline-offset-2 hover:text-amber-600 hover:underline"
+        >
+          🚪 휴업/폐업 제보
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div
       className={[
         "rounded-xl border p-3",
-        shutdown.length > 0
-          ? "border-gray-800 bg-gray-100"
-          : today.length > 0
-            ? "border-amber-300 bg-amber-50"
-            : "border-gray-200 bg-gray-50",
+        shutdown.length > 0 ? "border-gray-800 bg-gray-100" : "border-amber-300 bg-amber-50",
       ].join(" ")}
     >
-      {has ? (
-        <>
-          <p className="text-sm font-semibold">
-            {shutdown.length > 0 ? "🚫 폐업 제보가 있어요" : "⚠️ 오늘 휴업 제보가 있어요"}
-          </p>
-          <p className="mt-0.5 text-xs text-gray-500">
-            {shutdown.length > 0 && `폐업 제보 ${shutdown.length}건`}
-            {shutdown.length > 0 && today.length > 0 && " · "}
-            {today.length > 0 && `오늘 휴업 제보 ${today.length}건`} · 이웃 제보(미확정)
-          </p>
-          {/* 최근 제보 사진 */}
-          {reports.some((r) => r.photoUrl) && (
-            <div className="mt-2 flex gap-2 overflow-x-auto">
-              {reports
-                .filter((r) => r.photoUrl)
-                .slice(0, 5)
-                .map((r) => (
-                  <div key={r.id} className="shrink-0">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={r.photoUrl ?? ""}
-                      alt=""
-                      className="size-16 rounded-lg object-cover"
-                    />
-                    <p className="mt-0.5 w-16 truncate text-[10px] text-gray-400">{r.nickname}</p>
-                  </div>
-                ))}
-            </div>
-          )}
-          {reports.find((r) => r.note) && (
-            <p className="mt-1 text-xs text-gray-600">
-              “{reports.find((r) => r.note)?.note}”
-            </p>
-          )}
-        </>
-      ) : (
-        <p className="text-sm text-gray-500">갑자기 문을 닫았거나 폐업한 가게인가요?</p>
+      <p className="text-sm font-semibold">
+        {shutdown.length > 0 ? "🚫 폐업 제보가 있어요" : "⚠️ 오늘 휴업 제보가 있어요"}
+      </p>
+      <p className="mt-0.5 text-xs text-gray-500">
+        {shutdown.length > 0 && `폐업 제보 ${shutdown.length}건`}
+        {shutdown.length > 0 && today.length > 0 && " · "}
+        {today.length > 0 && `오늘 휴업 제보 ${today.length}건`} · 이웃 제보(미확정)
+      </p>
+      {/* 최근 제보 사진 */}
+      {reports.some((r) => r.photoUrl) && (
+        <div className="mt-2 flex gap-2 overflow-x-auto">
+          {reports
+            .filter((r) => r.photoUrl)
+            .slice(0, 5)
+            .map((r) => (
+              <div key={r.id} className="shrink-0">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={r.photoUrl ?? ""} alt="" className="size-16 rounded-lg object-cover" />
+                <p className="mt-0.5 w-16 truncate text-[10px] text-gray-400">{r.nickname}</p>
+              </div>
+            ))}
+        </div>
+      )}
+      {reports.find((r) => r.note) && (
+        <p className="mt-1 text-xs text-gray-600">“{reports.find((r) => r.note)?.note}”</p>
       )}
       <button
         type="button"
         onClick={onReport}
-        className={[
-          "mt-2 w-full rounded-lg py-2 text-sm font-medium",
-          has ? "bg-amber-600 text-white hover:bg-amber-700" : "border border-amber-300 text-amber-700 hover:bg-amber-50",
-        ].join(" ")}
+        className="mt-2 w-full rounded-lg bg-amber-600 py-2 text-sm font-medium text-white hover:bg-amber-700"
       >
         🚪 휴업/폐업 제보하기
       </button>

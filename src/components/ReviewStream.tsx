@@ -22,7 +22,11 @@ export function ReviewStream({ reviews }: { reviews: FeedReview[] }) {
   if (reviews.length === 0) return null;
   // 모바일은 더 적게 노출(지도 가림 최소화)
   const base = reviews.slice(0, isMobile ? 5 : 12);
-  const items = [...base, ...base];
+  // 항목이 적어도 세로로 끊김 없이 흐르도록 한 그룹을 충분히 채운 뒤 2배 복제
+  const minPerHalf = isMobile ? 7 : 10;
+  const repeat = Math.max(1, Math.ceil(minPerHalf / base.length));
+  const half = Array.from({ length: repeat }, () => base).flat();
+  const items = [...half, ...half];
 
   return (
     <div className="stream-mask pointer-events-none h-full w-full overflow-hidden">
