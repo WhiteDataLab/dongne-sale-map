@@ -32,6 +32,28 @@ export function isPublicStorageUrl(url: string): boolean {
   return url.startsWith(`${SUPABASE_URL}/storage/v1/object/public/`);
 }
 
+/** 공개 스토리지 이미지 삭제(용량 정리). 우리 URL만, 실패해도 무시(best-effort). */
+export async function deletePublicImage(url: string | null | undefined): Promise<void> {
+  if (!url || !storageConfigured() || !isPublicStorageUrl(url)) return;
+  const marker = "/storage/v1/object/public/";
+  const idx = url.indexOf(marker);
+  if (idx === -1) return;
+  const bucketAndPath = url.slice(idx + marker.length); // {bucket}/{path}
+  try {
+    await fetch(`${SUPABASE_URL}/storage/v1/object/${bucketAndPath}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${SERVICE_KEY}` },
+    });
+  } catch {
+    // 정리 실패는 무시
+  }
+}
+
+/** 여러 장 한 번에 정리. */
+export async function deletePublicImages(urls: (string | null | undefined)[]): Promise<void> {
+  await Promise.all(urls.map((u) => deletePublicImage(u)));
+}
+
 /** 이미지 업로드 → 공개 URL 반환. */
 export async function uploadSaleImage(
   data: ArrayBuffer,

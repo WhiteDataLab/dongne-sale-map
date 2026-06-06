@@ -108,6 +108,7 @@ model User {
   phone         String?    @unique // 전화번호 로그인용 (Phase 5)
   phoneVerified Boolean    @default(false)
   contactPhone  String? // 기프티콘 수령 연락처(로그인 전화와 별개, 중복 허용)
+  contactVerified Boolean @default(false) // 연락처 SMS 인증 여부(추천 보상 조건)
   role          UserRole   @default(user)
   status        UserStatus @default(active)
   points        Int        @default(0) // 표시용 (실지급 보류, 적립은 전부 PointLog.pending)

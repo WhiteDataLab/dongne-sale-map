@@ -21,7 +21,7 @@ Next.js 15(App Router)·React 19·TS strict · Tailwind v4 · NextAuth v5(JWT) �
 - **가게별 공유 URL(`/s/[id]`)**: 지도 없이 가게 세일 정보 바로 노출하는 공개 랜딩(서버 렌더). `generateMetadata`로 OG/트위터 카드(제목·세일·대표사진) → 카톡 등 링크 미리보기. "지도에서 자세히 보기"=딥링크(`/?store=&lat=&lng=`). `ShareButton`(Web Share API→클립보드 폴백)을 공유 페이지·가게 상세 헤더에 배치.
 - **실시간 피드 오버레이(`/api/feed`)**: 현 지도 bounds의 최신 세일을 **상단 가로 광고판(마퀴 `SaleMarquee`)**, 최신 리뷰를 **좌측 유튜브 채팅식 상승+페이드 스트림(`ReviewStream`)**으로 표시. 줌아웃→bounds 확대→더 많은 데이터. idle + 18초 폴링 갱신. CSS `marquee-x`/`stream-up`+mask, `prefers-reduced-motion` 정지.
 - **추천인 이벤트(`/invite`, migration 18)**: `User.referralCode`(unique, 지연 생성 `ensureReferralCode`)·`referredById`(self FK). 친구가 **초대 링크 `/i/CODE`**(ref_code 쿠키 7일)로 **카카오·네이버·전화 가입 시** auth 콜백이 쿠키 읽어 `applyReferral`→**추천인·친구 각 +50P**(PointLog refType=referral). 링크 없이 가입한 회원은 `/invite`에서 **코드 직접 입력**(`POST /api/referral`, 가입 7일내+미등록+본인아님 가드). 1인 1회. 사이드 메뉴 '🎉 친구 초대'.
-  - **악용 방어(migration 19, `User.referralRewarded`+`ReferralClaim`)**: 보상은 **연락처 등록 시점에만** 지급(`grantReferralIfEligible`, 가입 시엔 관계만=pending). **연락처(전화) 해시를 영구 원장**에 기록 → **탈퇴 후 재가입 + 같은 연락처면 미지급**(원장은 User 삭제와 무관히 잔존). 이미 사용된 연락처면 `referralRewarded=true`로 **소진 처리**(다른 연락처로 우회 차단). 연락처 미등록이면 양쪽 미지급. ⚠️ 남은 한계: 매번 **새 가짜 전화번호**로는 우회 가능(연락처 미인증) — 단, 그 번호로 기프티콘 발송돼 운영자가 인지 가능. 소셜 다계정도 완전차단 불가.
+  - **악용 방어(migration 19/23, `User.referralRewarded`+`ReferralClaim`+`contactVerified`)**: 보상은 **SMS 인증된 연락처** 등록 시점에만 지급(`grantReferralIfEligible`, 가입 시엔 관계만=pending). 연락처는 `ContactVerifyForm`(phone/send+verify→`saveVerifiedContact`)로만 등록 가능(인증 필수). **연락처(전화) 해시를 영구 원장**에 기록 → **탈퇴 후 재가입 + 같은 연락처면 미지급**(원장은 User 삭제와 무관히 잔존). 이미 사용된 연락처면 `referralRewarded=true`로 **소진 처리**(다른 연락처로 우회 차단). 연락처 미등록이면 양쪽 미지급. ⚠️ 남은 한계: 매번 **새 가짜 전화번호**로는 우회 가능(연락처 미인증) — 단, 그 번호로 기프티콘 발송돼 운영자가 인지 가능. 소셜 다계정도 완전차단 불가.
 - **고객센터 1:1 문의(`/support`, migration 22 `Inquiry`)**: 로그인 사용자가 닉네임·이메일·제목·내용·첨부이미지로 문의(`POST /api/inquiries`, 레이트리밋, 이미지=storage URL). 내 문의 목록을 `<details>`로 펼쳐 답변 확인(상태 문의중/답변완료). 관리자 `/admin/inquiries`에서 확인+답변(`answerInquiry`→status=answered). 사이드 메뉴 '🎧 고객센터', 관리 네비/홈(미답변 N).
 - **기프티콘 상품 관리(`/admin/gifts`, migration 21 `GiftItem`)**: 카탈로그를 코드 하드코딩→**DB(GiftItem)** 로 이관(기본 6종 시드). 관리자 **추가/수정/삭제/이미지 업로드/노출토글/정렬**(`GiftAdmin` + `POST/PATCH/DELETE /api/admin/gifts[/id]`, 이미지=storage URL 검증). 포인트샵·교환 API는 `getActiveGifts`/`getGiftItem`(DB)로 조회(비활성·삭제 상품 교환 차단). 과거 교환은 itemName/points 스냅샷 보존.
 - **포인트샵/기프티콘 교환(`/shop`, migration 17)**: 카탈로그=DB(GiftItem, 위 항목), 포인트=원. `POST /api/redemptions`: 연락처(`User.contactPhone`) 필수→없으면 409 needContact, 트랜잭션 내 잔액 재확인, **음수 PointLog(refType=redemption)로 차감** + `Redemption(requested)` 주문. 발송은 **관리자 수동**(`/admin/redemptions`: 발송완료/취소-환원, 취소 시 음수로그 삭제로 환원). 마이페이지=연락처 등록(`updateContact`)+교환 내역. ⚠️ 포인트가 이제 **소비(음수)**도 되므로 잔액=PointLog 합계에 음수 포함. 실제 기프티콘 구매·발송은 외부 전문샵 수동 운영(API 연동 미구현).
@@ -43,7 +43,7 @@ Next.js 15(App Router)·React 19·TS strict · Tailwind v4 · NextAuth v5(JWT) �
 - **서비스 소개(/about) 관리자 편집(CMS-lite)**: 콘텐츠를 `SiteConfig(about_content)` JSON으로 저장(`src/lib/about.ts` 모델+기본값, 없으면 폴백). `/about`에서 관리자에게만 '✏️ 소개 편집' 버튼(`AboutEditor`) → 히어로 글·콘텐츠 섹션(추가/삭제/순서/이미지 업로드/이모지·다크)·영상·마무리 편집. 저장 `POST /api/admin/about`(admin), 이미지=`/api/upload`(sale-photos), 영상=`/api/admin/intro-video`. '믿을 수 있게' 가치 카드 3개는 고정.
 - 프로필 사진(메뉴) 열면 지도에 열린 등록/상세 패널 자동 닫힘(`window` `app:overlay-close` 이벤트).
 
-## 4. 데이터 모델 (Prisma, migrations 0~22 적용 완료)
+## 4. 데이터 모델 (Prisma, migrations 0~23 적용 완료)
 User(provider?/providerId? nullable, name?, nickname, phone? unique, phoneVerified, role `user|admin|merchant`, status `active|banned`, points) · **Identity**(provider/providerId→user, 계정연결 단일출처) · Store(category `vegetable|meat|fruit|laundry|sidedish|salon|etc`, lat/lng, verified, **source `user|merchant`**, **ownerId?**, bannerUrl?, **notice?**(공지사항, 소유자/관리자만 편집), hoursJson?, status) · Product(photoUrl?, hidden, updatedAt) · Sale(photoUrls[], status, expiresAt) · Review(hidden) · Favorite · Report(targetType `store|sale|review|product`, 누적 3건 자동숨김) · PointLog(status pending|granted, refType/refId) · MerchantVerification(docPath) · PhoneVerification(codeHash) · **SiteConfig**(key/value).
 - 포인트 잔액 출처 = PointLog 합계(<5년). 세일 삭제/숨김/제재 시 해당 PointLog **회수**.
 - ⚠️ **정합 규칙**: "사장님 가게" 판정·표시는 **`ownerId`(hasOwner) 기준**(인증 소유자 유무). `source`는 등록 출처 메타일 뿐. `approveMerchant`는 `ownerId+source=merchant+verified`를 **함께** 세팅하므로 둘이 항상 일치해야 함. (과거 시드가 `source=merchant`만 주고 ownerId 누락 → 상세는 "사장님 가게", 상품탭은 "사장님 미등록" 모순. 시드/라이브 데이터 모두 소유자 지정으로 복구함.)
@@ -54,6 +54,7 @@ User(provider?/providerId? nullable, name?, nickname, phone? unique, phoneVerifi
 - **가짜 사진으로 포인트 우회 차단**: 세일·리뷰·메뉴·휴업제보·프로필·배너 사진 URL은 **우리 공개 스토리지 URL(`isPublicStorageUrl`)만 인정**(외부/위조 URL 거부).
 - **신고 악용 차단**: 같은 사용자가 같은 대상 **중복 신고 불가** → 자동숨김 임계치(3)는 '서로 다른 신고자 수' 기준.
 - **업로드**: 서버 경유(service_role 키 비노출), 이미지 화이트리스트(png/jpg/webp/gif, **SVG 불가**)+5MB. 민감문서(사업자등록증)=비공개 버킷+단기 서명URL.
+- **이미지 용량 정리**: 배너/프로필 사진 교체·삭제, 메뉴/리뷰/세일 삭제, 기프티콘 상품 이미지 교체·삭제 시 **이전/해당 스토리지 이미지 삭제**(`deletePublicImage`/`deletePublicImages`, best-effort). 공개 URL→`{bucket}/{path}` 파싱 후 service_role로 DELETE.
 - 잔여 위험(낮음): 업로드 자체 레이트리밋 없음(고아 이미지 누적 가능), 토큰 maxAge 동안 닉네임/이미지 지연.
 
 ## 5. 인프라/시크릿

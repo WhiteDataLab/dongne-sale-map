@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAdminSession } from "@/lib/admin";
-import { isPublicStorageUrl } from "@/lib/supabaseStorage";
+import { isPublicStorageUrl, deletePublicImage } from "@/lib/supabaseStorage";
 
 /** 기프티콘 상품 수정/삭제 — 관리자 전용. */
 export const runtime = "nodejs";
@@ -48,7 +48,11 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   if (b.sortOrder !== undefined && Number.isInteger(b.sortOrder)) data.sortOrder = b.sortOrder;
 
   try {
+    const prev = await prisma.giftItem.findUnique({ where: { id }, select: { imageUrl: true } });
     await prisma.giftItem.update({ where: { id }, data });
+    if (b.imageUrl !== undefined && prev?.imageUrl && prev.imageUrl !== (b.imageUrl || null)) {
+      await deletePublicImage(prev.imageUrl);
+    }
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ error: "수정에 실패했어요." }, { status: 500 });
@@ -61,7 +65,9 @@ export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: str
   }
   const { id } = await ctx.params;
   try {
+    const prev = await prisma.giftItem.findUnique({ where: { id }, select: { imageUrl: true } });
     await prisma.giftItem.delete({ where: { id } });
+    await deletePublicImage(prev?.imageUrl);
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ error: "삭제에 실패했어요." }, { status: 500 });

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 import { canManageMenu } from "@/lib/menu";
+import { deletePublicImage } from "@/lib/supabaseStorage";
 
 /** 메뉴(상품) 수정/삭제 (스펙 Phase 7b). 권한: canManageMenu. */
 export const runtime = "nodejs";
@@ -43,14 +44,18 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     await prisma.product.update({
       where: { id },
       data: {
-        ...(body.name !== undefined ? { name: body.name.trim() } : {}),
+        ...(body.name !== undefined ? { name: body.name.trim().slice(0, 100) } : {}),
         ...(typeof body.price === "number" ? { price: body.price } : {}),
-        ...(body.qtyUnit !== undefined ? { qtyUnit: body.qtyUnit.trim() } : {}),
+        ...(body.qtyUnit !== undefined ? { qtyUnit: body.qtyUnit.trim().slice(0, 40) } : {}),
         ...(body.photoUrl !== undefined ? { photoUrl: body.photoUrl } : {}),
-        ...(body.origin !== undefined ? { origin: body.origin?.trim() || null } : {}),
+        ...(body.origin !== undefined ? { origin: body.origin?.trim().slice(0, 60) || null } : {}),
         ...(body.stock !== undefined ? { stock: body.stock } : {}),
       },
     });
+    // 사진이 교체됐으면 이전 사진 정리
+    if (body.photoUrl !== undefined && auth.product.photoUrl && auth.product.photoUrl !== body.photoUrl) {
+      await deletePublicImage(auth.product.photoUrl);
+    }
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ error: "수정에 실패했어요." }, { status: 500 });
@@ -64,6 +69,7 @@ export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: str
 
   try {
     await prisma.product.delete({ where: { id } });
+    await deletePublicImage(auth.product.photoUrl);
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ error: "삭제에 실패했어요." }, { status: 500 });

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { isPublicStorageUrl } from "@/lib/supabaseStorage";
+import { isPublicStorageUrl, deletePublicImage } from "@/lib/supabaseStorage";
 import { getCurrentUser } from "@/lib/session";
 import { canManageMenu, canManageStore } from "@/lib/menu";
 import { asStoreHours, isOpenNow, kstTodayStart } from "@/lib/businessHours";
@@ -231,6 +231,10 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
       data.hoursJson = h === null ? Prisma.JsonNull : h;
     }
     await prisma.store.update({ where: { id }, data });
+    // 배너가 바뀌었으면 이전 배너 이미지 정리(용량 절약)
+    if ("bannerUrl" in body && store.bannerUrl && store.bannerUrl !== (body.bannerUrl ?? null)) {
+      await deletePublicImage(store.bannerUrl);
+    }
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ error: "변경에 실패했어요." }, { status: 500 });

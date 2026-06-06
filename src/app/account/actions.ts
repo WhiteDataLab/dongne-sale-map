@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { auth, signIn, signOut, unstable_update } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { isPublicStorageUrl } from "@/lib/supabaseStorage";
+import { isPublicStorageUrl, deletePublicImage } from "@/lib/supabaseStorage";
 import { normalizePhone } from "@/lib/sms";
 import { grantReferralIfEligible } from "@/lib/referral";
 
@@ -21,21 +21,43 @@ export async function updateNickname(formData: FormData) {
   revalidatePath("/account");
 }
 
-/** 기프티콘 수령 연락처 등록/수정 (마이페이지). 빈 값이면 삭제. */
-export async function updateContact(formData: FormData) {
+/** 연락처 삭제 (마이페이지). */
+export async function removeContact() {
   const session = await auth();
   const userId = session?.user?.id;
   if (!userId) return;
-  const raw = String(formData.get("contact") ?? "").trim();
-  if (!raw) {
-    await prisma.user.update({ where: { id: userId }, data: { contactPhone: null } });
-    revalidatePath("/account");
-    return;
-  }
-  const phone = normalizePhone(raw);
-  if (!phone) return; // 형식 오류 → 무시(클라에서 안내)
-  await prisma.user.update({ where: { id: userId }, data: { contactPhone: phone } });
-  // 연락처가 등록되면 보류된 추천 보상 지급 시도(영구 원장으로 재사용 차단)
+  await prisma.user.update({
+    where: { id: userId },
+    data: { contactPhone: null, contactVerified: false },
+  });
+  revalidatePath("/account");
+}
+
+/**
+ * SMS 인증을 마친 연락처 저장 (마이페이지).
+ * 해당 번호로 verified=true 인 PhoneVerification 이 있어야 저장된다(인증 증명).
+ * 저장 시 보류된 추천 보상 지급(인증 연락처만 보상).
+ */
+export async function saveVerifiedContact(rawPhone: string): Promise<{ ok: boolean; error?: string }> {
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) return { ok: false, error: "login_required" };
+  const phone = normalizePhone(rawPhone);
+  if (!phone) return { ok: false, error: "번호 형식을 확인해 주세요." };
+
+  // 최근 인증 완료된 기록 확인
+  const rec = await prisma.phoneVerification.findFirst({
+    where: { phone, verified: true, expiresAt: { gt: new Date() } },
+    orderBy: { createdAt: "desc" },
+  });
+  if (!rec) return { ok: false, error: "휴대폰 인증을 먼저 완료해 주세요." };
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { contactPhone: phone, contactVerified: true },
+  });
+  await prisma.phoneVerification.deleteMany({ where: { phone } }); // 1회용 소비
+
   try {
     await grantReferralIfEligible(userId);
   } catch {
@@ -43,6 +65,7 @@ export async function updateContact(formData: FormData) {
   }
   revalidatePath("/account");
   revalidatePath("/invite");
+  return { ok: true };
 }
 
 /** 프로필 사진 변경/삭제 (마이페이지). 세션 토큰도 갱신해 헤더/표시에 즉시 반영. */
@@ -52,7 +75,12 @@ export async function updateProfileImage(url: string | null) {
   if (!userId) return;
   // 우리 스토리지 URL 또는 제거(null)만 허용(외부/위조 URL 차단)
   if (url !== null && !isPublicStorageUrl(url)) return;
+  const prev = await prisma.user.findUnique({ where: { id: userId }, select: { profileImgUrl: true } });
   await prisma.user.update({ where: { id: userId }, data: { profileImgUrl: url } });
+  // 이전 프로필 사진 정리(바뀐 경우)
+  if (prev?.profileImgUrl && prev.profileImgUrl !== url) {
+    await deletePublicImage(prev.profileImgUrl);
+  }
   await unstable_update({ user: {} }); // jwt trigger="update" → DB 의 profileImgUrl 재반영
   revalidatePath("/account");
 }

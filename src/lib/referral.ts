@@ -47,9 +47,10 @@ export async function ensureReferralCode(userId: string): Promise<string> {
 export async function grantReferralIfEligible(userId: string): Promise<boolean> {
   const u = await prisma.user.findUnique({
     where: { id: userId },
-    select: { referredById: true, referralRewarded: true, contactPhone: true },
+    select: { referredById: true, referralRewarded: true, contactPhone: true, contactVerified: true },
   });
-  if (!u || !u.referredById || u.referralRewarded || !u.contactPhone) return false;
+  // SMS 인증된 연락처가 있어야 보상(미인증/미등록이면 미지급)
+  if (!u || !u.referredById || u.referralRewarded || !u.contactPhone || !u.contactVerified) return false;
 
   const hash = hashContact(u.contactPhone);
   const claimed = await prisma.referralClaim.findUnique({ where: { contactHash: hash } });

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
+import { deletePublicImages } from "@/lib/supabaseStorage";
 
 /**
  * 세일 제보 삭제 (작성자 본인 또는 관리자).
@@ -15,7 +16,10 @@ export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: str
   if (!user) return NextResponse.json({ error: "login_required" }, { status: 401 });
 
   try {
-    const sale = await prisma.sale.findUnique({ where: { id }, select: { createdById: true } });
+    const sale = await prisma.sale.findUnique({
+      where: { id },
+      select: { createdById: true, photoUrl: true, photoUrls: true },
+    });
     if (!sale) return NextResponse.json({ error: "세일을 찾을 수 없어요." }, { status: 404 });
     if (sale.createdById !== user.id && user.role !== "admin") {
       return NextResponse.json({ error: "삭제할 권한이 없어요." }, { status: 403 });
@@ -26,6 +30,7 @@ export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: str
       await tx.sale.delete({ where: { id } });
       return r.count;
     });
+    await deletePublicImages([sale.photoUrl, ...(sale.photoUrls ?? [])]);
 
     return NextResponse.json({ ok: true, revokedPointLogs: revoked });
   } catch {

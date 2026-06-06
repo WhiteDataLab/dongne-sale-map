@@ -3,8 +3,9 @@ import { cookies } from "next/headers";
 import { auth, signIn } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { POINT_EXPIRY_YEARS, POINT_HISTORY_YEARS, yearsAgo } from "@/lib/points";
-import { deleteAccount, startLink, updateNickname, updateContact } from "./actions";
+import { deleteAccount, startLink, updateNickname } from "./actions";
 import { ProfileAvatarEditor } from "@/components/ProfileAvatarEditor";
+import { ContactVerifyForm } from "@/components/ContactVerifyForm";
 import { DeleteReviewButton } from "@/components/DeleteReviewButton";
 import { starString } from "@/lib/format";
 
@@ -181,30 +182,14 @@ export default async function AccountPage() {
           </div>
         </section>
 
-        {/* 기프티콘 수령 연락처 */}
+        {/* 기프티콘 수령 연락처 (SMS 인증) */}
         <section id="contact">
           <h2 className="mb-2 text-sm font-semibold text-gray-700">기프티콘 수령 연락처</h2>
           <div className="rounded-xl border border-gray-200 p-4">
-            <p className="text-xs text-gray-400">
-              포인트로 기프티콘을 교환하면 이 연락처(문자)로 보내드려요.
+            <p className="mb-2 text-xs text-gray-400">
+              포인트로 기프티콘을 교환하면 이 연락처(문자)로 보내드려요. 추천 보상은 <b>SMS 인증된 연락처</b>에만 지급돼요.
             </p>
-            <form action={updateContact} className="mt-2 flex gap-2">
-              <input
-                name="contact"
-                type="tel"
-                inputMode="tel"
-                defaultValue={contactPhone ?? ""}
-                placeholder="010-1234-5678"
-                className="min-w-0 flex-1 rounded-lg border border-gray-200 px-3 py-1.5 text-sm outline-none focus:border-blue-500"
-                aria-label="수령 연락처"
-              />
-              <button className="shrink-0 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100">
-                저장
-              </button>
-            </form>
-            <p className="mt-1.5 text-xs text-gray-400">
-              {contactPhone ? `현재 등록: ${contactPhone}` : "아직 등록된 연락처가 없어요."}
-            </p>
+            <ContactVerifyForm current={contactPhone} />
           </div>
         </section>
 
