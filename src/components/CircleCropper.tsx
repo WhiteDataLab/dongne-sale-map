@@ -45,11 +45,24 @@ export function CircleCropper({
     return () => URL.revokeObjectURL(url);
   }, [file]);
 
+  // 이미지가 항상 뷰포트(원)를 덮도록 오프셋을 가둔다 → 빈 공간 노출 방지.
+  const clamp = (o: { x: number; y: number }, sc: number, el: HTMLImageElement | null) => {
+    if (!el) return o;
+    const w = el.naturalWidth * sc;
+    const h = el.naturalHeight * sc;
+    const minX = Math.min(0, VIEW - w); // 오른쪽 끝이 뷰포트 안으로 들어오지 않게
+    const minY = Math.min(0, VIEW - h);
+    return {
+      x: Math.min(0, Math.max(minX, o.x)),
+      y: Math.min(0, Math.max(minY, o.y)),
+    };
+  };
+
   const onZoom = (z: number) => {
     const newScale = baseScaleRef.current * z;
     const c = VIEW / 2;
     const f = newScale / scale;
-    setOffset((o) => ({ x: c - (c - o.x) * f, y: c - (c - o.y) * f }));
+    setOffset((o) => clamp({ x: c - (c - o.x) * f, y: c - (c - o.y) * f }, newScale, img));
     setScale(newScale);
     setZoom(z);
   };
@@ -61,7 +74,7 @@ export function CircleCropper({
   const onMove = (e: React.PointerEvent) => {
     const d = dragRef.current;
     if (!d) return;
-    setOffset({ x: d.ox + (e.clientX - d.x), y: d.oy + (e.clientY - d.y) });
+    setOffset(clamp({ x: d.ox + (e.clientX - d.x), y: d.oy + (e.clientY - d.y) }, scale, img));
   };
   const onUp = (e: React.PointerEvent) => {
     (e.target as Element).releasePointerCapture?.(e.pointerId);
