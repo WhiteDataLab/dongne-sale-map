@@ -2,7 +2,7 @@ import Link from "next/link";
 import { auth, signIn } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getPointBalance } from "@/lib/points";
-import { GIFT_CATALOG } from "@/lib/gifts";
+import { getActiveGifts, type GiftItem } from "@/lib/gifts";
 import { RedeemButton } from "@/components/RedeemButton";
 
 /** 포인트샵: 포인트로 커피 기프티콘 교환. (5000P = 5000원 상당) */
@@ -33,6 +33,7 @@ export default async function ShopPage() {
 
   let balance = 0;
   let contact: string | null = null;
+  let gifts: GiftItem[] = [];
   try {
     balance = await getPointBalance(session.user.id);
     const me = await prisma.user.findUnique({
@@ -40,6 +41,7 @@ export default async function ShopPage() {
       select: { contactPhone: true },
     });
     contact = me?.contactPhone ?? null;
+    gifts = await getActiveGifts();
   } catch {
     // DB 미연결
   }
@@ -75,15 +77,20 @@ export default async function ShopPage() {
         <section>
           <h1 className="mb-2 text-lg font-bold">커피 기프티콘</h1>
           <div className="grid grid-cols-2 gap-3">
-            {GIFT_CATALOG.map((g) => {
+            {gifts.map((g) => {
               const affordable = balance >= g.points && !!contact;
               return (
                 <div key={g.id} className="flex flex-col rounded-2xl border border-gray-100 bg-white p-3 shadow-sm">
                   <div
-                    className="mb-2 flex h-20 items-center justify-center rounded-xl text-4xl"
+                    className="mb-2 flex h-20 items-center justify-center overflow-hidden rounded-xl text-4xl"
                     style={{ background: `${g.color}1a` }}
                   >
-                    {g.emoji}
+                    {g.imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={g.imageUrl} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      g.emoji
+                    )}
                   </div>
                   <p className="text-xs text-gray-400">{g.brand}</p>
                   <p className="truncate text-sm font-semibold">{g.name}</p>

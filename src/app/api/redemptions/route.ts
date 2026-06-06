@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/session";
-import { findGiftItem } from "@/lib/gifts";
+import { getGiftItem } from "@/lib/gifts";
 import { POINT_EXPIRY_YEARS, yearsAgo } from "@/lib/points";
 
 /**
@@ -24,8 +24,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "잘못된 요청이에요." }, { status: 400 });
   }
 
-  const item = findGiftItem(String(body.itemId ?? ""));
-  if (!item) return NextResponse.json({ error: "상품을 찾을 수 없어요." }, { status: 404 });
+  const item = await getGiftItem(String(body.itemId ?? ""));
+  if (!item || !item.active) return NextResponse.json({ error: "상품을 찾을 수 없어요." }, { status: 404 });
 
   try {
     const user = await prisma.user.findUnique({

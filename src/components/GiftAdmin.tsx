@@ -1,0 +1,200 @@
+"use client";
+
+import { useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+
+type Gift = {
+  id: string;
+  brand: string;
+  name: string;
+  points: number;
+  imageUrl: string | null;
+  emoji: string;
+  color: string;
+  active: boolean;
+  sortOrder: number;
+};
+
+const inputCls = "w-full rounded-lg border border-gray-300 px-2.5 py-1.5 text-sm outline-none focus:border-blue-500";
+
+async function uploadImage(file: File): Promise<string | null> {
+  const fd = new FormData();
+  fd.append("file", file);
+  const res = await fetch("/api/upload", { method: "POST", body: fd });
+  const d = (await res.json().catch(() => ({}))) as { url?: string };
+  return res.ok && d.url ? d.url : null;
+}
+
+function GiftRow({ item }: { item: Gift }) {
+  const router = useRouter();
+  const ref = useRef<HTMLInputElement>(null);
+  const [brand, setBrand] = useState(item.brand);
+  const [name, setName] = useState(item.name);
+  const [points, setPoints] = useState(String(item.points));
+  const [emoji, setEmoji] = useState(item.emoji);
+  const [color, setColor] = useState(item.color);
+  const [imageUrl, setImageUrl] = useState<string | null>(item.imageUrl);
+  const [active, setActive] = useState(item.active);
+  const [sortOrder, setSortOrder] = useState(String(item.sortOrder));
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+
+  const save = async () => {
+    setBusy(true);
+    setMsg(null);
+    const res = await fetch(`/api/admin/gifts/${item.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        brand,
+        name,
+        points: Number(points),
+        emoji,
+        color,
+        imageUrl,
+        active,
+        sortOrder: Number(sortOrder),
+      }),
+    });
+    setBusy(false);
+    if (res.ok) {
+      setMsg("저장됨");
+      router.refresh();
+    } else {
+      const e = (await res.json().catch(() => ({}))) as { error?: string };
+      setMsg(e.error ?? "저장 실패");
+    }
+  };
+
+  const del = async () => {
+    if (!window.confirm(`'${brand} ${name}' 상품을 삭제할까요?`)) return;
+    setBusy(true);
+    const res = await fetch(`/api/admin/gifts/${item.id}`, { method: "DELETE" });
+    setBusy(false);
+    if (res.ok) router.refresh();
+    else setMsg("삭제 실패");
+  };
+
+  return (
+    <div className="rounded-xl border border-gray-200 p-3">
+      <div className="flex gap-3">
+        <button
+          type="button"
+          onClick={() => ref.current?.click()}
+          className="relative flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-lg text-2xl"
+          style={{ background: `${color}1a` }}
+        >
+          {imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={imageUrl} alt="" className="h-full w-full object-cover" />
+          ) : (
+            emoji
+          )}
+          <span className="absolute inset-x-0 bottom-0 bg-black/50 text-[9px] text-white">사진</span>
+        </button>
+        <div className="grid flex-1 grid-cols-2 gap-1.5">
+          <input value={brand} onChange={(e) => setBrand(e.target.value)} placeholder="브랜드" className={inputCls} />
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="상품명" className={inputCls} />
+          <input value={points} onChange={(e) => setPoints(e.target.value)} inputMode="numeric" placeholder="포인트" className={inputCls} />
+          <div className="flex gap-1.5">
+            <input value={emoji} onChange={(e) => setEmoji(e.target.value)} placeholder="이모지" className={`${inputCls} w-14`} />
+            <input value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} inputMode="numeric" placeholder="순서" className={inputCls} />
+          </div>
+        </div>
+      </div>
+      <input
+        ref={ref}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={async (e) => {
+          const f = e.target.files?.[0];
+          e.target.value = "";
+          if (!f) return;
+          setBusy(true);
+          const url = await uploadImage(f);
+          setBusy(false);
+          if (url) setImageUrl(url);
+          else setMsg("이미지 업로드 실패");
+        }}
+      />
+      <div className="mt-2 flex items-center justify-between">
+        <label className="flex items-center gap-1 text-xs text-gray-600">
+          <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} /> 노출
+        </label>
+        <div className="flex items-center gap-2">
+          {imageUrl && (
+            <button type="button" onClick={() => setImageUrl(null)} className="text-xs text-gray-400">
+              이미지 제거
+            </button>
+          )}
+          {msg && <span className="text-xs text-gray-500">{msg}</span>}
+          <button type="button" onClick={del} disabled={busy} className="rounded-lg border border-gray-300 px-2.5 py-1 text-xs text-red-500">
+            삭제
+          </button>
+          <button type="button" onClick={save} disabled={busy} className="rounded-lg bg-blue-600 px-3 py-1 text-xs font-semibold text-white disabled:bg-gray-300">
+            {busy ? "처리 중…" : "저장"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AddGift() {
+  const router = useRouter();
+  const [brand, setBrand] = useState("");
+  const [name, setName] = useState("");
+  const [points, setPoints] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+
+  const add = async () => {
+    if (!brand.trim() || !name.trim() || !Number(points)) return setMsg("브랜드·상품명·포인트를 입력하세요.");
+    setBusy(true);
+    const res = await fetch("/api/admin/gifts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ brand, name, points: Number(points) }),
+    });
+    setBusy(false);
+    if (res.ok) {
+      setBrand("");
+      setName("");
+      setPoints("");
+      setMsg(null);
+      router.refresh();
+    } else {
+      const e = (await res.json().catch(() => ({}))) as { error?: string };
+      setMsg(e.error ?? "추가 실패");
+    }
+  };
+
+  return (
+    <div className="rounded-xl border border-dashed border-blue-300 p-3">
+      <p className="mb-2 text-sm font-semibold text-blue-700">＋ 상품 추가</p>
+      <div className="grid grid-cols-3 gap-1.5">
+        <input value={brand} onChange={(e) => setBrand(e.target.value)} placeholder="브랜드" className={inputCls} />
+        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="상품명" className={inputCls} />
+        <input value={points} onChange={(e) => setPoints(e.target.value)} inputMode="numeric" placeholder="포인트" className={inputCls} />
+      </div>
+      <div className="mt-2 flex items-center justify-end gap-2">
+        {msg && <span className="text-xs text-red-500">{msg}</span>}
+        <button type="button" onClick={add} disabled={busy} className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white disabled:bg-gray-300">
+          추가 (추가 후 사진·이모지 편집)
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export function GiftAdmin({ items }: { items: Gift[] }) {
+  return (
+    <div className="flex flex-col gap-3">
+      <AddGift />
+      {items.map((g) => (
+        <GiftRow key={g.id} item={g} />
+      ))}
+    </div>
+  );
+}

@@ -176,6 +176,22 @@ model ReferralClaim {
   createdAt   DateTime @default(now())
 }
 
+// 포인트샵 기프티콘 상품 (관리자 CRUD). 포인트 = 원.
+model GiftItem {
+  id        String   @id @default(cuid())
+  brand     String
+  name      String
+  points    Int
+  imageUrl  String? // 업로드 이미지(없으면 이모지+색)
+  emoji     String   @default("🎁")
+  color     String   @default("#2563eb")
+  active    Boolean  @default(true) // 비활성화하면 포인트샵에 안 보임
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([active, sortOrder])
+}
+
 // 사이트 전역 설정 (key-value). 예: intro_video_url(소개 페이지 업로드 영상)
 model SiteConfig {
   key   String @id

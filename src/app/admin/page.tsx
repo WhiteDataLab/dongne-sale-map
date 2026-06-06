@@ -58,6 +58,13 @@ export default async function AdminHome() {
         </span>
       </Link>
       <Link
+        href="/admin/gifts"
+        className="flex items-center justify-between rounded-xl border border-gray-200 p-4"
+      >
+        <span className="font-medium">🏷️ 기프티콘 상품</span>
+        <span className="text-sm text-gray-400">추가·수정·삭제·이미지 →</span>
+      </Link>
+      <Link
         href="/admin/reports"
         className="flex items-center justify-between rounded-xl border border-gray-200 p-4"
       >
