@@ -102,6 +102,9 @@ export function SideNav({
                 <Link href="/checkin" onClick={close} className={itemClass}>
                   ✅ 출석체크
                 </Link>
+                <Link href="/shop" onClick={close} className={itemClass}>
+                  🎁 포인트샵
+                </Link>
                 <Link href="/favorites" onClick={close} className={itemClass}>
                   ♥ 즐겨찾기
                 </Link>

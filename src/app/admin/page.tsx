@@ -6,17 +6,20 @@ export default async function AdminHome() {
   let openReports = 0;
   let pendingStores = 0;
   let pendingMerchants = 0;
+  let pendingRedemptions = 0;
   let introVideo: string | null = null;
   try {
-    const [r, s, m, cfg] = await Promise.all([
+    const [r, s, m, rd, cfg] = await Promise.all([
       prisma.report.count({ where: { status: "open" } }),
       prisma.store.count({ where: { verified: false, status: "active" } }),
       prisma.merchantVerification.count({ where: { status: "pending" } }),
+      prisma.redemption.count({ where: { status: "requested" } }),
       prisma.siteConfig.findUnique({ where: { key: "intro_video_url" } }),
     ]);
     openReports = r;
     pendingStores = s;
     pendingMerchants = m;
+    pendingRedemptions = rd;
     introVideo = cfg?.value ?? null;
   } catch {
     // DB 미연결 시 0
@@ -44,6 +47,15 @@ export default async function AdminHome() {
       >
         <span className="font-medium">🔥 활동 분석</span>
         <span className="text-sm text-gray-400">활발한 회원·가게등록·리뷰 랭킹 →</span>
+      </Link>
+      <Link
+        href="/admin/redemptions"
+        className="flex items-center justify-between rounded-xl border border-gray-200 p-4"
+      >
+        <span className="font-medium">🎁 기프티콘 교환</span>
+        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-sm text-amber-700">
+          발송 대기 {pendingRedemptions}
+        </span>
       </Link>
       <Link
         href="/admin/reports"

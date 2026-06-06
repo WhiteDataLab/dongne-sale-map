@@ -3,8 +3,14 @@ import { cookies } from "next/headers";
 import { auth, signIn } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { POINT_EXPIRY_YEARS, POINT_HISTORY_YEARS, yearsAgo } from "@/lib/points";
-import { deleteAccount, startLink, updateNickname } from "./actions";
+import { deleteAccount, startLink, updateNickname, updateContact } from "./actions";
 import { ProfileAvatarEditor } from "@/components/ProfileAvatarEditor";
+
+const REDEMPTION_LABEL: Record<string, string> = {
+  requested: "발송 대기",
+  sent: "발송 완료",
+  canceled: "취소(환원)",
+};
 
 const LINK_RESULT_MSG: Record<string, string> = {
   linked: "계정이 연결됐어요.",
@@ -60,15 +66,29 @@ export default async function AccountPage() {
   // 표시 닉네임은 DB 최신값(세션 토큰 지연 회피)
   let nickname = session.user.name ?? "이웃";
   let profileImg: string | null = session.user.image ?? null;
+  let contactPhone: string | null = null;
   try {
     const me = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { nickname: true, profileImgUrl: true },
+      select: { nickname: true, profileImgUrl: true, contactPhone: true },
     });
     if (me) {
       nickname = me.nickname;
       profileImg = me.profileImgUrl;
+      contactPhone = me.contactPhone;
     }
+  } catch {
+    // DB 미연결
+  }
+
+  let redemptions: { id: string; itemName: string; points: number; status: string; createdAt: Date }[] = [];
+  try {
+    redemptions = await prisma.redemption.findMany({
+      where: { userId: session.user.id },
+      orderBy: { createdAt: "desc" },
+      take: 30,
+      select: { id: true, itemName: true, points: true, status: true, createdAt: true },
+    });
   } catch {
     // DB 미연결
   }
@@ -123,10 +143,63 @@ export default async function AccountPage() {
             <p className="mt-2 text-sm text-gray-500">
               적립 포인트{" "}
               <span className="font-semibold text-gray-800">{balance}P</span>
-              <span className="ml-1 text-xs text-gray-400">(표시용, 실지급 없음)</span>
+            </p>
+            <Link
+              href="/shop"
+              className="mt-2 inline-block rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white"
+            >
+              🎁 포인트샵 (기프티콘 교환)
+            </Link>
+          </div>
+        </section>
+
+        {/* 기프티콘 수령 연락처 */}
+        <section id="contact">
+          <h2 className="mb-2 text-sm font-semibold text-gray-700">기프티콘 수령 연락처</h2>
+          <div className="rounded-xl border border-gray-200 p-4">
+            <p className="text-xs text-gray-400">
+              포인트로 기프티콘을 교환하면 이 연락처(문자)로 보내드려요.
+            </p>
+            <form action={updateContact} className="mt-2 flex gap-2">
+              <input
+                name="contact"
+                type="tel"
+                inputMode="tel"
+                defaultValue={contactPhone ?? ""}
+                placeholder="010-1234-5678"
+                className="min-w-0 flex-1 rounded-lg border border-gray-200 px-3 py-1.5 text-sm outline-none focus:border-blue-500"
+                aria-label="수령 연락처"
+              />
+              <button className="shrink-0 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100">
+                저장
+              </button>
+            </form>
+            <p className="mt-1.5 text-xs text-gray-400">
+              {contactPhone ? `현재 등록: ${contactPhone}` : "아직 등록된 연락처가 없어요."}
             </p>
           </div>
         </section>
+
+        {/* 기프티콘 교환 내역 */}
+        {redemptions.length > 0 && (
+          <section>
+            <h2 className="mb-2 text-sm font-semibold text-gray-700">기프티콘 교환 내역</h2>
+            <ul className="flex flex-col divide-y divide-gray-100 rounded-xl border border-gray-200">
+              {redemptions.map((r) => (
+                <li key={r.id} className="flex items-center justify-between gap-2 px-3 py-2.5">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm">🎁 {r.itemName}</p>
+                    <p className="text-xs text-gray-400">
+                      {new Date(r.createdAt).toLocaleDateString("ko-KR")} ·{" "}
+                      {REDEMPTION_LABEL[r.status] ?? r.status}
+                    </p>
+                  </div>
+                  <span className="shrink-0 text-sm font-semibold text-red-500">-{r.points}P</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         <section>
           <h2 className="mb-2 text-sm font-semibold text-gray-700">포인트 내역</h2>
@@ -145,8 +218,11 @@ export default async function AccountPage() {
                       {h.status === "granted" ? "지급" : "적립예정"}
                     </p>
                   </div>
-                  <span className="shrink-0 text-sm font-semibold text-blue-600">
-                    +{h.amount}P
+                  <span
+                    className={`shrink-0 text-sm font-semibold ${h.amount < 0 ? "text-red-500" : "text-blue-600"}`}
+                  >
+                    {h.amount > 0 ? "+" : ""}
+                    {h.amount}P
                   </span>
                 </li>
               ))}

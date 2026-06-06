@@ -107,6 +107,7 @@ model User {
   profileImgUrl String?
   phone         String?    @unique // 전화번호 로그인용 (Phase 5)
   phoneVerified Boolean    @default(false)
+  contactPhone  String? // 기프티콘 수령 연락처(로그인 전화와 별개, 중복 허용)
   role          UserRole   @default(user)
   status        UserStatus @default(active)
   points        Int        @default(0) // 표시용 (실지급 보류, 적립은 전부 PointLog.pending)
@@ -126,6 +127,7 @@ model User {
   reports    Report[]   @relation("ReportReporter")
   pointLogs  PointLog[]
   closureReports ClosureReport[] @relation("ClosureReporter")
+  redemptions Redemption[]
 }
 
 // 로그인 수단(소셜/전화) ↔ User 연결. 계정 연결(account linking)의 핵심 (Phase 5).
@@ -310,6 +312,31 @@ model Report {
 
   // 신고 N건 자동 숨김 판정용 (Phase 4)
   @@index([targetType, targetId])
+  @@index([status])
+}
+
+enum RedemptionStatus {
+  requested // 교환 신청(포인트 차감됨, 관리자 발송 대기)
+  sent // 기프티콘 발송 완료
+  canceled // 취소(포인트 환원)
+}
+
+// 포인트 → 기프티콘 교환 주문. 발송은 관리자가 등록 연락처로 수동 처리(외부 전문샵 구매).
+model Redemption {
+  id        String           @id @default(cuid())
+  userId    String
+  itemId    String // 카탈로그 id (constants GIFT_CATALOG)
+  itemName  String // 스냅샷 (예: "스타벅스 아메리카노 T")
+  points    Int // 사용 포인트
+  contact   String // 수령 연락처 스냅샷
+  status    RedemptionStatus @default(requested)
+  note      String?
+  createdAt DateTime         @default(now())
+  sentAt    DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
   @@index([status])
 }
 

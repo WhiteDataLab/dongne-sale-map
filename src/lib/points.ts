@@ -12,3 +12,13 @@ export function yearsAgo(n: number, from = new Date()): Date {
   d.setFullYear(d.getFullYear() - n);
   return d;
 }
+
+/** 포인트 잔액 = PointLog 합계(소멸 기간 이내). (서버 전용) */
+export async function getPointBalance(userId: string): Promise<number> {
+  const { prisma } = await import("@/lib/prisma");
+  const agg = await prisma.pointLog.aggregate({
+    _sum: { amount: true },
+    where: { userId, createdAt: { gte: yearsAgo(POINT_EXPIRY_YEARS) } },
+  });
+  return agg._sum.amount ?? 0;
+}

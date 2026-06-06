@@ -167,6 +167,31 @@ export async function forceDeleteUser(formData: FormData) {
   revalidatePath("/admin/members");
 }
 
+/** 기프티콘 교환 발송 완료 처리. */
+export async function markRedemptionSent(formData: FormData) {
+  await ensureAdmin();
+  const id = String(formData.get("id"));
+  await prisma.redemption.update({
+    where: { id },
+    data: { status: "sent", sentAt: new Date() },
+  });
+  revalidatePath("/admin/redemptions");
+}
+
+/** 기프티콘 교환 취소 + 포인트 환원(음수 차감 로그 삭제). */
+export async function cancelRedemption(formData: FormData) {
+  await ensureAdmin();
+  const id = String(formData.get("id"));
+  const r = await prisma.redemption.findUnique({ where: { id } });
+  if (!r || r.status === "canceled") return;
+  await prisma.$transaction([
+    // 교환 시 생성한 음수 PointLog 삭제 → 잔액 환원
+    prisma.pointLog.deleteMany({ where: { refType: "redemption", refId: id } }),
+    prisma.redemption.update({ where: { id }, data: { status: "canceled" } }),
+  ]);
+  revalidatePath("/admin/redemptions");
+}
+
 export async function approveStore(formData: FormData) {
   await ensureAdmin();
   const id = String(formData.get("id"));

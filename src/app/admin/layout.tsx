@@ -46,6 +46,9 @@ export default async function AdminLayout({
           <Link href="/admin/activity" className="text-gray-600 hover:text-gray-900">
             활동 분석
           </Link>
+          <Link href="/admin/redemptions" className="text-gray-600 hover:text-gray-900">
+            기프티콘 교환
+          </Link>
           <Link href="/admin/users" className="text-gray-600 hover:text-gray-900">
             정지 계정
           </Link>

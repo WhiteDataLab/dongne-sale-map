@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { auth, signIn, signOut, unstable_update } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { isPublicStorageUrl } from "@/lib/supabaseStorage";
+import { normalizePhone } from "@/lib/sms";
 
 /** 닉네임 변경 (마이페이지). 세션 토큰도 갱신해 헤더/표시에 즉시 반영. */
 export async function updateNickname(formData: FormData) {
@@ -16,6 +17,23 @@ export async function updateNickname(formData: FormData) {
 
   await prisma.user.update({ where: { id: userId }, data: { nickname } });
   await unstable_update({ user: { name: nickname } }); // jwt trigger="update" → DB 최신값 반영
+  revalidatePath("/account");
+}
+
+/** 기프티콘 수령 연락처 등록/수정 (마이페이지). 빈 값이면 삭제. */
+export async function updateContact(formData: FormData) {
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) return;
+  const raw = String(formData.get("contact") ?? "").trim();
+  if (!raw) {
+    await prisma.user.update({ where: { id: userId }, data: { contactPhone: null } });
+    revalidatePath("/account");
+    return;
+  }
+  const phone = normalizePhone(raw);
+  if (!phone) return; // 형식 오류 → 무시(클라에서 안내)
+  await prisma.user.update({ where: { id: userId }, data: { contactPhone: phone } });
   revalidatePath("/account");
 }
 
