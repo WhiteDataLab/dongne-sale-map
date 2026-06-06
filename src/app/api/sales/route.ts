@@ -100,13 +100,14 @@ export async function POST(req: NextRequest) {
     }
 
     // 하루 1회 제한(파밍 방지): 같은 사용자가 오늘(KST) 같은 가게·같은 항목으로 이미 올렸으면 차단.
-    // (예: '당근'을 올렸으면 오늘 '당근'은 더 못 올리고 '상추'만 가능. 1시간 만료 반복 적립도 차단)
+    // 항목 식별은 일반화 — 선택한 상품(productId) 또는 입력 제목(title) 무엇이든 동일 항목이면 적용.
+    // (삼겹살/소고기/과자/채소 등 모든 항목 공통). 만료된 행도 카운트 → 1시간 만료 반복 적립도 차단.
     const myToday = await prisma.sale.findFirst({
       where: { createdById: userId, storeId, createdAt: { gte: kstTodayStart() }, ...itemMatch },
     });
     if (myToday) {
       return NextResponse.json(
-        { error: "오늘은 이 항목으로 이미 세일을 올렸어요. (하루 1회)" },
+        { error: "오늘은 이 항목으로 이미 세일을 올렸어요. (항목당 하루 1회)" },
         { status: 409 },
       );
     }
