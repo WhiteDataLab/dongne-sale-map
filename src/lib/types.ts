@@ -15,6 +15,19 @@ export type StoreDTO = {
   verified: boolean;
   source: StoreSource;
   hasActiveSale: boolean;
+  isOpenNow: boolean | null; // 영업시간 기준 영업중 여부(정보 없으면 null)
+  closedTodayReports: number; // 오늘 '갑자기 휴업' 제보 수
+  shutdownReports: number; // 최근 '폐업' 제보 수
+};
+
+/** 휴업/폐업 제보 DTO. */
+export type ClosureReportDTO = {
+  id: string;
+  kind: "closed_today" | "shutdown";
+  photoUrl: string | null;
+  note: string | null;
+  nickname: string;
+  createdAt: string;
 };
 
 export type ProductDTO = {
@@ -63,6 +76,7 @@ export type StoreDetailDTO = StoreDTO & {
   products: ProductDTO[];
   sales: SaleDTO[];
   reviews: ReviewDTO[];
+  closureReports: ClosureReportDTO[]; // 최근 휴업/폐업 제보 (경고 배너용)
   isFavorite: boolean;
   hasOwner: boolean; // 사장님(소유자)이 인증된 가게인지
   isOwner: boolean; // 현재 사용자가 소유자인지

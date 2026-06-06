@@ -18,6 +18,7 @@ import {
 import { freshnessLabel, starString, untilLabel, won } from "@/lib/format";
 import type { StoreDetailDTO } from "@/lib/types";
 import { SaleReportForm } from "./SaleReportForm";
+import { ClosureReportForm } from "./ClosureReportForm";
 import { ReviewForm } from "./ReviewForm";
 import { ReportButton } from "./ReportButton";
 import { MerchantApply } from "./MerchantApply";
@@ -57,6 +58,7 @@ export function StoreSheet({
   const [favorite, setFavorite] = useState(false);
   const [composing, setComposing] = useState<Composing>(null);
   const [bannerEditFile, setBannerEditFile] = useState<File | null>(null);
+  const [closureForm, setClosureForm] = useState(false);
 
   // 태블릿/PC(>=768px)에서는 왼쪽 사이드 패널, 모바일에서는 하단 바텀시트
   const [isDesktop, setIsDesktop] = useState(false);
@@ -103,6 +105,7 @@ export function StoreSheet({
     setDetail(null);
     setTab("sales");
     setComposing(null);
+    setClosureForm(false);
     setTranslateY(snapPoints().peek);
     loadDetail(storeId);
   }, [storeId, snapPoints, loadDetail]);
@@ -379,6 +382,23 @@ export function StoreSheet({
 
         {/* 탭 내용 (스크롤) */}
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3">
+          {detail && (
+            <div className="mb-3">
+              {closureForm ? (
+                <ClosureReportForm
+                  storeId={detail.id}
+                  onToast={onToast}
+                  onCancel={() => setClosureForm(false)}
+                  onDone={() => {
+                    setClosureForm(false);
+                    refresh();
+                  }}
+                />
+              ) : (
+                <ClosureBanner detail={detail} onReport={() => setClosureForm(true)} />
+              )}
+            </div>
+          )}
           {loading || !detail ? (
             <p className="py-10 text-center text-sm text-gray-400">불러오는 중…</p>
           ) : tab === "products" ? (
@@ -417,6 +437,82 @@ export function StoreSheet({
           onCancel={() => setBannerEditFile(null)}
         />
       )}
+    </div>
+  );
+}
+
+/** 휴업/폐업 제보 경고 배너 + 제보 진입 버튼. */
+function ClosureBanner({
+  detail,
+  onReport,
+}: {
+  detail: StoreDetailDTO;
+  onReport: () => void;
+}) {
+  const reports = detail.closureReports ?? [];
+  const shutdown = reports.filter((r) => r.kind === "shutdown");
+  const today = reports.filter((r) => r.kind === "closed_today");
+  const has = reports.length > 0;
+
+  return (
+    <div
+      className={[
+        "rounded-xl border p-3",
+        shutdown.length > 0
+          ? "border-gray-800 bg-gray-100"
+          : today.length > 0
+            ? "border-amber-300 bg-amber-50"
+            : "border-gray-200 bg-gray-50",
+      ].join(" ")}
+    >
+      {has ? (
+        <>
+          <p className="text-sm font-semibold">
+            {shutdown.length > 0 ? "🚫 폐업 제보가 있어요" : "⚠️ 오늘 휴업 제보가 있어요"}
+          </p>
+          <p className="mt-0.5 text-xs text-gray-500">
+            {shutdown.length > 0 && `폐업 제보 ${shutdown.length}건`}
+            {shutdown.length > 0 && today.length > 0 && " · "}
+            {today.length > 0 && `오늘 휴업 제보 ${today.length}건`} · 이웃 제보(미확정)
+          </p>
+          {/* 최근 제보 사진 */}
+          {reports.some((r) => r.photoUrl) && (
+            <div className="mt-2 flex gap-2 overflow-x-auto">
+              {reports
+                .filter((r) => r.photoUrl)
+                .slice(0, 5)
+                .map((r) => (
+                  <div key={r.id} className="shrink-0">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={r.photoUrl ?? ""}
+                      alt=""
+                      className="size-16 rounded-lg object-cover"
+                    />
+                    <p className="mt-0.5 w-16 truncate text-[10px] text-gray-400">{r.nickname}</p>
+                  </div>
+                ))}
+            </div>
+          )}
+          {reports.find((r) => r.note) && (
+            <p className="mt-1 text-xs text-gray-600">
+              “{reports.find((r) => r.note)?.note}”
+            </p>
+          )}
+        </>
+      ) : (
+        <p className="text-sm text-gray-500">갑자기 문을 닫았거나 폐업한 가게인가요?</p>
+      )}
+      <button
+        type="button"
+        onClick={onReport}
+        className={[
+          "mt-2 w-full rounded-lg py-2 text-sm font-medium",
+          has ? "bg-amber-600 text-white hover:bg-amber-700" : "border border-amber-300 text-amber-700 hover:bg-amber-50",
+        ].join(" ")}
+      >
+        🚪 휴업/폐업 제보하기
+      </button>
     </div>
   );
 }

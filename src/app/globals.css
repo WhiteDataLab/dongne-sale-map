@@ -201,3 +201,42 @@ button:disabled {
   color: #fff;
   font-size: 10px;
 }
+
+/* ── 휴업/폐업/영업종료 상태 ── */
+.store-pin__status {
+  margin-left: 2px;
+  padding: 1px 5px;
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 700;
+}
+.store-pin__status--off {
+  background: #e5e7eb;
+  color: #6b7280;
+}
+.store-pin__status--today {
+  background: #f59e0b;
+  color: #fff;
+}
+.store-pin__status--shutdown {
+  background: #111827;
+  color: #fff;
+}
+/* 영업종료: 흐리게 */
+.store-pin--off {
+  opacity: 0.6;
+}
+/* 폐업 제보: 흐리게 + 가게명 취소선 */
+.store-pin--shutdown {
+  opacity: 0.7;
+  border-color: #111827 !important;
+}
+.store-pin--shutdown .store-pin__name {
+  text-decoration: line-through;
+  color: #6b7280;
+}
+/* 오늘 휴업 제보: 주황 강조 테두리(주의 환기) */
+.store-pin--alert {
+  border-color: #f59e0b !important;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.18), 0 2px 6px rgba(0, 0, 0, 0.18);
+}

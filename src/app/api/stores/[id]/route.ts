@@ -3,7 +3,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 import { canManageMenu, canManageStore } from "@/lib/menu";
-import { asStoreHours, isOpenNow } from "@/lib/businessHours";
+import { asStoreHours, isOpenNow, kstTodayStart } from "@/lib/businessHours";
 import type { Category } from "@/lib/constants";
 import type { StoreDetailDTO, StoreSource } from "@/lib/types";
 
@@ -37,6 +37,17 @@ export async function GET(
         },
         createdBy: { select: { nickname: true, profileImgUrl: true } },
         owner: { select: { nickname: true, profileImgUrl: true } },
+        closureReports: {
+          where: {
+            OR: [
+              { kind: "closed_today", createdAt: { gte: kstTodayStart() } },
+              { kind: "shutdown", createdAt: { gte: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000) } },
+            ],
+          },
+          include: { createdBy: { select: { nickname: true } } },
+          orderBy: { createdAt: "desc" },
+          take: 20,
+        },
       },
     });
 
@@ -78,6 +89,8 @@ export async function GET(
       hours,
       isOpenNow: isOpenNow(hours, now),
       hasActiveSale: store.sales.length > 0,
+      closedTodayReports: store.closureReports.filter((c) => c.kind === "closed_today").length,
+      shutdownReports: store.closureReports.filter((c) => c.kind === "shutdown").length,
       avgRating,
       reviewCount: store.reviews.length,
       isFavorite,
@@ -123,6 +136,14 @@ export async function GET(
         content: r.content,
         nickname: r.user.nickname,
         createdAt: r.createdAt.toISOString(),
+      })),
+      closureReports: store.closureReports.map((c) => ({
+        id: c.id,
+        kind: c.kind as "closed_today" | "shutdown",
+        photoUrl: c.photoUrl,
+        note: c.note,
+        nickname: c.createdBy.nickname,
+        createdAt: c.createdAt.toISOString(),
       })),
     };
 

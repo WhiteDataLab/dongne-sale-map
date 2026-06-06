@@ -3,7 +3,10 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/session";
 import { geocodeAddress } from "@/lib/kakaoLocal";
 import { CATEGORIES, type Category } from "@/lib/constants";
+import { asStoreHours, isOpenNow, kstTodayStart } from "@/lib/businessHours";
 import type { StoreDTO, StoreSource } from "@/lib/types";
+
+const SHUTDOWN_WINDOW_DAYS = 14; // 폐업 제보 노출 기간
 
 /**
  * 현 지도 영역(bounds) 내 활성 가게 목록 (스펙 Phase 1).
@@ -54,6 +57,7 @@ export async function GET(req: NextRequest) {
         address: true,
         verified: true,
         source: true,
+        hoursJson: true,
         _count: {
           select: {
             sales: { where: { status: "active", expiresAt: { gt: now } } },
@@ -62,6 +66,28 @@ export async function GET(req: NextRequest) {
       },
       take: 200,
     });
+
+    // 휴업/폐업 제보 집계: 오늘 휴업 + 최근 폐업 (대상 = 화면 내 가게)
+    const ids = rows.map((s) => s.id);
+    const closedToday = new Map<string, number>();
+    const shutdown = new Map<string, number>();
+    if (ids.length > 0) {
+      const shutdownSince = new Date(Date.now() - SHUTDOWN_WINDOW_DAYS * 24 * 60 * 60 * 1000);
+      const [ct, sd] = await Promise.all([
+        prisma.closureReport.groupBy({
+          by: ["storeId"],
+          where: { storeId: { in: ids }, kind: "closed_today", createdAt: { gte: kstTodayStart() } },
+          _count: true,
+        }),
+        prisma.closureReport.groupBy({
+          by: ["storeId"],
+          where: { storeId: { in: ids }, kind: "shutdown", createdAt: { gte: shutdownSince } },
+          _count: true,
+        }),
+      ]);
+      for (const g of ct) closedToday.set(g.storeId, g._count);
+      for (const g of sd) shutdown.set(g.storeId, g._count);
+    }
 
     let stores: StoreDTO[] = rows.map((s) => ({
       id: s.id,
@@ -73,6 +99,9 @@ export async function GET(req: NextRequest) {
       verified: s.verified,
       source: s.source as StoreSource,
       hasActiveSale: s._count.sales > 0,
+      isOpenNow: isOpenNow(asStoreHours(s.hoursJson), now),
+      closedTodayReports: closedToday.get(s.id) ?? 0,
+      shutdownReports: shutdown.get(s.id) ?? 0,
     }));
 
     if (onlySale) stores = stores.filter((s) => s.hasActiveSale);

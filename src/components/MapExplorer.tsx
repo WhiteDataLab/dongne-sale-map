@@ -509,7 +509,24 @@ function buildPinElement(store: StoreDTO, onClick: () => void): HTMLElement {
   name.textContent = store.name;
 
   wrap.append(icon, name);
-  if (store.hasActiveSale && store.verified) {
+
+  // 상태 우선순위: 폐업 제보 > 오늘 휴업 제보 > 영업종료(시간) > 세일
+  const tag = (text: string, cls: string) => {
+    const b = document.createElement("span");
+    b.className = `store-pin__status ${cls}`;
+    b.textContent = text;
+    wrap.appendChild(b);
+  };
+  if (store.shutdownReports > 0) {
+    wrap.classList.add("store-pin--shutdown");
+    tag("폐업?", "store-pin__status--shutdown");
+  } else if (store.closedTodayReports > 0) {
+    wrap.classList.add("store-pin--alert");
+    tag("오늘 휴업?", "store-pin__status--today");
+  } else if (store.isOpenNow === false) {
+    wrap.classList.add("store-pin--off");
+    tag("영업종료", "store-pin__status--off");
+  } else if (store.hasActiveSale && store.verified) {
     const badge = document.createElement("span");
     badge.className = "store-pin__sale";
     badge.textContent = "세일";

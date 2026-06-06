@@ -87,6 +87,13 @@ export function isOpenNow(
   return minutes >= open && minutes < close;
 }
 
+/** KST(UTC+9) 기준 오늘 자정을 실제 UTC Date 로. (createdAt 은 UTC 저장) */
+export function kstTodayStart(): Date {
+  const nowKst = new Date(Date.now() + 9 * 60 * 60 * 1000);
+  const startKstAsUtc = Date.UTC(nowKst.getUTCFullYear(), nowKst.getUTCMonth(), nowKst.getUTCDate());
+  return new Date(startKstAsUtc - 9 * 60 * 60 * 1000);
+}
+
 /** Prisma Json(unknown) → StoreHours 안전 변환. */
 export function asStoreHours(value: unknown): StoreHours | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;

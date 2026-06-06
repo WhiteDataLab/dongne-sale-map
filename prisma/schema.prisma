@@ -84,6 +84,12 @@ enum PointStatus {
   granted
 }
 
+// 소비자 제보: 오늘 갑자기 휴업 / 폐업. 사진과 함께 다른 이웃에게 경고로 노출.
+enum ClosureKind {
+  closed_today // 원래 영업해야 하는데 오늘 갑자기 휴업
+  shutdown // 폐업(영구)
+}
+
 // ──────────────────────────────────────────────────────────────
 // Models
 // ──────────────────────────────────────────────────────────────
@@ -117,6 +123,7 @@ model User {
   favorites  Favorite[]
   reports    Report[]   @relation("ReportReporter")
   pointLogs  PointLog[]
+  closureReports ClosureReport[] @relation("ClosureReporter")
 }
 
 // 로그인 수단(소셜/전화) ↔ User 연결. 계정 연결(account linking)의 핵심 (Phase 5).
@@ -207,6 +214,7 @@ model Store {
   sales                 Sale[]
   reviews               Review[]
   favorites             Favorite[]
+  closureReports        ClosureReport[]
   merchantVerifications MerchantVerification[]
 
   @@index([ownerId])
@@ -300,6 +308,22 @@ model Report {
   // 신고 N건 자동 숨김 판정용 (Phase 4)
   @@index([targetType, targetId])
   @@index([status])
+}
+
+// 소비자 휴업/폐업 제보 (사진 첨부). 지도/상세에 경고로 노출, 관리자 검토.
+model ClosureReport {
+  id          String      @id @default(cuid())
+  storeId     String
+  kind        ClosureKind
+  photoUrl    String? // 제보 사진 (현장 인증)
+  note        String? // 한줄 메모 (선택)
+  createdById String
+  createdAt   DateTime    @default(now())
+
+  store     Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  createdBy User  @relation("ClosureReporter", fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([storeId, createdAt])
 }
 
 model PointLog {
