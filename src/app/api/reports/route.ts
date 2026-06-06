@@ -40,11 +40,20 @@ export async function POST(req: NextRequest) {
 
   const type = targetType as TargetType;
   try {
+    // 어뷰징 방어: 한 사용자가 같은 대상을 중복 신고해 단독으로 임계치를 채우지 못하게.
+    // (자동 숨김·포인트 회수의 악용 차단) → 임계치는 '서로 다른 신고자 수' 기준이 됨.
+    const already = await prisma.report.findFirst({
+      where: { targetType: type, targetId, reporterId: userId },
+    });
+    if (already) {
+      return NextResponse.json({ ok: true, hidden: false, duplicate: true });
+    }
+
     const report = await prisma.report.create({
       data: { targetType: type, targetId, reason: reason.trim(), reporterId: userId },
     });
 
-    // 신고 누적 N건 → 콘텐츠 자동 숨김(soft hide), 사후 검토는 관리 화면에서.
+    // 신고 누적 N명 → 콘텐츠 자동 숨김(soft hide), 사후 검토는 관리 화면에서.
     const openCount = await prisma.report.count({
       where: { targetType: type, targetId, status: "open" },
     });

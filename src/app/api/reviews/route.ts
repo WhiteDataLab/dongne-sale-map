@@ -1,16 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/session";
+import { isPublicStorageUrl } from "@/lib/supabaseStorage";
 
 /**
  * 리뷰 작성/평점 (스펙 Phase 3 + 사진/포인트 정책).
  * 포인트(pending +10):
  *  - 최초 리뷰: 글만 써도 지급
  *  - 2번째부터: 사진을 함께 올려야 지급(글만이면 0)
+ * 어뷰징 방어: 가게당 1회, 레이트리밋, 사진은 우리 스토리지 URL만 인정.
  */
 export const runtime = "nodejs";
 
 const POINT_REVIEW = 10;
+const RATE_WINDOW_MS = 60_000;
+const RATE_MAX = 3;
 
 type Body = { storeId?: string; rating?: number; content?: string; photoUrls?: unknown };
 
@@ -28,8 +32,9 @@ export async function POST(req: NextRequest) {
   }
 
   const { storeId, rating, content } = body;
+  // 사진은 우리 공개 스토리지에서 올린 URL만 인정(가짜 URL로 포인트 우회 차단)
   const photoUrls = Array.isArray(body.photoUrls)
-    ? body.photoUrls.filter((u): u is string => typeof u === "string" && u.length > 0).slice(0, 5)
+    ? body.photoUrls.filter((u): u is string => typeof u === "string" && isPublicStorageUrl(u)).slice(0, 5)
     : [];
 
   if (!storeId || !content?.trim()) {
@@ -43,6 +48,19 @@ export async function POST(req: NextRequest) {
     const store = await prisma.store.findUnique({ where: { id: storeId } });
     if (!store || store.status !== "active") {
       return NextResponse.json({ error: "가게를 찾을 수 없어요." }, { status: 404 });
+    }
+
+    // 어뷰징 방어 1) 가게당 1회 (포인트 파밍·도배 방지)
+    const dup = await prisma.review.findFirst({ where: { userId, storeId } });
+    if (dup) {
+      return NextResponse.json({ error: "이미 이 가게에 리뷰를 남겼어요." }, { status: 409 });
+    }
+    // 어뷰징 방어 2) 단시간 다중 작성 레이트리밋
+    const recent = await prisma.review.count({
+      where: { userId, createdAt: { gt: new Date(Date.now() - RATE_WINDOW_MS) } },
+    });
+    if (recent >= RATE_MAX) {
+      return NextResponse.json({ error: "잠시 후 다시 시도해 주세요." }, { status: 429 });
     }
 
     // 포인트 정책: 최초 리뷰는 무조건, 이후엔 사진 있을 때만

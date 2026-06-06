@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { isPublicStorageUrl } from "@/lib/supabaseStorage";
 import { getCurrentUser } from "@/lib/session";
 import { canManageMenu, canManageStore } from "@/lib/menu";
 import { asStoreHours, isOpenNow, kstTodayStart } from "@/lib/businessHours";
@@ -190,7 +191,13 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     }
     // 전달된 필드만 부분 수정 (배너 / 공지 / 소개 / 기본정보 / 영업시간)
     const data: Prisma.StoreUpdateInput = {};
-    if ("bannerUrl" in body) data.bannerUrl = body.bannerUrl ?? null;
+    if ("bannerUrl" in body) {
+      const b = body.bannerUrl;
+      if (b && !isPublicStorageUrl(b)) {
+        return NextResponse.json({ error: "이미지 주소가 올바르지 않아요." }, { status: 400 });
+      }
+      data.bannerUrl = b ?? null;
+    }
     if ("notice" in body) {
       const n = typeof body.notice === "string" ? body.notice.trim() : "";
       data.notice = n || null; // 빈 문자열 = 삭제

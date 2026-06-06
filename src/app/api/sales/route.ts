@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/session";
 import { asStoreHours, minutesUntilClose } from "@/lib/businessHours";
+import { isPublicStorageUrl } from "@/lib/supabaseStorage";
 
 /**
  * 세일 제보 (스펙 Phase 3).
@@ -54,7 +55,7 @@ export async function POST(req: NextRequest) {
         ? [body.photoUrl]
         : []
   )
-    .filter((u) => typeof u === "string" && u.length > 0)
+    .filter((u) => typeof u === "string" && isPublicStorageUrl(u))
     .slice(0, MAX_PHOTOS);
 
   if (!storeId || !title?.trim() || photos.length === 0) {

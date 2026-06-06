@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/session";
+import { isPublicStorageUrl } from "@/lib/supabaseStorage";
 
 /** 소비자 휴업/폐업 제보 (사진 첨부). 로그인 필요. 지도·상세에 경고로 노출. */
 export const runtime = "nodejs";
@@ -40,7 +41,10 @@ export async function POST(req: NextRequest) {
       data: {
         storeId,
         kind,
-        photoUrl: typeof body.photoUrl === "string" && body.photoUrl ? body.photoUrl : null,
+        photoUrl:
+          typeof body.photoUrl === "string" && isPublicStorageUrl(body.photoUrl)
+            ? body.photoUrl
+            : null,
         note: typeof body.note === "string" && body.note.trim() ? body.note.trim() : null,
         createdById: userId,
       },

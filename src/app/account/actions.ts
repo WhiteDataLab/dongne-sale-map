@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { auth, signIn, signOut, unstable_update } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { isPublicStorageUrl } from "@/lib/supabaseStorage";
 
 /** 닉네임 변경 (마이페이지). 세션 토큰도 갱신해 헤더/표시에 즉시 반영. */
 export async function updateNickname(formData: FormData) {
@@ -23,6 +24,8 @@ export async function updateProfileImage(url: string | null) {
   const session = await auth();
   const userId = session?.user?.id;
   if (!userId) return;
+  // 우리 스토리지 URL 또는 제거(null)만 허용(외부/위조 URL 차단)
+  if (url !== null && !isPublicStorageUrl(url)) return;
   await prisma.user.update({ where: { id: userId }, data: { profileImgUrl: url } });
   await unstable_update({ user: {} }); // jwt trigger="update" → DB 의 profileImgUrl 재반영
   revalidatePath("/account");

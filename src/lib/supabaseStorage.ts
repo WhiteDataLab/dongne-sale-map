@@ -26,6 +26,12 @@ export function isAllowedImageType(type: string): boolean {
   return type in EXT_BY_TYPE;
 }
 
+/** 우리 공개 스토리지에서 발급된 URL인지 검증(외부/위조 URL로 포인트 우회 방지). */
+export function isPublicStorageUrl(url: string): boolean {
+  if (!SUPABASE_URL || typeof url !== "string") return false;
+  return url.startsWith(`${SUPABASE_URL}/storage/v1/object/public/`);
+}
+
 /** 이미지 업로드 → 공개 URL 반환. */
 export async function uploadSaleImage(
   data: ArrayBuffer,

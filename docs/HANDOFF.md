@@ -41,6 +41,14 @@ User(provider?/providerId? nullable, name?, nickname, phone? unique, phoneVerifi
 - 포인트 잔액 출처 = PointLog 합계(<5년). 세일 삭제/숨김/제재 시 해당 PointLog **회수**.
 - ⚠️ **정합 규칙**: "사장님 가게" 판정·표시는 **`ownerId`(hasOwner) 기준**(인증 소유자 유무). `source`는 등록 출처 메타일 뿐. `approveMerchant`는 `ownerId+source=merchant+verified`를 **함께** 세팅하므로 둘이 항상 일치해야 함. (과거 시드가 `source=merchant`만 주고 ownerId 누락 → 상세는 "사장님 가게", 상품탭은 "사장님 미등록" 모순. 시드/라이브 데이터 모두 소유자 지정으로 복구함.)
 
+## 4-1. 보안/어뷰징 방어 (점검 완료)
+- **권한**: 모든 변경 API는 `getCurrentUser`(정지=차단, role=DB 최신) 또는 `getAdminSession`(이제 **DB role/status 재확인** → 강등/정지 관리자 즉시 차단). 세일/리뷰/제보 삭제는 작성자·관리자만.
+- **포인트 파밍 차단**: 리뷰=**가게당 1회 + 60s 레이트리밋(3)**, 메뉴=**5분 레이트리밋(8)**, 세일=기존 60s(3)+중복가드. 콘텐츠 숨김/삭제 시 PointLog 회수(sale/review/product).
+- **가짜 사진으로 포인트 우회 차단**: 세일·리뷰·메뉴·휴업제보·프로필·배너 사진 URL은 **우리 공개 스토리지 URL(`isPublicStorageUrl`)만 인정**(외부/위조 URL 거부).
+- **신고 악용 차단**: 같은 사용자가 같은 대상 **중복 신고 불가** → 자동숨김 임계치(3)는 '서로 다른 신고자 수' 기준.
+- **업로드**: 서버 경유(service_role 키 비노출), 이미지 화이트리스트(png/jpg/webp/gif, **SVG 불가**)+5MB. 민감문서(사업자등록증)=비공개 버킷+단기 서명URL.
+- 잔여 위험(낮음): 업로드 자체 레이트리밋 없음(고아 이미지 누적 가능), 토큰 maxAge 동안 닉네임/이미지 지연.
+
 ## 5. 인프라/시크릿
 - DB: Supabase 풀러 `aws-1-ap-northeast-2.pooler.supabase.com`(user `postgres.<ref>`), 6543(앱)/5432(마이그레이션). **직접호스트 db.<ref>.supabase.co 는 IPv6-only라 사용 불가.**
 - Storage 버킷: `sale-photos`(public·이미지), `merchant-docs`(private·서명URL), `intro`(public·영상 50MB).

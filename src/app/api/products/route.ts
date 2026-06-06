@@ -2,11 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 import { canManageMenu } from "@/lib/menu";
+import { isPublicStorageUrl } from "@/lib/supabaseStorage";
 
 /** 메뉴(상품) 추가 (스펙 Phase 7b). 사진 필수. 권한: canManageMenu. */
 export const runtime = "nodejs";
 
 const POINT_PRODUCT = 5; // 메뉴 등록 적립(표시용, status=pending)
+const RATE_WINDOW_MS = 5 * 60_000;
+const RATE_MAX = 8; // 5분 내 메뉴 등록 상한(포인트 파밍·도배 방지)
 
 type Body = {
   storeId?: string;
@@ -32,7 +35,7 @@ export async function POST(req: NextRequest) {
   if (!storeId || !name?.trim()) {
     return NextResponse.json({ error: "메뉴명은 필수예요." }, { status: 400 });
   }
-  if (!photoUrl) {
+  if (!photoUrl || !isPublicStorageUrl(photoUrl)) {
     return NextResponse.json({ error: "메뉴 사진은 필수예요." }, { status: 400 });
   }
   if (typeof body.price !== "number" || !Number.isFinite(body.price) || body.price < 0) {
@@ -48,6 +51,13 @@ export async function POST(req: NextRequest) {
     }
     if (!canManageMenu(store, user)) {
       return NextResponse.json({ error: "메뉴를 등록할 권한이 없어요." }, { status: 403 });
+    }
+    // 어뷰징 방어: 단시간 다중 등록 레이트리밋(+5P 파밍 방지)
+    const recent = await prisma.product.count({
+      where: { createdById: user.id, createdAt: { gt: new Date(Date.now() - RATE_WINDOW_MS) } },
+    });
+    if (recent >= RATE_MAX) {
+      return NextResponse.json({ error: "잠시 후 다시 시도해 주세요. (너무 빠른 연속 등록)" }, { status: 429 });
     }
     const product = await prisma.$transaction(async (tx) => {
       const created = await tx.product.create({
