@@ -6,6 +6,7 @@ import { POINT_EXPIRY_YEARS, POINT_HISTORY_YEARS, yearsAgo } from "@/lib/points"
 import { deleteAccount, startLink, updateNickname } from "./actions";
 import { ProfileAvatarEditor } from "@/components/ProfileAvatarEditor";
 import { ContactVerifyForm } from "@/components/ContactVerifyForm";
+import { PointHistory } from "@/components/PointHistory";
 import { DeleteReviewButton } from "@/components/DeleteReviewButton";
 import { starString } from "@/lib/format";
 
@@ -139,7 +140,7 @@ export default async function AccountPage() {
     history = await prisma.pointLog.findMany({
       where: { userId: session.user.id, createdAt: { gte: yearsAgo(POINT_HISTORY_YEARS) } },
       orderBy: { createdAt: "desc" },
-      take: 100,
+      take: 500, // 최대 2년치(페이지네이션으로 탐색)
       select: { id: true, amount: true, reason: true, status: true, createdAt: true },
     });
   } catch {
@@ -248,31 +249,15 @@ export default async function AccountPage() {
 
         <section>
           <h2 className="mb-2 text-sm font-semibold text-gray-700">포인트 내역</h2>
-          {history.length === 0 ? (
-            <p className="rounded-xl border border-dashed border-gray-200 p-4 text-center text-sm text-gray-400">
-              최근 2년간 적립 내역이 없어요.
-            </p>
-          ) : (
-            <ul className="flex flex-col divide-y divide-gray-100 rounded-xl border border-gray-200">
-              {history.map((h) => (
-                <li key={h.id} className="flex items-center justify-between gap-2 px-3 py-2.5">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm">{h.reason}</p>
-                    <p className="text-xs text-gray-400">
-                      {new Date(h.createdAt).toLocaleDateString("ko-KR")} ·{" "}
-                      {h.status === "granted" ? "지급" : "적립예정"}
-                    </p>
-                  </div>
-                  <span
-                    className={`shrink-0 text-sm font-semibold ${h.amount < 0 ? "text-red-500" : "text-blue-600"}`}
-                  >
-                    {h.amount > 0 ? "+" : ""}
-                    {h.amount}P
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
+          <PointHistory
+            items={history.map((h) => ({
+              id: h.id,
+              amount: h.amount,
+              reason: h.reason,
+              status: h.status,
+              date: new Date(h.createdAt).toLocaleDateString("ko-KR"),
+            }))}
+          />
           <p className="mt-1.5 text-xs text-gray-400">
             내역은 최근 {POINT_HISTORY_YEARS}년까지 표시되며, 적립 후 {POINT_EXPIRY_YEARS}년이 지난
             포인트는 소멸돼요.
