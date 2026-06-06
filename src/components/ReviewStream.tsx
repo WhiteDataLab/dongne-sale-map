@@ -34,7 +34,9 @@ export function ReviewStream({ reviews }: { reviews: FeedReview[] }) {
           >
             <span className="font-semibold text-gray-900">{r.storeName}</span>
             <span className="ml-1 text-[9px] text-amber-500 sm:text-[10px]">{starString(r.rating)}</span>
-            <span className="ml-1 text-gray-600">{r.content}</span>
+            <span className="ml-1 text-gray-600">
+              {r.content.length > 20 ? `${r.content.slice(0, 20)}…` : r.content}
+            </span>
             <span className="ml-1 text-gray-400">- {r.nickname}</span>
           </div>
         ))}
