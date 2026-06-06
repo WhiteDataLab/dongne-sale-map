@@ -161,6 +161,10 @@ button:disabled {
     transform: translateX(-50%);
   }
 }
+/* 마우스 올리면 멈춰 클릭하기 쉽게 */
+.marquee:hover .marquee-track {
+  animation-play-state: paused;
+}
 
 /* ── 실시간 리뷰 스트림(아래→위로 올라가며 옅어짐) ── */
 .stream-track {

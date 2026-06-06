@@ -23,6 +23,7 @@ export type StoreDTO = {
 /** 지도 상단 광고판(마퀴)용 최신 세일. */
 export type FeedSale = {
   id: string;
+  storeId: string;
   title: string;
   salePrice: number;
   qty: string;

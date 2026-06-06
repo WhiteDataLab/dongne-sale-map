@@ -35,6 +35,7 @@ export async function GET(req: NextRequest) {
         take: 15,
         select: {
           id: true,
+          storeId: true,
           title: true,
           salePrice: true,
           qty: true,
@@ -58,6 +59,7 @@ export async function GET(req: NextRequest) {
 
     const sales: FeedSale[] = saleRows.map((s) => ({
       id: s.id,
+      storeId: s.storeId,
       title: s.title,
       salePrice: s.salePrice,
       qty: s.qty,

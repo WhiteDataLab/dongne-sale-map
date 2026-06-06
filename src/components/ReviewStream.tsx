@@ -14,7 +14,7 @@ export function ReviewStream({ reviews }: { reviews: FeedReview[] }) {
 
   return (
     <div className="stream-mask pointer-events-none h-full w-full overflow-hidden">
-      <div className="stream-track flex flex-col gap-2">
+      <div className="stream-track flex flex-col items-end gap-2 text-right">
         {items.map((r, i) => (
           <div
             key={`${r.id}-${i}`}

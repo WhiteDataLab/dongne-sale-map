@@ -454,13 +454,21 @@ export function MapExplorer() {
 
         <FilterBar filters={filters} onChange={setFilters} />
 
-        {/* 현 지역 최신 세일 광고판 (가로 마퀴) */}
-        {!registerMode && <SaleMarquee sales={feed.sales} />}
+        {/* 현 지역 최신 세일 광고판 (가로 마퀴) — 누르면 가게 상세 열림 */}
+        {!registerMode && (
+          <SaleMarquee
+            sales={feed.sales}
+            onSelect={(id) => {
+              setResults(null);
+              setSelectedStoreId(id);
+            }}
+          />
+        )}
       </div>
 
-      {/* 실시간 리뷰 스트림 (좌측, 아래→위로 올라가며 옅어짐) */}
+      {/* 실시간 리뷰 스트림 (우측 상단, 아래→위로 올라가며 옅어짐) */}
       {!error && !registerMode && !selectedStoreId && feed.reviews.length > 0 && (
-        <div className="pointer-events-none absolute bottom-24 left-2 top-44 z-[5] w-[62%] max-w-[260px]">
+        <div className="pointer-events-none absolute right-2 top-40 z-[5] h-[44%] w-[60%] max-w-[250px]">
           <ReviewStream reviews={feed.reviews} />
         </div>
       )}
