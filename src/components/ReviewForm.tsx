@@ -2,7 +2,18 @@
 
 import { useState } from "react";
 
-/** 리뷰 작성/평점 폼 (스펙 Phase 3). */
+/** 버튼/태깅 리뷰 프리셋. 누르면 선택되고, 여러 개 선택 가능. */
+const REVIEW_TAGS = [
+  "재료가 신선해요",
+  "양이 많아요",
+  "가성비가 좋아요",
+  "메뉴 구성이 알차요",
+  "고기 질이 좋아요",
+  "비싼 만큼 가치있어요",
+  "인테리어가 멋져요",
+];
+
+/** 리뷰 작성/평점 폼 (스펙 Phase 3 + 태깅 리뷰). */
 export function ReviewForm({
   storeId,
   onDone,
@@ -15,17 +26,30 @@ export function ReviewForm({
   onToast: (msg: string) => void;
 }) {
   const [rating, setRating] = useState(5);
-  const [content, setContent] = useState("");
+  const [selected, setSelected] = useState<string[]>([]);
+  const [showCustom, setShowCustom] = useState(false);
+  const [custom, setCustom] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  const toggle = (tag: string) =>
+    setSelected((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]));
+
+  // 최종 리뷰 내용 = 선택 태그 + (기타) 직접 입력
+  const buildContent = () => {
+    const parts = [...selected];
+    if (showCustom && custom.trim()) parts.push(custom.trim());
+    return parts.join(", ");
+  };
+
   const submit = async () => {
-    if (!content.trim()) return onToast("리뷰 내용을 입력해 주세요.");
+    const content = buildContent();
+    if (!content) return onToast("태그를 고르거나 ‘기타’로 직접 입력해 주세요.");
     setSubmitting(true);
     try {
       const res = await fetch("/api/reviews", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ storeId, rating, content: content.trim() }),
+        body: JSON.stringify({ storeId, rating, content }),
       });
       if (!res.ok) {
         const e = (await res.json().catch(() => ({}))) as { error?: string };
@@ -50,6 +74,7 @@ export function ReviewForm({
         </button>
       </div>
 
+      {/* 별점 */}
       <div className="flex gap-1 text-2xl">
         {[1, 2, 3, 4, 5].map((n) => (
           <button
@@ -64,13 +89,51 @@ export function ReviewForm({
         ))}
       </div>
 
-      <textarea
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        rows={3}
-        placeholder="가게는 어땠나요?"
-        className="resize-none rounded-lg border border-gray-200 px-3 py-2 text-sm"
-      />
+      {/* 태그 버튼 */}
+      <div className="flex flex-wrap gap-2">
+        {REVIEW_TAGS.map((tag) => {
+          const on = selected.includes(tag);
+          return (
+            <button
+              key={tag}
+              type="button"
+              onClick={() => toggle(tag)}
+              className={[
+                "rounded-full border px-3 py-1.5 text-sm transition-colors",
+                on
+                  ? "border-blue-600 bg-blue-600 text-white"
+                  : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50",
+              ].join(" ")}
+            >
+              {tag}
+            </button>
+          );
+        })}
+        <button
+          type="button"
+          onClick={() => setShowCustom((v) => !v)}
+          className={[
+            "rounded-full border px-3 py-1.5 text-sm transition-colors",
+            showCustom
+              ? "border-gray-800 bg-gray-800 text-white"
+              : "border-dashed border-gray-300 bg-white text-gray-500 hover:bg-gray-50",
+          ].join(" ")}
+        >
+          ✏️ 기타
+        </button>
+      </div>
+
+      {/* 기타: 직접 입력 */}
+      {showCustom && (
+        <textarea
+          value={custom}
+          onChange={(e) => setCustom(e.target.value)}
+          rows={2}
+          autoFocus
+          placeholder="직접 남기고 싶은 후기를 적어 주세요."
+          className="resize-none rounded-lg border border-gray-200 px-3 py-2 text-sm"
+        />
+      )}
 
       <button
         type="button"

@@ -146,6 +146,47 @@ button:disabled {
   }
 }
 
+/* ── 지도 상단 세일 광고판(가로 마퀴) ── */
+.marquee-track {
+  display: inline-flex;
+  white-space: nowrap;
+  will-change: transform;
+  animation: marquee-x 28s linear infinite;
+}
+@keyframes marquee-x {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* ── 실시간 리뷰 스트림(아래→위로 올라가며 옅어짐) ── */
+.stream-track {
+  will-change: transform;
+  animation: stream-up 26s linear infinite;
+}
+@keyframes stream-up {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-50%);
+  }
+}
+/* 위로 갈수록 옅어지는 마스크 */
+.stream-mask {
+  -webkit-mask-image: linear-gradient(to top, #000 25%, transparent 92%);
+  mask-image: linear-gradient(to top, #000 25%, transparent 92%);
+}
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track,
+  .stream-track {
+    animation: none;
+  }
+}
+
 /* ── 이미지 hover 확대 (Apple 느낌) ── */
 .zoomable {
   overflow: hidden;

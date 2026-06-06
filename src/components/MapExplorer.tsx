@@ -8,8 +8,10 @@ import { SearchBar } from "./SearchBar";
 import { FilterBar, type Filters } from "./FilterBar";
 import { StoreSheet } from "./StoreSheet";
 import { StoreRegisterForm } from "./StoreRegisterForm";
+import { SaleMarquee } from "./SaleMarquee";
+import { ReviewStream } from "./ReviewStream";
 import { DEFAULT_CENTER, DEFAULT_LEVEL, CATEGORY_META } from "@/lib/constants";
-import type { StoreDTO } from "@/lib/types";
+import type { StoreDTO, FeedSale, FeedReview } from "@/lib/types";
 
 /**
  * Phase 1 지도 화면: 카카오맵 렌더링 + 검색 이동 + bounds 핀 + 필터.
@@ -51,6 +53,7 @@ export function MapExplorer() {
   const [results, setResults] = useState<Place[] | null>(null);
   const [registerMode, setRegisterMode] = useState(false);
   const [picked, setPicked] = useState<{ lat: number; lng: number; address: string } | null>(null);
+  const [feed, setFeed] = useState<{ sales: FeedSale[]; reviews: FeedReview[] }>({ sales: [], reviews: [] });
   const router = useRouter();
 
   const registerModeRef = useRef(false);
@@ -97,6 +100,34 @@ export function MapExplorer() {
     }
   }, []);
 
+  // 현 지도 영역의 실시간 피드(최신 세일 광고판 + 리뷰 스트림)
+  const fetchFeed = useCallback(async () => {
+    const map = mapRef.current;
+    if (!map) return;
+    const bounds = map.getBounds();
+    const sw = bounds.getSouthWest();
+    const ne = bounds.getNorthEast();
+    const params = new URLSearchParams({
+      swLat: String(sw.getLat()),
+      swLng: String(sw.getLng()),
+      neLat: String(ne.getLat()),
+      neLng: String(ne.getLng()),
+    });
+    try {
+      const res = await fetch(`/api/feed?${params.toString()}`);
+      const data = (await res.json()) as { sales?: FeedSale[]; reviews?: FeedReview[] };
+      setFeed({ sales: data.sales ?? [], reviews: data.reviews ?? [] });
+    } catch {
+      // 무시(피드는 부가 효과)
+    }
+  }, []);
+
+  // 실시간성: 18초마다 현 영역 피드 갱신
+  useEffect(() => {
+    const id = window.setInterval(() => fetchFeed(), 18000);
+    return () => window.clearInterval(id);
+  }, [fetchFeed]);
+
   // 지도 초기화 (1회)
   useEffect(() => {
     if (!loaded || !mapEl.current || mapRef.current) return;
@@ -106,9 +137,11 @@ export function MapExplorer() {
       level: DEFAULT_LEVEL,
     });
     mapRef.current = map;
-    // 이동/확대 종료 시 현 영역 가게 재조회
+    // 이동/확대 종료 시 현 영역 가게 + 피드 재조회
     kakao.maps.event.addListener(map, "idle", fetchStores);
+    kakao.maps.event.addListener(map, "idle", fetchFeed);
     fetchStores();
+    fetchFeed();
 
     // 등록 모드에서 커서를 따라다니는 미리보기 핀 (꽂기 전 시각화)
     kakao.maps.event.addListener(map, "mousemove", (e: { latLng: any }) => {
@@ -179,7 +212,7 @@ export function MapExplorer() {
       setSelectedStoreId(qStore);
     }
     if (params.get("register") === "1") setRegisterMode(true);
-  }, [loaded, fetchStores]);
+  }, [loaded, fetchStores, fetchFeed]);
 
   // 상단 오버레이 높이 측정(검색+필터). 시트 최대화 한계로 사용.
   useEffect(() => {
@@ -420,7 +453,17 @@ export function MapExplorer() {
         )}
 
         <FilterBar filters={filters} onChange={setFilters} />
+
+        {/* 현 지역 최신 세일 광고판 (가로 마퀴) */}
+        {!registerMode && <SaleMarquee sales={feed.sales} />}
       </div>
+
+      {/* 실시간 리뷰 스트림 (좌측, 아래→위로 올라가며 옅어짐) */}
+      {!error && !registerMode && !selectedStoreId && feed.reviews.length > 0 && (
+        <div className="pointer-events-none absolute bottom-24 left-2 top-44 z-[5] w-[62%] max-w-[260px]">
+          <ReviewStream reviews={feed.reviews} />
+        </div>
+      )}
 
       {/* 빈 상태 (스펙 6장) */}
       {!error && !loadingStores && stores.length === 0 && (

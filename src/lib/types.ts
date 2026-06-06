@@ -20,6 +20,25 @@ export type StoreDTO = {
   shutdownReports: number; // 최근 '폐업' 제보 수
 };
 
+/** 지도 상단 광고판(마퀴)용 최신 세일. */
+export type FeedSale = {
+  id: string;
+  title: string;
+  salePrice: number;
+  qty: string;
+  storeName: string;
+  createdAt: string;
+};
+
+/** 실시간 리뷰 스트림(유튜브 채팅 느낌)용. */
+export type FeedReview = {
+  id: string;
+  nickname: string;
+  content: string;
+  rating: number;
+  storeName: string;
+};
+
 /** 휴업/폐업 제보 DTO. */
 export type ClosureReportDTO = {
   id: string;
