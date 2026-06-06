@@ -6,6 +6,7 @@ import { auth, signIn, signOut, unstable_update } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { isPublicStorageUrl } from "@/lib/supabaseStorage";
 import { normalizePhone } from "@/lib/sms";
+import { grantReferralIfEligible } from "@/lib/referral";
 
 /** 닉네임 변경 (마이페이지). 세션 토큰도 갱신해 헤더/표시에 즉시 반영. */
 export async function updateNickname(formData: FormData) {
@@ -34,7 +35,14 @@ export async function updateContact(formData: FormData) {
   const phone = normalizePhone(raw);
   if (!phone) return; // 형식 오류 → 무시(클라에서 안내)
   await prisma.user.update({ where: { id: userId }, data: { contactPhone: phone } });
+  // 연락처가 등록되면 보류된 추천 보상 지급 시도(영구 원장으로 재사용 차단)
+  try {
+    await grantReferralIfEligible(userId);
+  } catch {
+    // 보상 실패는 연락처 저장을 막지 않음
+  }
   revalidatePath("/account");
+  revalidatePath("/invite");
 }
 
 /** 프로필 사진 변경/삭제 (마이페이지). 세션 토큰도 갱신해 헤더/표시에 즉시 반영. */

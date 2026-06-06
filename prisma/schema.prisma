@@ -115,6 +115,7 @@ model User {
   checkInStreak   Int      @default(0) // 연속 출석 일수
   referralCode    String?  @unique // 내 추천인 코드(공유용, 지연 생성)
   referredById    String? // 나를 추천한 사용자(가입 시 1회 설정)
+  referralRewarded Boolean @default(false) // 추천 보상 지급(또는 소진) 여부 — 중복 적립 방지
   createdAt     DateTime   @default(now())
 
   // 관계
@@ -164,6 +165,14 @@ model MerchantVerification {
 
   @@index([status])
   @@index([userId])
+}
+
+// 추천 보상 영구 원장: 이미 추천 보상에 사용된 연락처(해시). 탈퇴해도 남아 재가입 재적립 차단.
+// PII 최소화를 위해 원문 전화번호 대신 해시만 저장.
+model ReferralClaim {
+  id          String   @id @default(cuid())
+  contactHash String   @unique
+  createdAt   DateTime @default(now())
 }
 
 // 사이트 전역 설정 (key-value). 예: intro_video_url(소개 페이지 업로드 영상)

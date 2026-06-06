@@ -36,15 +36,24 @@ export default async function InvitePage() {
   let invitedCount = 0;
   let earned = 0;
   let canEnter = false;
+  let pendingReward = false;
   try {
     code = await ensureReferralCode(session.user.id);
     const me = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { referredById: true, createdAt: true, _count: { select: { referrals: true } } },
+      select: {
+        referredById: true,
+        referralRewarded: true,
+        contactPhone: true,
+        createdAt: true,
+        _count: { select: { referrals: true } },
+      },
     });
     invitedCount = me?._count.referrals ?? 0;
     const ageDays = me ? (Date.now() - me.createdAt.getTime()) / (24 * 60 * 60 * 1000) : 999;
     canEnter = !!me && !me.referredById && ageDays <= GRACE_DAYS;
+    // 추천인은 등록됐지만 연락처 미등록으로 보상 보류 상태
+    pendingReward = !!me && !!me.referredById && !me.referralRewarded && !me.contactPhone;
     const agg = await prisma.pointLog.aggregate({
       _sum: { amount: true },
       where: { userId: session.user.id, refType: "referral", amount: { gt: 0 } },
@@ -78,6 +87,16 @@ export default async function InvitePage() {
             </div>
           </div>
         </section>
+
+        {pendingReward && (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm">
+            <p className="font-semibold text-amber-800">⏳ 추천 보상 대기 중</p>
+            <p className="mt-0.5 text-xs text-amber-700">
+              추천인은 등록됐어요! <Link href="/account#contact" className="font-semibold underline">마이페이지에서 연락처를 등록</Link>하면
+              나와 친구에게 각각 +{REFERRAL_POINT}P가 지급돼요.
+            </p>
+          </div>
+        )}
 
         {code ? (
           <InvitePanel code={code} canEnter={canEnter} />

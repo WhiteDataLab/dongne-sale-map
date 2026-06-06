@@ -42,8 +42,14 @@ export async function POST(req: NextRequest) {
 
   const result = await applyReferral(userId, code);
   switch (result) {
-    case "ok":
+    case "granted":
       return NextResponse.json({ ok: true, message: "추천 보상 +50P! 친구에게도 +50P 지급됐어요." });
+    case "pending":
+      return NextResponse.json({
+        ok: true,
+        pending: true,
+        message: "추천인 등록 완료! 마이페이지에서 연락처를 등록하면 +50P가 지급돼요.",
+      });
     case "self":
       return NextResponse.json({ error: "본인 코드는 사용할 수 없어요." }, { status: 400 });
     case "invalid":
