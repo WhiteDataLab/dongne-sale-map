@@ -55,6 +55,8 @@ export function MapExplorer() {
   const [picked, setPicked] = useState<{ lat: number; lng: number; address: string } | null>(null);
   const [feed, setFeed] = useState<{ sales: FeedSale[]; reviews: FeedReview[] }>({ sales: [], reviews: [] });
   const feedSigRef = useRef("");
+  // 현재 위치(좌표 미저장 — 거리 표시/지도 이동용 화면 상태)
+  const [myLoc, setMyLoc] = useState<{ lat: number; lng: number } | null>(null);
   const router = useRouter();
 
   const registerModeRef = useRef(false);
@@ -305,6 +307,7 @@ export function MapExplorer() {
         const { kakao } = window;
         const ll = new kakao.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
         map.setCenter(ll);
+        setMyLoc({ lat: pos.coords.latitude, lng: pos.coords.longitude }); // 거리 표시용(미저장)
         // 현재 위치 파란 점 표시 (좌표 저장 안 함 — 화면 표시용)
         if (!myLocRef.current) {
           const el = document.createElement("div");
@@ -331,6 +334,24 @@ export function MapExplorer() {
       { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 },
     );
   }, [fetchStores, flashNotice]);
+
+  // 거리 표시용 위치 요청(지도 이동 없이 myLoc 만 갱신). 가게 상세의 '거리 보기'에서 호출.
+  const locateForDistance = useCallback(() => {
+    if (!navigator.geolocation) {
+      flashNotice("이 기기에서는 위치를 사용할 수 없어요.");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setMyLoc({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      (err) =>
+        flashNotice(
+          err.code === err.PERMISSION_DENIED
+            ? "위치 권한이 거부됐어요. 브라우저 설정에서 허용해 주세요."
+            : "현재 위치를 가져오지 못했어요.",
+        ),
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 60_000 },
+    );
+  }, [flashNotice]);
 
   const handleSearch = useCallback(
     async (q: string) => {
@@ -550,6 +571,8 @@ export function MapExplorer() {
         storeId={selectedStoreId}
         onClose={() => setSelectedStoreId(null)}
         onToast={flashNotice}
+        userLoc={myLoc}
+        onLocate={locateForDistance}
       />
     </div>
   );

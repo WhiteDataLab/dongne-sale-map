@@ -16,6 +16,7 @@ import {
   type DayKey,
 } from "@/lib/businessHours";
 import { freshnessLabel, starString, untilLabel, won } from "@/lib/format";
+import { haversineMeters, formatDistance } from "@/lib/geo";
 import type { StoreDetailDTO } from "@/lib/types";
 import { SaleReportForm } from "./SaleReportForm";
 import { ClosureReportForm } from "./ClosureReportForm";
@@ -48,10 +49,14 @@ export function StoreSheet({
   storeId,
   onClose,
   onToast,
+  userLoc,
+  onLocate,
 }: {
   storeId: string | null;
   onClose: () => void;
   onToast: (msg: string) => void;
+  userLoc?: { lat: number; lng: number } | null;
+  onLocate?: () => void;
 }) {
   const [detail, setDetail] = useState<StoreDetailDTO | null>(null);
   const [loading, setLoading] = useState(false);
@@ -314,6 +319,21 @@ export function StoreSheet({
                 </div>
                 <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
                   <OpenBadge isOpen={detail.isOpenNow} />
+                  {userLoc ? (
+                    <span className="rounded-full bg-blue-50 px-2 py-0.5 font-medium text-blue-600">
+                      📍 내 위치에서 {formatDistance(haversineMeters(userLoc.lat, userLoc.lng, detail.lat, detail.lng))}
+                    </span>
+                  ) : (
+                    onLocate && (
+                      <button
+                        type="button"
+                        onClick={onLocate}
+                        className="rounded-full bg-gray-100 px-2 py-0.5 text-gray-500 hover:bg-gray-200"
+                      >
+                        📍 거리 보기
+                      </button>
+                    )
+                  )}
                   {detail.avgRating !== null && (
                     <span className="text-amber-500">
                       ★ {detail.avgRating}{" "}

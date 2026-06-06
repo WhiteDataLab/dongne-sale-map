@@ -14,3 +14,10 @@ export function haversineMeters(
     Math.cos(toRad(aLat)) * Math.cos(toRad(bLat)) * Math.sin(dLng / 2) ** 2;
   return 2 * R * Math.asin(Math.sqrt(s));
 }
+
+/** 거리(m) → 친근한 표시: 1km 미만은 m, 이상은 km(소수 1자리). */
+export function formatDistance(meters: number): string {
+  if (!Number.isFinite(meters)) return "";
+  if (meters < 1000) return `${Math.round(meters)}m`;
+  return `${(meters / 1000).toFixed(1)}km`;
+}
