@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/session";
 import { findGiftItem } from "@/lib/gifts";
@@ -39,36 +40,49 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const result = await prisma.$transaction(async (tx) => {
-      const agg = await tx.pointLog.aggregate({
-        _sum: { amount: true },
-        where: { userId, createdAt: { gte: yearsAgo(POINT_EXPIRY_YEARS) } },
-      });
-      const balance = agg._sum.amount ?? 0;
-      if (balance < item.points) {
-        return { ok: false as const, balance };
-      }
-      const redemption = await tx.redemption.create({
-        data: {
-          userId,
-          itemId: item.id,
-          itemName: `${item.brand} ${item.name}`,
-          points: item.points,
-          contact: user.contactPhone!,
-        },
-      });
-      await tx.pointLog.create({
-        data: {
-          userId,
-          amount: -item.points,
-          reason: `기프티콘 교환: ${item.brand} ${item.name}`,
-          status: "granted",
-          refType: "redemption",
-          refId: redemption.id,
-        },
-      });
-      return { ok: true as const, balance: balance - item.points, redemptionId: redemption.id };
-    });
+    const result = await prisma.$transaction(
+      async (tx) => {
+        const agg = await tx.pointLog.aggregate({
+          _sum: { amount: true },
+          where: { userId, createdAt: { gte: yearsAgo(POINT_EXPIRY_YEARS) } },
+        });
+        const balance = agg._sum.amount ?? 0;
+        // 잔액 부족 시 교환 불가 — 차감 후 잔액이 음수가 되는 일을 원천 차단.
+        if (balance < item.points) {
+          return { ok: false as const, balance };
+        }
+        const redemption = await tx.redemption.create({
+          data: {
+            userId,
+            itemId: item.id,
+            itemName: `${item.brand} ${item.name}`,
+            points: item.points,
+            contact: user.contactPhone!,
+          },
+        });
+        await tx.pointLog.create({
+          data: {
+            userId,
+            amount: -item.points,
+            reason: `기프티콘 교환: ${item.brand} ${item.name}`,
+            status: "granted",
+            refType: "redemption",
+            refId: redemption.id,
+          },
+        });
+        // 안전장치: 차감 직후 잔액 재계산 → 음수면 롤백(트랜잭션 throw)
+        const after = await tx.pointLog.aggregate({
+          _sum: { amount: true },
+          where: { userId, createdAt: { gte: yearsAgo(POINT_EXPIRY_YEARS) } },
+        });
+        if ((after._sum.amount ?? 0) < 0) {
+          throw new Error("negative_balance_guard");
+        }
+        return { ok: true as const, balance: after._sum.amount ?? 0, redemptionId: redemption.id };
+      },
+      // 동시 교환에 따른 이중 차감 방지(직렬화)
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
 
     if (!result.ok) {
       return NextResponse.json(
@@ -82,6 +96,10 @@ export async function POST(req: NextRequest) {
       message: "교환 완료! 등록한 연락처로 기프티콘을 보내드려요.",
     });
   } catch {
-    return NextResponse.json({ error: "교환에 실패했어요." }, { status: 500 });
+    // 직렬화 충돌·안전가드 롤백 등 → 차감 없이 안전하게 실패. 재시도 안내.
+    return NextResponse.json(
+      { error: "잠시 후 다시 시도해 주세요. (포인트는 차감되지 않았어요)" },
+      { status: 409 },
+    );
   }
 }

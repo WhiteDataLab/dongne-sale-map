@@ -20,5 +20,6 @@ export async function getPointBalance(userId: string): Promise<number> {
     _sum: { amount: true },
     where: { userId, createdAt: { gte: yearsAgo(POINT_EXPIRY_YEARS) } },
   });
-  return agg._sum.amount ?? 0;
+  // 표시/판정용 잔액은 절대 음수가 되지 않게 0으로 클램프(소비는 잔액 검증으로 차단됨).
+  return Math.max(0, agg._sum.amount ?? 0);
 }

@@ -106,7 +106,7 @@ export default async function AccountPage() {
       _sum: { amount: true },
       where: { userId: session.user.id, createdAt: { gte: yearsAgo(POINT_EXPIRY_YEARS) } },
     });
-    balance = agg._sum.amount ?? 0;
+    balance = Math.max(0, agg._sum.amount ?? 0);
     history = await prisma.pointLog.findMany({
       where: { userId: session.user.id, createdAt: { gte: yearsAgo(POINT_HISTORY_YEARS) } },
       orderBy: { createdAt: "desc" },
