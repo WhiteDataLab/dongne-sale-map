@@ -18,6 +18,16 @@ export async function updateNickname(formData: FormData) {
   revalidatePath("/account");
 }
 
+/** 프로필 사진 변경/삭제 (마이페이지). 세션 토큰도 갱신해 헤더/표시에 즉시 반영. */
+export async function updateProfileImage(url: string | null) {
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) return;
+  await prisma.user.update({ where: { id: userId }, data: { profileImgUrl: url } });
+  await unstable_update({ user: {} }); // jwt trigger="update" → DB 의 profileImgUrl 재반영
+  revalidatePath("/account");
+}
+
 /**
  * 소셜 계정 연결 시작 (account linking, Phase 5b).
  * 로그인 상태에서 link_uid 쿠키를 심고 OAuth 시작 → jwt 콜백이 현재 User 에 신원을 붙인다.

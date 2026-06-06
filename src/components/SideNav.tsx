@@ -57,24 +57,34 @@ export function SideNav({
             open ? "translate-x-0" : "-translate-x-full"
           }`}
         >
-          {/* 프로필 영역 */}
-          <div className="flex items-center gap-3 border-b border-gray-100 p-4">
-            <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-100 text-xl">
-              {user?.image ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={user.image} alt="" className="size-12 object-cover" />
-              ) : (
-                "🙂"
-              )}
-            </div>
-            <div className="min-w-0">
-              {user ? (
+          {/* 프로필 영역 — 로그인 시 누르면 마이페이지(사진 변경)로 */}
+          {user ? (
+            <Link
+              href="/account"
+              onClick={close}
+              className="flex items-center gap-3 border-b border-gray-100 p-4 transition-colors hover:bg-gray-50"
+            >
+              <div className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-100 text-xl">
+                {user.image ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={user.image} alt="" className="size-12 object-cover" />
+                ) : (
+                  "🙂"
+                )}
+              </div>
+              <div className="min-w-0">
                 <p className="truncate font-semibold">{user.name}님</p>
-              ) : (
-                <p className="text-sm text-gray-500">로그인하고 시작해요</p>
-              )}
+                <p className="text-xs text-gray-400">프로필 사진 변경 ›</p>
+              </div>
+            </Link>
+          ) : (
+            <div className="flex items-center gap-3 border-b border-gray-100 p-4">
+              <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-100 text-xl">
+                🙂
+              </div>
+              <p className="text-sm text-gray-500">로그인하고 시작해요</p>
             </div>
-          </div>
+          )}
 
           {/* 메뉴 */}
           <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto p-2">

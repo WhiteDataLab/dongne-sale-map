@@ -4,6 +4,7 @@ import { auth, signIn } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { POINT_EXPIRY_YEARS, POINT_HISTORY_YEARS, yearsAgo } from "@/lib/points";
 import { deleteAccount, startLink, updateNickname } from "./actions";
+import { ProfileAvatarEditor } from "@/components/ProfileAvatarEditor";
 
 const LINK_RESULT_MSG: Record<string, string> = {
   linked: "계정이 연결됐어요.",
@@ -58,12 +59,16 @@ export default async function AccountPage() {
   // 포인트: 잔액 = PointLog 합계(5년 이내), 내역 = 최근 2년만 노출
   // 표시 닉네임은 DB 최신값(세션 토큰 지연 회피)
   let nickname = session.user.name ?? "이웃";
+  let profileImg: string | null = session.user.image ?? null;
   try {
     const me = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { nickname: true },
+      select: { nickname: true, profileImgUrl: true },
     });
-    if (me) nickname = me.nickname;
+    if (me) {
+      nickname = me.nickname;
+      profileImg = me.profileImgUrl;
+    }
   } catch {
     // DB 미연결
   }
@@ -102,8 +107,8 @@ export default async function AccountPage() {
         <section>
           <h1 className="text-xl font-bold">마이페이지</h1>
           <div className="mt-3 rounded-xl border border-gray-200 p-4">
-            <p className="font-medium">{nickname}님</p>
-            <form action={updateNickname} className="mt-2 flex gap-2">
+            <ProfileAvatarEditor currentUrl={profileImg} nickname={nickname} />
+            <form action={updateNickname} className="mt-3 flex gap-2">
               <input
                 name="nickname"
                 defaultValue={nickname}

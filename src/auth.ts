@@ -78,6 +78,7 @@ export const authConfig: NextAuthConfig = {
             token.nickname = u.nickname;
             token.role = u.role;
             token.points = u.points;
+            token.picture = u.profileImgUrl ?? null;
           }
         } catch {
           // 무시
@@ -127,6 +128,7 @@ export const authConfig: NextAuthConfig = {
           token.role = dbUser.role;
           token.points = dbUser.points;
           token.nickname = dbUser.nickname;
+          token.picture = dbUser.profileImgUrl ?? null;
         } else {
           // 전화번호(Credentials): authorize 가 반환한 user.id 가 우리 User.id.
           const dbUser = await prisma.user.findUnique({ where: { id: user.id! } });
@@ -135,6 +137,7 @@ export const authConfig: NextAuthConfig = {
             token.role = dbUser.role;
             token.points = dbUser.points;
             token.nickname = dbUser.nickname;
+            token.picture = dbUser.profileImgUrl ?? null;
           }
         }
       } catch {
@@ -149,6 +152,7 @@ export const authConfig: NextAuthConfig = {
         session.user.role = (token.role as "user" | "admin" | "merchant") ?? "user";
         session.user.points = (token.points as number) ?? 0;
         if (token.nickname) session.user.name = token.nickname as string;
+        session.user.image = (token.picture as string | null) ?? null;
       }
       return session;
     },
