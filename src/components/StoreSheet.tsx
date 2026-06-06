@@ -24,6 +24,7 @@ import { ReportButton } from "./ReportButton";
 import { MerchantApply } from "./MerchantApply";
 import { ProductForm } from "./ProductForm";
 import { PhotoEditor } from "./PhotoEditor";
+import { ShareButton } from "./ShareButton";
 import type { ProductDTO } from "@/lib/types";
 
 type Composing = "sale" | "review" | null;
@@ -326,6 +327,14 @@ export function StoreSheet({
                   <span className="text-gray-500">{detail.registeredBy.nickname}님이 등록</span>
                 </div>
               </div>
+              <ShareButton
+                path={`/s/${detail.id}`}
+                title={`${detail.name} 세일 정보`}
+                text="동네 세일 지도에서 확인해보세요!"
+                className="shrink-0 self-start rounded-full border border-gray-200 px-2 py-1 text-xs text-gray-500"
+              >
+                🔗 공유
+              </ShareButton>
               <button
                 type="button"
                 aria-label="즐겨찾기"
