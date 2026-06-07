@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
-import { deletePublicImages, isPublicStorageUrl } from "@/lib/supabaseStorage";
+import { deletePublicImages, isPublicStorageUrl, isReceiptPath } from "@/lib/supabaseStorage";
 
 /** 리뷰 수정/삭제 (작성자 본인 또는 관리자). */
 export const runtime = "nodejs";
@@ -12,6 +12,7 @@ type PatchBody = {
   tags?: unknown;
   productIds?: unknown;
   photoUrls?: unknown;
+  receiptPath?: unknown;
 };
 
 /** 문자열 배열만 추출 + 트림 + 빈값/중복 제거 + 개수 제한. */
@@ -85,9 +86,20 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
       return NextResponse.json({ error: "선택한 메뉴를 찾을 수 없어요." }, { status: 400 });
     }
 
+    // 새 영수증 경로가 오면 갱신, 없으면 기존 유지(제거는 미지원)
+    const receiptUrl =
+      typeof body.receiptPath === "string" && isReceiptPath(body.receiptPath) ? body.receiptPath : undefined;
+
     await prisma.review.update({
       where: { id },
-      data: { rating, content, tags, productIds: valid.map((p) => p.id), photoUrls },
+      data: {
+        rating,
+        content,
+        tags,
+        productIds: valid.map((p) => p.id),
+        photoUrls,
+        ...(receiptUrl ? { receiptUrl } : {}),
+      },
     });
 
     // 교체/삭제로 더 이상 참조되지 않는 이전 사진 정리(best-effort)

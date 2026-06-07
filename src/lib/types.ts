@@ -90,6 +90,7 @@ export type ReviewDTO = {
   tags: string[]; // 빠른 태그 — 원형 테두리 칩으로 표시
   products: ReviewProduct[]; // 구매한 메뉴(있던 것만 이름 해석)
   photoUrls: string[];
+  receiptVerified: boolean; // 영수증 인증 여부(이미지 자체는 비공개 — 배지만)
   nickname: string;
   createdAt: string;
   scored: boolean; // 포인트·별점 반영 여부(같은 날 재작성=false)

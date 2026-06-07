@@ -116,6 +116,7 @@ export default async function AccountPage() {
     tags: string[];
     productIds: string[];
     photoUrls: string[];
+    receiptUrl: string | null;
     scored: boolean;
     createdAt: Date;
     store: { name: string };
@@ -134,6 +135,7 @@ export default async function AccountPage() {
         tags: true,
         productIds: true,
         photoUrls: true,
+        receiptUrl: true,
         scored: true,
         createdAt: true,
         store: { select: { name: true } },
@@ -304,6 +306,7 @@ export default async function AccountPage() {
                       .filter((pid) => productNameMap.has(pid))
                       .map((pid) => ({ id: pid, name: productNameMap.get(pid) as string })),
                     photoUrls: r.photoUrls,
+                    receiptVerified: Boolean(r.receiptUrl),
                     scored: r.scored,
                     createdAt: r.createdAt.toISOString(),
                   }}

@@ -109,6 +109,28 @@ export async function uploadMerchantDoc(
   return path;
 }
 
+/**
+ * 리뷰 영수증을 **비공개** 버킷에 업로드 → 저장 경로 반환(공개 URL 아님).
+ * 영수증엔 카드/상호/시간 등 민감정보가 있어 공개 노출하지 않고 인증 배지로만 쓴다.
+ */
+export async function uploadReceiptImage(data: ArrayBuffer, contentType: string): Promise<string> {
+  if (!storageConfigured()) throw new Error("storage_not_configured");
+  const ext = EXT_BY_TYPE[contentType] ?? "jpg";
+  const path = `receipts/${randomUUID()}.${ext}`;
+  const res = await fetch(`${SUPABASE_URL}/storage/v1/object/${DOC_BUCKET}/${path}`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${SERVICE_KEY}`, "Content-Type": contentType },
+    body: Buffer.from(data),
+  });
+  if (!res.ok) throw new Error(`receipt_upload_failed: ${res.status}`);
+  return path;
+}
+
+/** 비공개 영수증 경로 형식 검증(위조 차단). */
+export function isReceiptPath(p: string): boolean {
+  return typeof p === "string" && /^receipts\/[\w-]+\.(png|jpg|webp|gif)$/.test(p);
+}
+
 const VIDEO_EXT: Record<string, string> = {
   "video/mp4": "mp4",
   "video/webm": "webm",

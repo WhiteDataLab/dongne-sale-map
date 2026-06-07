@@ -10,16 +10,23 @@ export function ReviewContent({
   content,
   products,
   verified = false,
+  receiptVerified = false,
 }: {
   tags: string[];
   content: string;
   products: ReviewProduct[];
   verified?: boolean; // 사진이 함께 올라온 리뷰 = 사진 인증 배지
+  receiptVerified?: boolean; // 영수증 인증(더 강한 신뢰 배지)
 }) {
   return (
     <div className="mt-1 flex flex-col gap-1">
-      {(products.length > 0 || verified) && (
+      {(products.length > 0 || verified || receiptVerified) && (
         <p className="flex flex-wrap items-center gap-1.5 text-xs text-gray-500">
+          {receiptVerified && (
+            <span className="rounded-full bg-blue-100 px-2 py-0.5 font-medium text-blue-700">
+              🧾 영수증 인증
+            </span>
+          )}
           {verified && (
             <span className="rounded-full bg-green-100 px-2 py-0.5 font-medium text-green-700">
               📷 사진 인증

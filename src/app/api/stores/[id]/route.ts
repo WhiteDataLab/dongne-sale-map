@@ -164,6 +164,7 @@ export async function GET(
           .filter((pid) => productNameMap.has(pid))
           .map((pid) => ({ id: pid, name: productNameMap.get(pid) as string })),
         photoUrls: r.photoUrls,
+        receiptVerified: Boolean(r.receiptUrl),
         nickname: r.user.nickname,
         createdAt: r.createdAt.toISOString(),
         scored: r.scored,

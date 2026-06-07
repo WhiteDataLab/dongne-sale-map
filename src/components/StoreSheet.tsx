@@ -1394,6 +1394,7 @@ function ReviewsTab({
                 content={r.content}
                 products={r.products}
                 verified={r.photoUrls?.length > 0}
+                receiptVerified={r.receiptVerified}
               />
               {r.photoUrls?.length > 0 && (
                 <div className="mt-1.5 flex gap-1.5 overflow-x-auto">

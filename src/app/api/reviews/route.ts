@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/session";
-import { isPublicStorageUrl } from "@/lib/supabaseStorage";
+import { isPublicStorageUrl, isReceiptPath } from "@/lib/supabaseStorage";
 import { kstTodayStart } from "@/lib/businessHours";
 
 /**
@@ -28,6 +28,7 @@ type Body = {
   tags?: unknown;
   productIds?: unknown;
   photoUrls?: unknown;
+  receiptPath?: unknown;
 };
 
 /** 문자열 배열만 추출 + 트림 + 빈값 제거 + 개수 제한. */
@@ -64,6 +65,9 @@ export async function POST(req: NextRequest) {
   const photoUrls = Array.isArray(body.photoUrls)
     ? body.photoUrls.filter((u): u is string => typeof u === "string" && isPublicStorageUrl(u)).slice(0, 5)
     : [];
+  // 영수증 인증(선택): 비공개 경로 형식만 인정
+  const receiptUrl =
+    typeof body.receiptPath === "string" && isReceiptPath(body.receiptPath) ? body.receiptPath : null;
 
   if (!storeId) {
     return NextResponse.json({ error: "가게 정보가 없어요." }, { status: 400 });
@@ -114,12 +118,13 @@ export async function POST(req: NextRequest) {
     // 포인트 정책: 반영 대상이면서, 최초 리뷰는 무조건 / 이후엔 사진 있을 때만
     const priorCount = await prisma.review.count({ where: { userId } });
     const isFirst = priorCount === 0;
-    const hasPhoto = photoUrls.length > 0;
-    const grant = scored && (isFirst || hasPhoto) ? POINT_REVIEW : 0;
+    // 사진 또는 영수증 인증이 있으면 '인증된 리뷰'로 보고 2번째부터도 포인트 지급
+    const hasProof = photoUrls.length > 0 || receiptUrl !== null;
+    const grant = scored && (isFirst || hasProof) ? POINT_REVIEW : 0;
 
     const review = await prisma.$transaction(async (tx) => {
       const created = await tx.review.create({
-        data: { storeId, userId, rating, content, tags, productIds: linkedIds, photoUrls, scored },
+        data: { storeId, userId, rating, content, tags, productIds: linkedIds, photoUrls, receiptUrl, scored },
       });
       if (grant > 0) {
         await tx.pointLog.create({

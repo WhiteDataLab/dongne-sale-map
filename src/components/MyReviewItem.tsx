@@ -17,6 +17,7 @@ type MyReview = {
   tags: string[];
   products: ReviewProduct[];
   photoUrls: string[];
+  receiptVerified: boolean;
   createdAt: string; // ISO
   scored: boolean;
 };
@@ -33,6 +34,7 @@ export function MyReviewItem({ review }: { review: MyReview }) {
     tags: review.tags,
     products: review.products,
     photoUrls: review.photoUrls,
+    receiptVerified: review.receiptVerified,
     nickname: "",
     createdAt: review.createdAt,
     scored: review.scored,
@@ -81,6 +83,7 @@ export function MyReviewItem({ review }: { review: MyReview }) {
         content={review.content}
         products={review.products}
         verified={review.photoUrls.length > 0}
+        receiptVerified={review.receiptVerified}
       />
       {review.photoUrls.length > 0 && (
         <div className="mt-1.5 flex gap-1.5 overflow-x-auto">

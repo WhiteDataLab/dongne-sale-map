@@ -60,6 +60,32 @@ export function ReviewForm({
   const [editIdx, setEditIdx] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  // 영수증 인증(선택) — 비공개 업로드 후 경로만 보관
+  const [receiptPath, setReceiptPath] = useState<string | null>(null);
+  const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
+  const [receiptBusy, setReceiptBusy] = useState(false);
+  const receiptRef = useRef<HTMLInputElement>(null);
+
+  const uploadReceipt = async (f: File) => {
+    setReceiptBusy(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", f);
+      const res = await fetch("/api/upload/receipt", { method: "POST", body: fd });
+      if (!res.ok) {
+        onToast(res.status === 401 ? "로그인이 필요해요." : "영수증 업로드에 실패했어요.");
+        return;
+      }
+      const { path } = (await res.json()) as { path: string };
+      setReceiptPath(path);
+      setReceiptPreview(URL.createObjectURL(f));
+      onToast("영수증 인증이 추가됐어요.");
+    } catch {
+      onToast("네트워크 오류가 발생했어요.");
+    } finally {
+      setReceiptBusy(false);
+    }
+  };
 
   const toggleTag = (tag: string) =>
     setSelected((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]));
@@ -118,7 +144,14 @@ export function ReviewForm({
         uploaded.push(url);
       }
       const photoUrls = [...keptUrls, ...uploaded];
-      const payload = { rating, content, tags: selected, productIds: purchasedIds, photoUrls };
+      const payload = {
+        rating,
+        content,
+        tags: selected,
+        productIds: purchasedIds,
+        photoUrls,
+        ...(receiptPath ? { receiptPath } : {}),
+      };
 
       if (isEdit && review) {
         const res = await fetch(`/api/reviews/${review.id}`, {
@@ -371,6 +404,46 @@ export function ReviewForm({
           e.target.value = "";
         }}
       />
+
+      {/* 영수증 인증 (선택) — 비공개 보관, 배지로만 표시 */}
+      <div className="rounded-lg border border-gray-200 bg-white p-2.5">
+        <div className="flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <p className="text-sm font-medium">
+              🧾 영수증 인증 <span className="text-xs font-normal text-gray-400">(선택)</span>
+            </p>
+            <p className="text-xs text-gray-400">올리면 ‘영수증 인증’ 배지가 붙어요. 이미지는 비공개로 보관돼요.</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => receiptRef.current?.click()}
+            disabled={receiptBusy}
+            className="shrink-0 rounded-lg border border-gray-300 px-2.5 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:text-gray-300"
+          >
+            {receiptBusy ? "업로드 중…" : receiptPath ? "다시 선택" : "영수증 올리기"}
+          </button>
+        </div>
+        {(receiptPath || (isEdit && review?.receiptVerified)) && (
+          <p className="mt-1 text-xs font-medium text-blue-600">
+            ✓ {receiptPath ? "영수증 인증 추가됨" : "기존 영수증 인증됨"}
+          </p>
+        )}
+        {receiptPreview && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={receiptPreview} alt="" className="mt-2 h-20 rounded border border-gray-200 object-cover" />
+        )}
+        <input
+          ref={receiptRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) uploadReceipt(f);
+            e.target.value = "";
+          }}
+        />
+      </div>
 
       {!isEdit && (
         <p className="rounded-lg bg-blue-50 px-3 py-2 text-xs text-blue-700">

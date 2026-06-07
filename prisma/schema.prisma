@@ -351,6 +351,7 @@ model Review {
   tags       String[] @default([]) // 빠른 태그(프리셋) — 원형 테두리 칩으로 표시
   productIds String[] @default([]) // 구매한 메뉴(상품 id) — 최소 1개 필수, 다중 선택 가능
   photoUrls  String[] @default([]) // 리뷰 사진(선택). 2번째 리뷰부터는 사진 있어야 포인트 지급
+  receiptUrl String? // 영수증 인증(선택) — 비공개 버킷 경로만 저장(공개 노출 X, 배지로만 표시)
   scored     Boolean  @default(true) // 포인트·별점 반영 여부. 같은 날 같은 가게 재작성은 false
   hidden     Boolean  @default(false) // 신고 누적 N건 시 soft hide (Phase 4)
   createdAt  DateTime @default(now())
