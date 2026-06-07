@@ -15,7 +15,7 @@ import {
   getKstNow,
   type DayKey,
 } from "@/lib/businessHours";
-import { freshnessLabel, starString, untilLabel, won } from "@/lib/format";
+import { freshnessLabel, reviewDateLabel, starString, untilLabel, won } from "@/lib/format";
 import { haversineMeters, formatDistance } from "@/lib/geo";
 import type { StoreDetailDTO } from "@/lib/types";
 import { SaleReportForm } from "./SaleReportForm";
@@ -27,7 +27,7 @@ import { MerchantApply } from "./MerchantApply";
 import { ProductForm } from "./ProductForm";
 import { PhotoEditor } from "./PhotoEditor";
 import { ShareButton } from "./ShareButton";
-import type { ProductDTO } from "@/lib/types";
+import type { ProductDTO, ReviewDTO } from "@/lib/types";
 
 type Composing = "sale" | "review" | null;
 
@@ -1315,6 +1315,19 @@ function ReviewsTab({
   onToast: (msg: string) => void;
   onGoRegisterProduct: () => void;
 }) {
+  // 내 리뷰 수정 — 특정 리뷰를 편집 중일 때 폼을 인라인으로 연다.
+  const [editReview, setEditReview] = useState<ReviewDTO | null>(null);
+
+  const remove = async (id: string) => {
+    const res = await fetch(`/api/reviews/${id}`, { method: "DELETE" });
+    if (res.ok) {
+      onToast("리뷰를 삭제했어요.");
+      onDone();
+    } else {
+      onToast(res.status === 403 ? "권한이 없어요." : "삭제에 실패했어요.");
+    }
+  };
+
   return (
     <div className="flex flex-col gap-3">
       {composing ? (
@@ -1324,6 +1337,17 @@ function ReviewsTab({
           onGoRegisterProduct={onGoRegisterProduct}
           onDone={onDone}
           onCancel={onClose}
+          onToast={onToast}
+        />
+      ) : editReview ? (
+        <ReviewForm
+          storeId={detail.id}
+          review={editReview}
+          onDone={() => {
+            setEditReview(null);
+            onDone();
+          }}
+          onCancel={() => setEditReview(null)}
           onToast={onToast}
         />
       ) : (
@@ -1350,7 +1374,10 @@ function ReviewsTab({
           {detail.reviews.map((r) => (
             <li key={r.id} className="border-b border-gray-50 pb-2">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">{r.nickname}</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-sm font-medium">{r.nickname}</span>
+                  <span className="text-xs text-gray-400">{reviewDateLabel(r.createdAt)}</span>
+                </div>
                 <span className="text-amber-500 text-sm">{starString(r.rating)}</span>
               </div>
               <p className="mt-1 text-sm text-gray-700">{r.content}</p>
@@ -1372,12 +1399,32 @@ function ReviewsTab({
                   myReaction={r.myReaction}
                   onToast={onToast}
                 />
-                <ReportButton
-                  targetType="review"
-                  targetId={r.id}
-                  onToast={onToast}
-                  onChanged={onDone}
-                />
+                <div className="flex items-center gap-3">
+                  {r.isMine && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setEditReview(r)}
+                        className="text-xs text-blue-600"
+                      >
+                        수정
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => remove(r.id)}
+                        className="text-xs text-red-500"
+                      >
+                        삭제
+                      </button>
+                    </>
+                  )}
+                  <ReportButton
+                    targetType="review"
+                    targetId={r.id}
+                    onToast={onToast}
+                    onChanged={onDone}
+                  />
+                </div>
               </div>
             </li>
           ))}

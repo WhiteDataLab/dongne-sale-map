@@ -45,7 +45,13 @@
       "Bash(git branch *)",
       "Bash(git remote *)",
       "Bash(echo \"origin 갱신: $\\(git remote get-url origin\\)\")",
-      "Bash(Get-Process)"
+      "Bash(Get-Process)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(git restore *)",
+      "PowerShell($procs = Get-CimInstance Win32_Process -Filter \"Name='node.exe'\" | Where-Object { $_.CommandLine -match 'next' }; if \\($procs\\) { $procs | Select-Object ProcessId, CommandLine | Format-List } else { \"no next node process running\" })",
+      "PowerShell(npm run build 2>&1)"
     ]
   }
 }

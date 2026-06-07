@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import type { ProductDTO } from "@/lib/types";
+import type { ProductDTO, ReviewDTO } from "@/lib/types";
 import { PhotoEditor } from "./PhotoEditor";
 
 /** 버튼/태깅 리뷰 프리셋. 누르면 선택되고, 여러 개 선택 가능. */
@@ -17,28 +17,38 @@ const REVIEW_TAGS = [
 
 const MAX_PHOTOS = 5;
 
-/** 리뷰 작성 폼 (태깅 + 사진 + 포인트 정책). */
+/**
+ * 리뷰 작성/수정 폼 (태깅 + 사진 + 포인트 정책).
+ * `review` 가 주어지면 수정 모드: 태그 프리셋·구매메뉴 퍼널 대신 본문 직접 수정,
+ * 기존 사진은 유지/삭제하고 새 사진을 추가해 PATCH 로 갱신한다.
+ */
 export function ReviewForm({
   storeId,
-  products,
+  products = [],
+  review,
   onGoRegisterProduct,
   onDone,
   onCancel,
   onToast,
 }: {
   storeId: string;
-  products: ProductDTO[];
-  onGoRegisterProduct: () => void;
+  products?: ProductDTO[];
+  review?: ReviewDTO;
+  onGoRegisterProduct?: () => void;
   onDone: () => void;
   onCancel: () => void;
   onToast: (msg: string) => void;
 }) {
+  const isEdit = Boolean(review);
   const [purchasedId, setPurchasedId] = useState<string | null>(null);
   const [notInMenu, setNotInMenu] = useState(false);
-  const [rating, setRating] = useState(5);
+  const [rating, setRating] = useState(review?.rating ?? 5);
   const [selected, setSelected] = useState<string[]>([]);
-  const [showCustom, setShowCustom] = useState(false);
-  const [custom, setCustom] = useState("");
+  // 수정 모드는 본문을 직접 편집(기존 내용 프리필), 작성 모드는 '기타' 토글로만 노출
+  const [showCustom, setShowCustom] = useState(isEdit);
+  const [custom, setCustom] = useState(review?.content ?? "");
+  // 수정 모드에서 유지 중인 기존(원격) 사진 URL
+  const [keptUrls, setKeptUrls] = useState<string[]>(review?.photoUrls ?? []);
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [editIdx, setEditIdx] = useState<number | null>(null);
@@ -49,14 +59,17 @@ export function ReviewForm({
     setSelected((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]));
 
   const buildContent = () => {
+    if (isEdit) return custom.trim();
     const parts = [...selected];
     if (showCustom && custom.trim()) parts.push(custom.trim());
     return parts.join(", ");
   };
 
+  const photoCount = keptUrls.length + files.length;
+
   const addFiles = (list: FileList | null) => {
     if (!list) return;
-    const room = MAX_PHOTOS - files.length;
+    const room = MAX_PHOTOS - photoCount;
     if (room <= 0) return onToast(`사진은 최대 ${MAX_PHOTOS}장이에요.`);
     const picked = Array.from(list).slice(0, room);
     const firstNew = files.length;
@@ -81,11 +94,13 @@ export function ReviewForm({
 
   const submit = async () => {
     const content = buildContent();
-    if (!content) return onToast("태그를 고르거나 ‘기타’로 직접 입력해 주세요.");
+    if (!content) {
+      return onToast(isEdit ? "내용을 입력해 주세요." : "태그를 고르거나 ‘기타’로 직접 입력해 주세요.");
+    }
     setSubmitting(true);
     try {
-      // 사진 업로드(개별)
-      const photoUrls: string[] = [];
+      // 새로 추가한 사진만 업로드(수정 모드의 기존 사진은 그대로 유지)
+      const uploaded: string[] = [];
       for (const f of files) {
         const fd = new FormData();
         fd.append("file", f);
@@ -96,7 +111,30 @@ export function ReviewForm({
           return;
         }
         const { url } = (await up.json()) as { url: string };
-        photoUrls.push(url);
+        uploaded.push(url);
+      }
+      const photoUrls = [...keptUrls, ...uploaded];
+
+      if (isEdit && review) {
+        const res = await fetch(`/api/reviews/${review.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ rating, content, photoUrls }),
+        });
+        if (!res.ok) {
+          const e = (await res.json().catch(() => ({}))) as { error?: string };
+          onToast(
+            res.status === 401
+              ? "로그인이 필요해요."
+              : res.status === 403
+                ? "수정할 권한이 없어요."
+                : e.error ?? "수정 실패",
+          );
+          return;
+        }
+        onToast("리뷰를 수정했어요.");
+        onDone();
+        return;
       }
 
       const res = await fetch("/api/reviews", {
@@ -126,7 +164,7 @@ export function ReviewForm({
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-gray-50 p-3">
       <div className="flex items-center justify-between">
-        <h4 className="font-semibold">리뷰 쓰기</h4>
+        <h4 className="font-semibold">{isEdit ? "리뷰 수정" : "리뷰 쓰기"}</h4>
         <button
           type="button"
           onClick={onCancel}
@@ -136,7 +174,8 @@ export function ReviewForm({
         </button>
       </div>
 
-      {/* 구매 메뉴 선택 ("어떤 걸 구매하셨나요?") */}
+      {/* 구매 메뉴 선택 ("어떤 걸 구매하셨나요?") — 작성 모드 전용 */}
+      {!isEdit && (
       <div>
         <p className="mb-1.5 text-sm font-medium">어떤 걸 구매하셨나요?</p>
         <div className="flex flex-wrap gap-2">
@@ -194,6 +233,7 @@ export function ReviewForm({
           </div>
         )}
       </div>
+      )}
 
       {/* 별점 */}
       <div className="flex gap-1 text-2xl">
@@ -210,7 +250,8 @@ export function ReviewForm({
         ))}
       </div>
 
-      {/* 태그 버튼 */}
+      {/* 태그 버튼 — 작성 모드 전용(수정 모드는 본문 직접 편집) */}
+      {!isEdit && (
       <div className="flex flex-wrap gap-2">
         {REVIEW_TAGS.map((tag) => {
           const on = selected.includes(tag);
@@ -243,6 +284,7 @@ export function ReviewForm({
           ✏️ 기타
         </button>
       </div>
+      )}
 
       {showCustom && (
         <textarea
@@ -257,6 +299,21 @@ export function ReviewForm({
 
       {/* 사진 (선택, 최대 5장) */}
       <div className="grid grid-cols-4 gap-2">
+        {/* 기존 사진(수정 모드): 삭제만 가능 */}
+        {keptUrls.map((url) => (
+          <div key={url} className="relative aspect-square overflow-hidden rounded-lg bg-gray-100">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={url} alt="" className="h-full w-full object-cover" />
+            <button
+              type="button"
+              onClick={() => setKeptUrls((arr) => arr.filter((u) => u !== url))}
+              aria-label="삭제"
+              className="absolute right-1 top-1 flex size-5 items-center justify-center rounded-full bg-black/60 text-xs text-white"
+            >
+              ×
+            </button>
+          </div>
+        ))}
         {previews.map((src, i) => (
           <div key={src} className="relative aspect-square overflow-hidden rounded-lg bg-gray-100">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -278,7 +335,7 @@ export function ReviewForm({
             </button>
           </div>
         ))}
-        {files.length < MAX_PHOTOS && (
+        {photoCount < MAX_PHOTOS && (
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
@@ -301,9 +358,11 @@ export function ReviewForm({
         }}
       />
 
-      <p className="rounded-lg bg-blue-50 px-3 py-2 text-xs text-blue-700">
-        💡 첫 리뷰는 글만 써도 10P! 그 다음부터는 <b>사진과 함께</b> 작성하면 10P를 받아요.
-      </p>
+      {!isEdit && (
+        <p className="rounded-lg bg-blue-50 px-3 py-2 text-xs text-blue-700">
+          💡 첫 리뷰는 글만 써도 10P! 그 다음부터는 <b>사진과 함께</b> 작성하면 10P를 받아요.
+        </p>
+      )}
 
       <button
         type="button"
@@ -311,7 +370,7 @@ export function ReviewForm({
         disabled={submitting}
         className="rounded-lg bg-blue-600 py-2.5 text-sm font-semibold text-white disabled:bg-gray-300"
       >
-        {submitting ? "등록 중…" : "리뷰 등록"}
+        {submitting ? (isEdit ? "수정 중…" : "등록 중…") : isEdit ? "수정 완료" : "리뷰 등록"}
       </button>
 
       {editIdx !== null && files[editIdx] && (
