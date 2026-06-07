@@ -43,8 +43,9 @@ export function kstDaysAgo(iso: string): number {
 
 /**
  * 리뷰 작성일 라벨 — 정확한 시각 대신 KST 달력일 기준 한글 구간으로 뭉뚱그린다.
- * 오늘/어제/그제(0·1·2일 전) 이후는 주·달 단위 근사 구간:
- *   3~6일 → 이번주, 7~13일(저번주), 14~27일(2주전~ → 이번달), 28일+ (4주전~ → 저번달).
+ * 오늘/어제/그제(0·1·2일 전) 이후는 주·달 근사 구간, 그 뒤로는 개월/년 단위:
+ *   3~6일 → 이번주, 7~13일(저번주), 14~27일(이번달), 28~59일(저번달),
+ *   60~364일 → N개월 전(2~11), 365일+ → N년 전(1·2·3…).
  */
 export function reviewDateLabel(iso: string): string {
   const d = kstDaysAgo(iso);
@@ -54,5 +55,7 @@ export function reviewDateLabel(iso: string): string {
   if (d <= 6) return "이번주";
   if (d <= 13) return "저번주";
   if (d <= 27) return "이번달";
-  return "저번달";
+  if (d <= 59) return "저번달";
+  if (d < 365) return `${Math.min(11, Math.floor(d / 30))}개월 전`;
+  return `${Math.floor(d / 365)}년 전`;
 }

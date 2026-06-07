@@ -7,8 +7,7 @@ import { deleteAccount, startLink, updateNickname } from "./actions";
 import { ProfileAvatarEditor } from "@/components/ProfileAvatarEditor";
 import { ContactVerifyForm } from "@/components/ContactVerifyForm";
 import { PointHistory } from "@/components/PointHistory";
-import { DeleteReviewButton } from "@/components/DeleteReviewButton";
-import { starString } from "@/lib/format";
+import { MyReviewItem } from "@/components/MyReviewItem";
 
 const REDEMPTION_LABEL: Record<string, string> = {
   requested: "발송 대기",
@@ -99,8 +98,10 @@ export default async function AccountPage() {
 
   let myReviews: {
     id: string;
+    storeId: string;
     rating: number;
     content: string;
+    photoUrls: string[];
     createdAt: Date;
     store: { name: string };
     reactions: { kind: string }[];
@@ -112,8 +113,10 @@ export default async function AccountPage() {
       take: 50,
       select: {
         id: true,
+        storeId: true,
         rating: true,
         content: true,
+        photoUrls: true,
         createdAt: true,
         store: { select: { name: true } },
         reactions: { select: { kind: true } },
@@ -203,25 +206,22 @@ export default async function AccountPage() {
             </p>
           ) : (
             <ul className="flex flex-col gap-2">
-              {myReviews.map((r) => {
-                const likes = r.reactions.filter((x) => x.kind === "like").length;
-                const dislikes = r.reactions.filter((x) => x.kind === "dislike").length;
-                return (
-                  <li key={r.id} className="rounded-xl border border-gray-200 p-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium">🏪 {r.store.name}</p>
-                        <p className="text-amber-500 text-xs">{starString(r.rating)}</p>
-                      </div>
-                      <DeleteReviewButton reviewId={r.id} />
-                    </div>
-                    <p className="mt-1 whitespace-pre-wrap text-sm text-gray-700">{r.content}</p>
-                    <p className="mt-1 text-xs text-gray-400">
-                      {new Date(r.createdAt).toLocaleDateString("ko-KR")} · 👍 {likes} · 👎 {dislikes}
-                    </p>
-                  </li>
-                );
-              })}
+              {myReviews.map((r) => (
+                <MyReviewItem
+                  key={r.id}
+                  review={{
+                    id: r.id,
+                    storeId: r.storeId,
+                    storeName: r.store.name,
+                    rating: r.rating,
+                    content: r.content,
+                    photoUrls: r.photoUrls,
+                    createdAt: r.createdAt.toISOString(),
+                    likes: r.reactions.filter((x) => x.kind === "like").length,
+                    dislikes: r.reactions.filter((x) => x.kind === "dislike").length,
+                  }}
+                />
+              ))}
             </ul>
           )}
         </section>
