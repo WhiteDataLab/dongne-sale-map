@@ -304,6 +304,42 @@ summary:focus-visible {
   }
 }
 
+/* ── 줌아웃 클러스터 버블 (호갱노노식) ── */
+.store-cluster {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 42px;
+  min-height: 42px;
+  padding: 6px 8px;
+  border-radius: 9999px;
+  background: rgba(37, 99, 235, 0.92);
+  border: 2px solid #fff;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform 0.1s ease;
+}
+.store-cluster:hover {
+  transform: scale(1.06);
+}
+.store-cluster__count {
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+}
+.store-cluster__price {
+  margin-top: 2px;
+  padding: 0 5px;
+  border-radius: 9999px;
+  background: #ef4444;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
 /* ── 휴업/폐업/영업종료 상태 ── */
 .store-pin__status {
   margin-left: 2px;

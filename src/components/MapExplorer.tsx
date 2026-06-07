@@ -282,7 +282,7 @@ export function MapExplorer() {
     overlaysRef.current.forEach((o) => o.setMap(null));
     overlaysRef.current = [];
 
-    for (const s of stores) {
+    const addPin = (s: StoreDTO) => {
       const el = buildPinElement(s, () => {
         if (!s.verified) {
           flashNotice(`'${s.name}' 은 인증 진행중인 가게예요.`);
@@ -298,6 +298,31 @@ export function MapExplorer() {
       });
       overlay.setMap(map);
       overlaysRef.current.push(overlay);
+    };
+
+    // 줌아웃(레벨 높음) 시 가까운 가게를 묶어 클러스터 버블로 표시(호갱노노식).
+    // 클릭하면 해당 위치로 줌인 → idle 재조회로 자동 디클러스터링.
+    const level = map.getLevel();
+    if (level >= CLUSTER_LEVEL && stores.length > 1) {
+      for (const c of groupByGrid(map, stores, CLUSTER_GRID)) {
+        if (c.items.length === 1) {
+          addPin(c.items[0]);
+          continue;
+        }
+        const el = buildClusterElement(c, () => {
+          map.setLevel(Math.max(1, level - 2), { anchor: new kakao.maps.LatLng(c.lat, c.lng) });
+        });
+        const overlay = new kakao.maps.CustomOverlay({
+          position: new kakao.maps.LatLng(c.lat, c.lng),
+          content: el,
+          yAnchor: 0.5,
+          clickable: true,
+        });
+        overlay.setMap(map);
+        overlaysRef.current.push(overlay);
+      }
+    } else {
+      for (const s of stores) addPin(s);
     }
   }, [stores, flashNotice]);
 
@@ -616,6 +641,62 @@ export function MapExplorer() {
 
 /** 핀(커스텀 오버레이) DOM 생성: [카테고리 아이콘 | 가게명]. 미인증=회색.
  *  사장님(merchant) 등록/인증 가게도 지도에선 카테고리 아이콘만 — 구분 표시는 가게 상세에서만. */
+// 줌아웃 클러스터링 설정: 레벨이 이 값 이상(더 멀리)일 때 묶음, 화면을 N등분한 격자로 그룹화.
+const CLUSTER_LEVEL = 6;
+const CLUSTER_GRID = 7;
+
+type Cluster = { lat: number; lng: number; items: StoreDTO[] };
+
+/** 현재 보이는 영역을 격자(grid×grid)로 나눠 같은 칸의 가게들을 묶는다. */
+function groupByGrid(map: { getBounds: () => any }, stores: StoreDTO[], grid: number): Cluster[] {
+  const bounds = map.getBounds();
+  const sw = bounds.getSouthWest();
+  const ne = bounds.getNorthEast();
+  const minLng = sw.getLng();
+  const minLat = sw.getLat();
+  const cw = (ne.getLng() - minLng) / grid || 1;
+  const ch = (ne.getLat() - minLat) / grid || 1;
+
+  const cells = new Map<string, StoreDTO[]>();
+  for (const s of stores) {
+    const cx = Math.floor((s.lng - minLng) / cw);
+    const cy = Math.floor((s.lat - minLat) / ch);
+    const key = `${cx}:${cy}`;
+    const g = cells.get(key);
+    if (g) g.push(s);
+    else cells.set(key, [s]);
+  }
+
+  return [...cells.values()].map((items) => ({
+    lat: items.reduce((a, s) => a + s.lat, 0) / items.length,
+    lng: items.reduce((a, s) => a + s.lng, 0) / items.length,
+    items,
+  }));
+}
+
+/** 클러스터 버블(개수 + 최저 세일가). 클릭 시 줌인. */
+function buildClusterElement(cluster: Cluster, onClick: () => void): HTMLElement {
+  const el = document.createElement("div");
+  el.className = "store-cluster";
+
+  const count = document.createElement("span");
+  count.className = "store-cluster__count";
+  count.textContent = String(cluster.items.length);
+  el.appendChild(count);
+
+  const sale = cluster.items.filter((s) => s.hasActiveSale && s.saleMinPrice != null);
+  if (sale.length > 0) {
+    const min = Math.min(...sale.map((s) => s.saleMinPrice as number));
+    const price = document.createElement("span");
+    price.className = "store-cluster__price";
+    price.textContent = `🔥${min.toLocaleString("ko-KR")}원~`;
+    el.appendChild(price);
+  }
+
+  el.addEventListener("click", onClick);
+  return el;
+}
+
 function buildPinElement(store: StoreDTO, onClick: () => void): HTMLElement {
   const meta = CATEGORY_META[store.category];
   const wrap = document.createElement("div");
