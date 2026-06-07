@@ -23,6 +23,7 @@ import { ClosureReportForm } from "./ClosureReportForm";
 import { ReviewForm } from "./ReviewForm";
 import { ReportButton } from "./ReportButton";
 import { ReviewContent } from "./ReviewContent";
+import { PriceChart } from "./PriceChart";
 import { MerchantApply } from "./MerchantApply";
 import { ProductForm } from "./ProductForm";
 import { PhotoEditor } from "./PhotoEditor";
@@ -759,6 +760,15 @@ function SalesTab({
         >
           🔥 세일 제보하기
         </button>
+      )}
+
+      {detail.priceTrends.length > 0 && (
+        <section className="flex flex-col gap-2">
+          <h3 className="text-sm font-semibold">📈 가격 추이 <span className="font-normal text-gray-400">(최근 90일 세일가)</span></h3>
+          {detail.priceTrends.map((t) => (
+            <PriceChart key={t.key} trend={t} />
+          ))}
+        </section>
       )}
 
       {detail.sales.length === 0 ? (

@@ -6,7 +6,7 @@ import { getCurrentUser } from "@/lib/session";
 import { canManageMenu, canManageStore } from "@/lib/menu";
 import { asStoreHours, isOpenNow, kstTodayStart } from "@/lib/businessHours";
 import type { Category } from "@/lib/constants";
-import type { StoreDetailDTO, StoreSource } from "@/lib/types";
+import type { StoreDetailDTO, StoreSource, PriceTrend } from "@/lib/types";
 
 /** 가게 상세 (스펙 Phase 2): 상품/세일/리뷰 + 영업중 자동판정 + 즐겨찾기 여부. */
 export const runtime = "nodejs";
@@ -89,6 +89,37 @@ export async function GET(
         )
       : false;
 
+    // 가격 변동 그래프: 최근 90일 세일 제보(만료 포함)를 품목별로 묶어 가격 추이 생성.
+    // 별도 이력 테이블 없이 Sale 자체가 시점별 가격 포인트가 된다.
+    const histSince = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+    const histSales = await prisma.sale.findMany({
+      where: { storeId: id, createdAt: { gte: histSince } },
+      select: { salePrice: true, createdAt: true, productId: true, title: true },
+      orderBy: { createdAt: "asc" },
+      take: 400,
+    });
+    const storeProductName = new Map(store.products.map((p) => [p.id, p.name]));
+    const trendMap = new Map<string, PriceTrend & { productId: string | null }>();
+    for (const s of histSales) {
+      const key = s.productId ? `p:${s.productId}` : `t:${s.title.trim()}`;
+      let g = trendMap.get(key);
+      if (!g) {
+        g = {
+          key,
+          productId: s.productId,
+          label: s.productId ? (storeProductName.get(s.productId) ?? s.title) : s.title,
+          points: [],
+        };
+        trendMap.set(key, g);
+      }
+      g.points.push({ t: s.createdAt.toISOString(), p: s.salePrice });
+    }
+    const priceTrends: PriceTrend[] = [...trendMap.values()]
+      .filter((g) => g.points.length >= 2) // 추이가 되려면 2개 이상
+      .sort((a, b) => b.points.length - a.points.length)
+      .slice(0, 8)
+      .map((g) => ({ key: g.key, label: g.label, points: g.points.slice(-24) }));
+
     const dto: StoreDetailDTO = {
       id: store.id,
       name: store.name,
@@ -155,6 +186,7 @@ export async function GET(
         createdAt: s.createdAt.toISOString(),
         isMine: Boolean(userId && s.createdById === userId),
       })),
+      priceTrends,
       reviews: store.reviews.map((r) => ({
         id: r.id,
         rating: r.rating,

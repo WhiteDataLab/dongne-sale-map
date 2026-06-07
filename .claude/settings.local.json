@@ -58,7 +58,8 @@
       "WebFetch(domain:www.daangn.com)",
       "WebFetch(domain:ohou.se)",
       "WebFetch(domain:www.apple.com)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(node -e ' *)"
     ]
   }
 }

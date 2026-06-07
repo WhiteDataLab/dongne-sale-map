@@ -97,6 +97,13 @@ export type ReviewDTO = {
   isMine: boolean;
 };
 
+/** 품목별 세일가 추이(과거 세일 제보에서 파생). 가격 변동 그래프용. */
+export type PriceTrend = {
+  key: string;
+  label: string; // 품목명(상품명 우선, 없으면 세일 제목)
+  points: { t: string; p: number }[]; // 시간순(오래된→최근) 가격 포인트
+};
+
 /** 가게 상세(바텀시트)용 DTO. (source 는 StoreDTO 에서 상속) */
 export type StoreDetailDTO = StoreDTO & {
   phone: string | null;
@@ -108,6 +115,7 @@ export type StoreDetailDTO = StoreDTO & {
   reviewCount: number;
   products: ProductDTO[];
   sales: SaleDTO[];
+  priceTrends: PriceTrend[]; // 품목별 세일가 변동 그래프(최근 90일)
   reviews: ReviewDTO[];
   closureReports: ClosureReportDTO[]; // 최근 휴업/폐업 제보 (경고 배너용)
   isFavorite: boolean;
