@@ -50,6 +50,7 @@ export async function GET(req: NextRequest) {
         select: {
           id: true,
           content: true,
+          tags: true,
           rating: true,
           user: { select: { nickname: true } },
           store: { select: { name: true } },
@@ -69,7 +70,7 @@ export async function GET(req: NextRequest) {
     const reviews: FeedReview[] = reviewRows.map((r) => ({
       id: r.id,
       nickname: r.user.nickname,
-      content: r.content,
+      content: [...r.tags, r.content].filter((s) => s && s.trim()).join(", "),
       rating: r.rating,
       storeName: r.store.name,
     }));

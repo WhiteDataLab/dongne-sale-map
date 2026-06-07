@@ -35,7 +35,6 @@ export async function GET(
           where: { hidden: false }, // 자동 숨김된 리뷰 제외 (Phase 4)
           include: {
             user: { select: { nickname: true } },
-            reactions: { select: { kind: true, userId: true } },
           },
           orderBy: { createdAt: "desc" },
         },
@@ -59,11 +58,23 @@ export async function GET(
       return NextResponse.json({ error: "가게를 찾을 수 없어요." }, { status: 404 });
     }
 
-    const ratings = store.reviews.map((r) => r.rating);
+    // 별점 평균은 '반영 대상(scored)' 리뷰만 집계 (같은 날 재작성 등은 제외)
+    const ratings = store.reviews.filter((r) => r.scored).map((r) => r.rating);
     const avgRating =
       ratings.length > 0
         ? Math.round((ratings.reduce((a, b) => a + b, 0) / ratings.length) * 10) / 10
         : null;
+
+    // 리뷰에 연결된 구매 메뉴 이름 해석(현재 존재하는 상품만)
+    const reviewProductIds = Array.from(new Set(store.reviews.flatMap((r) => r.productIds)));
+    const productNameMap = new Map<string, string>();
+    if (reviewProductIds.length > 0) {
+      const prods = await prisma.product.findMany({
+        where: { id: { in: reviewProductIds } },
+        select: { id: true, name: true },
+      });
+      for (const p of prods) productNameMap.set(p.id, p.name);
+    }
 
     const hours = asStoreHours(store.hoursJson);
 
@@ -138,15 +149,14 @@ export async function GET(
         id: r.id,
         rating: r.rating,
         content: r.content,
+        tags: r.tags,
+        products: r.productIds
+          .filter((pid) => productNameMap.has(pid))
+          .map((pid) => ({ id: pid, name: productNameMap.get(pid) as string })),
         photoUrls: r.photoUrls,
         nickname: r.user.nickname,
         createdAt: r.createdAt.toISOString(),
-        likeCount: r.reactions.filter((x) => x.kind === "like").length,
-        dislikeCount: r.reactions.filter((x) => x.kind === "dislike").length,
-        myReaction: (r.reactions.find((x) => x.userId === userId)?.kind ?? null) as
-          | "like"
-          | "dislike"
-          | null,
+        scored: r.scored,
         isMine: Boolean(userId && r.userId === userId),
       })),
       closureReports: store.closureReports.map((c) => ({

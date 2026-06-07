@@ -22,7 +22,7 @@ import { SaleReportForm } from "./SaleReportForm";
 import { ClosureReportForm } from "./ClosureReportForm";
 import { ReviewForm } from "./ReviewForm";
 import { ReportButton } from "./ReportButton";
-import { ReviewReactions } from "./ReviewReactions";
+import { ReviewContent } from "./ReviewContent";
 import { MerchantApply } from "./MerchantApply";
 import { ProductForm } from "./ProductForm";
 import { PhotoEditor } from "./PhotoEditor";
@@ -1342,6 +1342,7 @@ function ReviewsTab({
       ) : editReview ? (
         <ReviewForm
           storeId={detail.id}
+          products={detail.products}
           review={editReview}
           onDone={() => {
             setEditReview(null);
@@ -1380,7 +1381,7 @@ function ReviewsTab({
                 </div>
                 <span className="text-amber-500 text-sm">{starString(r.rating)}</span>
               </div>
-              <p className="mt-1 text-sm text-gray-700">{r.content}</p>
+              <ReviewContent tags={r.tags} content={r.content} products={r.products} />
               {r.photoUrls?.length > 0 && (
                 <div className="mt-1.5 flex gap-1.5 overflow-x-auto">
                   {r.photoUrls.map((u, i) => (
@@ -1392,13 +1393,9 @@ function ReviewsTab({
                 </div>
               )}
               <div className="mt-1.5 flex items-center justify-between">
-                <ReviewReactions
-                  reviewId={r.id}
-                  likeCount={r.likeCount}
-                  dislikeCount={r.dislikeCount}
-                  myReaction={r.myReaction}
-                  onToast={onToast}
-                />
+                <span className="text-xs text-gray-300">
+                  {!r.scored && "별점·포인트 미반영"}
+                </span>
                 <div className="flex items-center gap-3">
                   {r.isMine && (
                     <>

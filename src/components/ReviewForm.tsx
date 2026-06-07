@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import type { ProductDTO, ReviewDTO } from "@/lib/types";
+import type { ReviewDTO } from "@/lib/types";
 import { PhotoEditor } from "./PhotoEditor";
 
 /** 버튼/태깅 리뷰 프리셋. 누르면 선택되고, 여러 개 선택 가능. */
@@ -17,10 +17,15 @@ const REVIEW_TAGS = [
 
 const MAX_PHOTOS = 5;
 
+/** 폼이 쓰는 최소 상품 정보(이름·id). 가게 상세=ProductDTO, 마이페이지=연결된 메뉴. */
+type PickableProduct = { id: string; name: string };
+
 /**
- * 리뷰 작성/수정 폼 (태깅 + 사진 + 포인트 정책).
- * `review` 가 주어지면 수정 모드: 태그 프리셋·구매메뉴 퍼널 대신 본문 직접 수정,
- * 기존 사진은 유지/삭제하고 새 사진을 추가해 PATCH 로 갱신한다.
+ * 리뷰 작성/수정 폼.
+ * 규칙:
+ *  - 구매 메뉴 1개 이상 연결 필수(다중 선택).
+ *  - 태그(빠른 선택)는 원형 칩, '기타'로 직접 입력하면 일반 텍스트로 함께 저장.
+ *  - `review` 가 주어지면 수정 모드(PATCH), 아니면 작성 모드(POST).
  */
 export function ReviewForm({
   storeId,
@@ -32,7 +37,7 @@ export function ReviewForm({
   onToast,
 }: {
   storeId: string;
-  products?: ProductDTO[];
+  products?: PickableProduct[];
   review?: ReviewDTO;
   onGoRegisterProduct?: () => void;
   onDone: () => void;
@@ -40,12 +45,13 @@ export function ReviewForm({
   onToast: (msg: string) => void;
 }) {
   const isEdit = Boolean(review);
-  const [purchasedId, setPurchasedId] = useState<string | null>(null);
+  const [purchasedIds, setPurchasedIds] = useState<string[]>(
+    review?.products.map((p) => p.id) ?? [],
+  );
   const [notInMenu, setNotInMenu] = useState(false);
   const [rating, setRating] = useState(review?.rating ?? 5);
-  const [selected, setSelected] = useState<string[]>([]);
-  // 수정 모드는 본문을 직접 편집(기존 내용 프리필), 작성 모드는 '기타' 토글로만 노출
-  const [showCustom, setShowCustom] = useState(isEdit);
+  const [selected, setSelected] = useState<string[]>(review?.tags ?? []);
+  const [showCustom, setShowCustom] = useState(Boolean(review?.content));
   const [custom, setCustom] = useState(review?.content ?? "");
   // 수정 모드에서 유지 중인 기존(원격) 사진 URL
   const [keptUrls, setKeptUrls] = useState<string[]>(review?.photoUrls ?? []);
@@ -55,16 +61,12 @@ export function ReviewForm({
   const [submitting, setSubmitting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const toggle = (tag: string) =>
+  const toggleTag = (tag: string) =>
     setSelected((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]));
+  const toggleProduct = (id: string) =>
+    setPurchasedIds((prev) => (prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]));
 
-  const buildContent = () => {
-    if (isEdit) return custom.trim();
-    const parts = [...selected];
-    if (showCustom && custom.trim()) parts.push(custom.trim());
-    return parts.join(", ");
-  };
-
+  const content = showCustom ? custom.trim() : "";
   const photoCount = keptUrls.length + files.length;
 
   const addFiles = (list: FileList | null) => {
@@ -93,9 +95,11 @@ export function ReviewForm({
   };
 
   const submit = async () => {
-    const content = buildContent();
-    if (!content) {
-      return onToast(isEdit ? "내용을 입력해 주세요." : "태그를 고르거나 ‘기타’로 직접 입력해 주세요.");
+    if (purchasedIds.length === 0) {
+      return onToast("구매하신 메뉴를 1개 이상 선택해 주세요.");
+    }
+    if (selected.length === 0 && !content) {
+      return onToast("태그를 고르거나 ‘기타’로 직접 입력해 주세요.");
     }
     setSubmitting(true);
     try {
@@ -114,12 +118,13 @@ export function ReviewForm({
         uploaded.push(url);
       }
       const photoUrls = [...keptUrls, ...uploaded];
+      const payload = { rating, content, tags: selected, productIds: purchasedIds, photoUrls };
 
       if (isEdit && review) {
         const res = await fetch(`/api/reviews/${review.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ rating, content, photoUrls }),
+          body: JSON.stringify(payload),
         });
         if (!res.ok) {
           const e = (await res.json().catch(() => ({}))) as { error?: string };
@@ -140,18 +145,23 @@ export function ReviewForm({
       const res = await fetch("/api/reviews", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ storeId, rating, content, photoUrls }),
+        body: JSON.stringify({ storeId, ...payload }),
       });
       if (!res.ok) {
         const e = (await res.json().catch(() => ({}))) as { error?: string };
         onToast(res.status === 401 ? "로그인이 필요해요." : e.error ?? "등록 실패");
         return;
       }
-      const { pointPending } = (await res.json()) as { pointPending?: number };
+      const { pointPending, scored } = (await res.json()) as {
+        pointPending?: number;
+        scored?: boolean;
+      };
       onToast(
         pointPending && pointPending > 0
           ? `리뷰 등록! 적립 대기 +${pointPending}P`
-          : "리뷰 등록 완료! 다음부터는 사진을 함께 올리면 10P 받아요.",
+          : scored === false
+            ? "리뷰 등록 완료! 오늘 이미 작성해 별점·포인트는 반영되지 않아요."
+            : "리뷰 등록 완료! 다음부터는 사진을 함께 올리면 10P 받아요.",
       );
       onDone();
     } catch {
@@ -174,19 +184,21 @@ export function ReviewForm({
         </button>
       </div>
 
-      {/* 구매 메뉴 선택 ("어떤 걸 구매하셨나요?") — 작성 모드 전용 */}
-      {!isEdit && (
+      {/* 구매 메뉴 선택 — 1개 이상 필수, 다중 선택 가능 */}
       <div>
-        <p className="mb-1.5 text-sm font-medium">어떤 걸 구매하셨나요?</p>
+        <p className="mb-1.5 text-sm font-medium">
+          어떤 걸 구매하셨나요? <span className="text-red-500">*</span>
+          <span className="ml-1 text-xs font-normal text-gray-400">여러 개 선택 가능</span>
+        </p>
         <div className="flex flex-wrap gap-2">
           {products.map((p) => {
-            const on = purchasedId === p.id;
+            const on = purchasedIds.includes(p.id);
             return (
               <button
                 key={p.id}
                 type="button"
                 onClick={() => {
-                  setPurchasedId(on ? null : p.id);
+                  toggleProduct(p.id);
                   setNotInMenu(false);
                 }}
                 className={[
@@ -196,26 +208,31 @@ export function ReviewForm({
                     : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50",
                 ].join(" ")}
               >
+                {on ? "✓ " : ""}
                 {p.name}
               </button>
             );
           })}
-          <button
-            type="button"
-            onClick={() => {
-              setNotInMenu(true);
-              setPurchasedId(null);
-            }}
-            className={[
-              "rounded-full border px-3 py-1.5 text-sm transition-colors",
-              notInMenu
-                ? "border-amber-600 bg-amber-600 text-white"
-                : "border-dashed border-gray-300 bg-white text-gray-500 hover:bg-gray-50",
-            ].join(" ")}
-          >
-            메뉴에 없어요
-          </button>
+          {!isEdit && onGoRegisterProduct && (
+            <button
+              type="button"
+              onClick={() => setNotInMenu((v) => !v)}
+              className={[
+                "rounded-full border px-3 py-1.5 text-sm transition-colors",
+                notInMenu
+                  ? "border-amber-600 bg-amber-600 text-white"
+                  : "border-dashed border-gray-300 bg-white text-gray-500 hover:bg-gray-50",
+              ].join(" ")}
+            >
+              메뉴에 없어요
+            </button>
+          )}
         </div>
+        {products.length === 0 && !notInMenu && (
+          <p className="mt-1 text-xs text-gray-400">
+            아직 등록된 메뉴가 없어요. 구매하신 메뉴를 먼저 등록해 주세요.
+          </p>
+        )}
 
         {notInMenu && (
           <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
@@ -233,7 +250,6 @@ export function ReviewForm({
           </div>
         )}
       </div>
-      )}
 
       {/* 별점 */}
       <div className="flex gap-1 text-2xl">
@@ -250,8 +266,7 @@ export function ReviewForm({
         ))}
       </div>
 
-      {/* 태그 버튼 — 작성 모드 전용(수정 모드는 본문 직접 편집) */}
-      {!isEdit && (
+      {/* 태그 버튼 (빠른 선택) + 기타(직접 입력) */}
       <div className="flex flex-wrap gap-2">
         {REVIEW_TAGS.map((tag) => {
           const on = selected.includes(tag);
@@ -259,7 +274,7 @@ export function ReviewForm({
             <button
               key={tag}
               type="button"
-              onClick={() => toggle(tag)}
+              onClick={() => toggleTag(tag)}
               className={[
                 "rounded-full border px-3 py-1.5 text-sm transition-colors",
                 on
@@ -284,7 +299,6 @@ export function ReviewForm({
           ✏️ 기타
         </button>
       </div>
-      )}
 
       {showCustom && (
         <textarea
@@ -360,7 +374,7 @@ export function ReviewForm({
 
       {!isEdit && (
         <p className="rounded-lg bg-blue-50 px-3 py-2 text-xs text-blue-700">
-          💡 첫 리뷰는 글만 써도 10P! 그 다음부터는 <b>사진과 함께</b> 작성하면 10P를 받아요.
+          💡 첫 리뷰는 글만 써도 10P! 그 다음부터는 <b>사진과 함께</b> 작성하면 10P를 받아요. (같은 날 같은 가게 재작성은 별점·포인트 미반영)
         </p>
       )}
 

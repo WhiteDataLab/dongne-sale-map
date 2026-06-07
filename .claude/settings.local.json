@@ -51,7 +51,10 @@
       "Bash(git push *)",
       "Bash(git restore *)",
       "PowerShell($procs = Get-CimInstance Win32_Process -Filter \"Name='node.exe'\" | Where-Object { $_.CommandLine -match 'next' }; if \\($procs\\) { $procs | Select-Object ProcessId, CommandLine | Format-List } else { \"no next node process running\" })",
-      "PowerShell(npm run build 2>&1)"
+      "PowerShell(npm run build 2>&1)",
+      "Bash(rm -f \"src/app/api/reviews/[id]/react/route.ts\")",
+      "Bash(rmdir \"src/app/api/reviews/[id]/react\")",
+      "PowerShell(if \\(Test-Path \".env.local\"\\) { $c = Get-Content \".env.local\"; \"DATABASE_URL present: \" + [bool]\\($c -match '^DATABASE_URL='\\); \"DIRECT_URL present: \" + [bool]\\($c -match '^DIRECT_URL='\\) } else { \".env.local NOT FOUND\" })"
     ]
   }
 }

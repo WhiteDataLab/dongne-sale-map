@@ -101,11 +101,14 @@ export default async function AccountPage() {
     storeId: string;
     rating: number;
     content: string;
+    tags: string[];
+    productIds: string[];
     photoUrls: string[];
+    scored: boolean;
     createdAt: Date;
     store: { name: string };
-    reactions: { kind: string }[];
   }[] = [];
+  const productNameMap = new Map<string, string>();
   try {
     myReviews = await prisma.review.findMany({
       where: { userId: session.user.id, hidden: false },
@@ -116,12 +119,23 @@ export default async function AccountPage() {
         storeId: true,
         rating: true,
         content: true,
+        tags: true,
+        productIds: true,
         photoUrls: true,
+        scored: true,
         createdAt: true,
         store: { select: { name: true } },
-        reactions: { select: { kind: true } },
       },
     });
+    // 연결된 구매 메뉴 이름 해석(현재 존재하는 상품만)
+    const ids = Array.from(new Set(myReviews.flatMap((r) => r.productIds)));
+    if (ids.length > 0) {
+      const prods = await prisma.product.findMany({
+        where: { id: { in: ids } },
+        select: { id: true, name: true },
+      });
+      for (const p of prods) productNameMap.set(p.id, p.name);
+    }
   } catch {
     // DB 미연결
   }
@@ -215,10 +229,13 @@ export default async function AccountPage() {
                     storeName: r.store.name,
                     rating: r.rating,
                     content: r.content,
+                    tags: r.tags,
+                    products: r.productIds
+                      .filter((pid) => productNameMap.has(pid))
+                      .map((pid) => ({ id: pid, name: productNameMap.get(pid) as string })),
                     photoUrls: r.photoUrls,
+                    scored: r.scored,
                     createdAt: r.createdAt.toISOString(),
-                    likes: r.reactions.filter((x) => x.kind === "like").length,
-                    dislikes: r.reactions.filter((x) => x.kind === "dislike").length,
                   }}
                 />
               ))}

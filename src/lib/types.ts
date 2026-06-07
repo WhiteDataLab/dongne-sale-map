@@ -76,16 +76,19 @@ export type SaleDTO = {
   isMine: boolean; // 현재 사용자가 올린 제보인지 (삭제 버튼 노출)
 };
 
+/** 리뷰에 연결된 구매 메뉴(상품) 요약. */
+export type ReviewProduct = { id: string; name: string };
+
 export type ReviewDTO = {
   id: string;
   rating: number;
-  content: string;
+  content: string; // 자유 입력(기타) 본문 — 일반 텍스트로 표시
+  tags: string[]; // 빠른 태그 — 원형 테두리 칩으로 표시
+  products: ReviewProduct[]; // 구매한 메뉴(있던 것만 이름 해석)
   photoUrls: string[];
   nickname: string;
   createdAt: string;
-  likeCount: number;
-  dislikeCount: number;
-  myReaction: "like" | "dislike" | null;
+  scored: boolean; // 포인트·별점 반영 여부(같은 날 재작성=false)
   isMine: boolean;
 };
 
