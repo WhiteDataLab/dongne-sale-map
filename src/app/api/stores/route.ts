@@ -58,14 +58,16 @@ export async function GET(req: NextRequest) {
         verified: true,
         source: true,
         hoursJson: true,
-        _count: {
-          select: {
-            sales: { where: { status: "active", expiresAt: { gt: now } } },
-          },
+        sales: {
+          where: { status: "active", expiresAt: { gt: now } },
+          select: { salePrice: true, expiresAt: true },
         },
       },
       take: 200,
     });
+
+    // 마감 임박 기준: 1시간 이내 만료
+    const soonThreshold = new Date(now.getTime() + 60 * 60 * 1000);
 
     // 휴업/폐업 제보 집계: 오늘 휴업 + 최근 폐업 (대상 = 화면 내 가게)
     const ids = rows.map((s) => s.id);
@@ -98,7 +100,9 @@ export async function GET(req: NextRequest) {
       address: s.address,
       verified: s.verified,
       source: s.source as StoreSource,
-      hasActiveSale: s._count.sales > 0,
+      hasActiveSale: s.sales.length > 0,
+      saleMinPrice: s.sales.length > 0 ? Math.min(...s.sales.map((x) => x.salePrice)) : null,
+      saleSoonExpiring: s.sales.some((x) => x.expiresAt <= soonThreshold),
       isOpenNow: isOpenNow(asStoreHours(s.hoursJson), now),
       closedTodayReports: closedToday.get(s.id) ?? 0,
       shutdownReports: shutdown.get(s.id) ?? 0,

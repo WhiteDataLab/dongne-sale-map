@@ -104,6 +104,8 @@ export async function GET(
       hours,
       isOpenNow: isOpenNow(hours, now),
       hasActiveSale: store.sales.length > 0,
+      saleMinPrice: store.sales.length > 0 ? Math.min(...store.sales.map((x) => x.salePrice)) : null,
+      saleSoonExpiring: store.sales.some((x) => x.expiresAt <= new Date(now.getTime() + 60 * 60 * 1000)),
       closedTodayReports: store.closureReports.filter((c) => c.kind === "closed_today").length,
       shutdownReports: store.closureReports.filter((c) => c.kind === "shutdown").length,
       avgRating,

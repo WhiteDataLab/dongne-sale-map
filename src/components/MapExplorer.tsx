@@ -45,6 +45,8 @@ export function MapExplorer() {
   const [filters, setFilters] = useState<Filters>({
     category: "all",
     onlySale: false,
+    onlyOpen: false,
+    onlySoon: false,
   });
   const [loadingStores, setLoadingStores] = useState(false);
   const [searching, setSearching] = useState(false);
@@ -95,7 +97,11 @@ export function MapExplorer() {
     try {
       const res = await fetch(`/api/stores?${params.toString()}`);
       const data = (await res.json()) as { stores?: StoreDTO[] };
-      setStores(data.stores ?? []);
+      let list = data.stores ?? [];
+      // 영업중·마감임박은 DTO 기준 클라이언트 필터(서버 재호출 불필요)
+      if (f.onlyOpen) list = list.filter((s) => s.isOpenNow === true);
+      if (f.onlySoon) list = list.filter((s) => s.saleSoonExpiring);
+      setStores(list);
     } catch {
       setStores([]);
     } finally {
@@ -613,10 +619,15 @@ function buildPinElement(store: StoreDTO, onClick: () => void): HTMLElement {
     wrap.classList.add("store-pin--off");
     tag("영업종료", "store-pin__status--off");
   } else if (store.hasActiveSale && store.verified) {
+    // 세일 가격을 핀에 바로 노출(호갱노노/오피넷식 '지도 위 숫자') + 마감임박 강조
     const badge = document.createElement("span");
-    badge.className = "store-pin__sale";
-    badge.textContent = "세일";
+    const soon = store.saleSoonExpiring;
+    badge.className = "store-pin__sale" + (soon ? " store-pin__sale--soon" : "");
+    const priceText =
+      store.saleMinPrice != null ? `${store.saleMinPrice.toLocaleString("ko-KR")}원~` : "세일";
+    badge.textContent = (soon ? "⏰ " : "🔥 ") + priceText;
     wrap.appendChild(badge);
+    if (soon) wrap.classList.add("store-pin--soon");
   }
 
   wrap.addEventListener("click", onClick);

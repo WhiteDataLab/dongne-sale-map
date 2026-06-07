@@ -13,6 +13,8 @@ import { CATEGORIES, CATEGORY_META, type Category } from "@/lib/constants";
 export type Filters = {
   category: Category | "all";
   onlySale: boolean;
+  onlyOpen: boolean; // 영업중만
+  onlySoon: boolean; // 마감임박(1시간 내)만
 };
 
 function Chip({
@@ -81,13 +83,18 @@ export function FilterBar({
       >
         🔥 세일중
       </Chip>
-
-      {/* 아래 두 필터는 의존 데이터가 다음 Phase에서 들어옴 → 지금은 비활성 */}
-      <Chip disabled title="Phase 2에서 영업시간 자동판정으로 활성화돼요">
-        영업중
+      <Chip
+        active={filters.onlySoon}
+        onClick={() => onChange({ ...filters, onlySoon: !filters.onlySoon })}
+        title="1시간 내 마감되는 세일"
+      >
+        ⏰ 마감임박
       </Chip>
-      <Chip disabled title="Phase 3에서 리뷰/평점으로 활성화돼요">
-        평점순
+      <Chip
+        active={filters.onlyOpen}
+        onClick={() => onChange({ ...filters, onlyOpen: !filters.onlyOpen })}
+      >
+        🟢 영업중
       </Chip>
     </div>
   );

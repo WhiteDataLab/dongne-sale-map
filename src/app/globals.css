@@ -274,11 +274,34 @@ summary:focus-visible {
 }
 .store-pin__sale {
   margin-left: 2px;
-  padding: 1px 5px;
+  padding: 1px 6px;
   border-radius: 9999px;
   background: #ef4444;
   color: #fff;
   font-size: 10px;
+  font-weight: 700;
+}
+/* 마감임박 세일: 빨강→주황 + 부드러운 펄스로 긴급성 표현 */
+.store-pin__sale--soon {
+  background: #f97316;
+}
+.store-pin--soon {
+  border-color: #f97316 !important;
+  animation: pin-soon-pulse 1.4s ease-in-out infinite;
+}
+@keyframes pin-soon-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.45), 0 2px 6px rgba(0, 0, 0, 0.18);
+  }
+  50% {
+    box-shadow: 0 0 0 5px rgba(249, 115, 22, 0), 0 2px 6px rgba(0, 0, 0, 0.18);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .store-pin--soon {
+    animation: none;
+  }
 }
 
 /* ── 휴업/폐업/영업종료 상태 ── */

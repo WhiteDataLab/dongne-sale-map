@@ -11,6 +11,7 @@
 Next.js 15(App Router)·React 19·TS strict · Tailwind v4 · NextAuth v5(JWT) · Prisma 6 · Supabase(PostgreSQL + Storage) · Kakao Maps JS SDK + Local REST · Vercel.
 
 ## 3. 구현 완료 (Phase 0~7 + 추가)
+- **지도 가격 핀 + 마감임박 + 필터 확장(레퍼런스: 호갱노노/오피넷/라스트오더/캐치테이블)**: 지도 핀에 **진행중 세일 최저가를 숫자로 노출**(`🔥 2,900원~`), 1시간 내 마감은 **주황 펄스 + `⏰`** 로 긴급 강조. `StoreDTO`에 `saleMinPrice`/`saleSoonExpiring` 추가(`/api/stores`·`/api/stores/[id]`에서 활성 세일 집계). 필터바에 **⏰ 마감임박 / 🟢 영업중** 추가(영업중·마감임박은 DTO 기준 클라 필터, 세일중은 서버). 핀 CSS `store-pin__sale--soon`/`store-pin--soon` 펄스(`prefers-reduced-motion` 정지).
 - **메뉴/IA 개편(migration 25, 분석=`docs/MENU_IA.md`)**: 사이드 메뉴를 **6그룹(탐색/기여/혜택/내정보/고객지원/관리)** 으로 재구성 + 하단 **약관·정책 묶음**(서비스소개·이용약관·개인정보·위치기반약관·운영정책·교환환불·운영정보·사이트맵). 신설 페이지: **위치기반서비스 이용약관**(`/location-terms`, P0), **운영정책·커뮤니티 가이드**(`/policy`), **포인트·기프티콘 교환/환불 정책**(`/refund`), **서비스 운영 정보**(`/company`, 사업자 정보 TODO), **FAQ**(`/faq`), **사이트맵**(`/sitemap`), **설정 허브**(`/settings`), **동네 소식**(`/news`, 최근 세일/휴업·폐업/신규가게 집계, 모델 없음).
   - **공지·이벤트(Notice 모델)**: 관리자 `/admin/notices`(`NoticeAdmin` + `POST/PATCH/DELETE /api/admin/notices[/id]`, 종류 notice|event·상단고정·노출토글) → 공개 `/notices`.
   - **인앱 알림함(`/notifications`)**: 별도 테이블 없이 **Notice + 내 문의 답변(Inquiry.answered) + 내 기프티콘 교환 상태(sent/canceled)** 를 파생 집계. 읽음 상태는 클라(`NotificationList`, localStorage `notif_seen_at`)에서 새 항목 강조. 푸시는 Out-of-scope.
