@@ -31,6 +31,18 @@ export function starString(rating: number): string {
   return "★".repeat(r) + "☆".repeat(Math.max(0, 5 - r));
 }
 
+/** KST 기준 'YYYY.M.D' (마이페이지 내 정보용 — 상대표기 대신 정확한 날짜). */
+export function ymd(iso: string): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+  }).formatToParts(new Date(iso));
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  return `${get("year")}.${get("month")}.${get("day")}`;
+}
+
 /** KST(UTC+9) 달력일 일련번호(에포크 기준 일수). 달력일 차이 계산용. */
 function kstEpochDay(ms: number): number {
   return Math.floor((ms + 9 * 60 * 60 * 1000) / 86_400_000);

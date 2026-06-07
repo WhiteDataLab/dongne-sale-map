@@ -5,10 +5,10 @@ import { useRouter } from "next/navigation";
 import { ReviewForm } from "./ReviewForm";
 import { DeleteReviewButton } from "./DeleteReviewButton";
 import { ReviewContent } from "./ReviewContent";
-import { reviewDateLabel, starString } from "@/lib/format";
+import { ymd, starString } from "@/lib/format";
 import type { ReviewDTO, ReviewProduct } from "@/lib/types";
 
-type MyReview = {
+export type MyReview = {
   id: string;
   storeId: string;
   storeName: string;
@@ -96,7 +96,7 @@ export function MyReviewItem({ review }: { review: MyReview }) {
         </div>
       )}
       <p className="mt-1 text-xs text-gray-400">
-        {reviewDateLabel(review.createdAt)}
+        {ymd(review.createdAt)}
         {!review.scored && " · 별점·포인트 미반영"}
       </p>
     </li>

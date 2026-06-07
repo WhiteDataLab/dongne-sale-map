@@ -3,12 +3,12 @@ import { cookies } from "next/headers";
 import { auth, signIn } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { POINT_EXPIRY_YEARS, POINT_HISTORY_YEARS, yearsAgo } from "@/lib/points";
-import { reviewDateLabel } from "@/lib/format";
 import { deleteAccount, startLink, updateNickname } from "./actions";
 import { ProfileAvatarEditor } from "@/components/ProfileAvatarEditor";
 import { ContactVerifyForm } from "@/components/ContactVerifyForm";
 import { PointHistory } from "@/components/PointHistory";
-import { MyReviewItem } from "@/components/MyReviewItem";
+import { MyReviewList } from "@/components/MyReviewList";
+import { ActivityTimeline } from "@/components/ActivityTimeline";
 
 const REDEMPTION_LABEL: Record<string, string> = {
   requested: "발송 대기",
@@ -286,53 +286,38 @@ export default async function AccountPage() {
         {/* 내가 쓴 리뷰 */}
         <section>
           <h2 className="mb-2 text-sm font-semibold text-gray-700">내가 쓴 리뷰 ({myReviews.length})</h2>
-          {myReviews.length === 0 ? (
-            <p className="rounded-xl border border-dashed border-gray-200 p-4 text-center text-sm text-gray-400">
-              아직 작성한 리뷰가 없어요.
-            </p>
-          ) : (
-            <ul className="flex flex-col gap-2">
-              {myReviews.map((r) => (
-                <MyReviewItem
-                  key={r.id}
-                  review={{
-                    id: r.id,
-                    storeId: r.storeId,
-                    storeName: r.store.name,
-                    rating: r.rating,
-                    content: r.content,
-                    tags: r.tags,
-                    products: r.productIds
-                      .filter((pid) => productNameMap.has(pid))
-                      .map((pid) => ({ id: pid, name: productNameMap.get(pid) as string })),
-                    photoUrls: r.photoUrls,
-                    receiptVerified: Boolean(r.receiptUrl),
-                    scored: r.scored,
-                    createdAt: r.createdAt.toISOString(),
-                  }}
-                />
-              ))}
-            </ul>
-          )}
+          <MyReviewList
+            reviews={myReviews.map((r) => ({
+              id: r.id,
+              storeId: r.storeId,
+              storeName: r.store.name,
+              rating: r.rating,
+              content: r.content,
+              tags: r.tags,
+              products: r.productIds
+                .filter((pid) => productNameMap.has(pid))
+                .map((pid) => ({ id: pid, name: productNameMap.get(pid) as string })),
+              photoUrls: r.photoUrls,
+              receiptVerified: Boolean(r.receiptUrl),
+              scored: r.scored,
+              createdAt: r.createdAt.toISOString(),
+            }))}
+          />
         </section>
 
         {/* 내 활동 타임라인 */}
         {timeline.length > 0 && (
           <section>
             <h2 className="mb-2 text-sm font-semibold text-gray-700">내 활동</h2>
-            <ul className="flex flex-col divide-y divide-gray-100 rounded-xl border border-gray-200">
-              {timeline.slice(0, 12).map((t) => (
-                <li key={t.id}>
-                  <Link href={t.href} className="flex items-center gap-2 px-3 py-2.5 hover:bg-gray-50">
-                    <span aria-hidden>{t.icon}</span>
-                    <span className="min-w-0 flex-1 truncate text-sm text-gray-700">{t.text}</span>
-                    <span className="shrink-0 text-xs text-gray-400">
-                      {reviewDateLabel(t.date.toISOString())}
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <ActivityTimeline
+              items={timeline.map((t) => ({
+                id: t.id,
+                icon: t.icon,
+                text: t.text,
+                href: t.href,
+                date: t.date.toISOString(),
+              }))}
+            />
           </section>
         )}
 
