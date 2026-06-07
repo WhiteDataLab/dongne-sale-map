@@ -219,6 +219,25 @@ model SiteConfig {
   value String
 }
 
+// 플랫폼 공지/이벤트 (관리자 작성). 공개 목록(/notices) + 알림함(/notifications) 소스.
+enum NoticeKind {
+  notice // 공지
+  event // 이벤트
+}
+
+model Notice {
+  id        String     @id @default(cuid())
+  kind      NoticeKind @default(notice)
+  title     String
+  body      String
+  pinned    Boolean    @default(false) // 상단 고정
+  active    Boolean    @default(true) // 숨김 토글
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @default(now()) @updatedAt
+
+  @@index([active, pinned, createdAt])
+}
+
 // 회원 탈퇴 통계 로그 (관리자 대시보드용). PII 없음 — 탈퇴 시각 + 가입 경로(provider)만.
 // User 는 탈퇴 시 hard delete 되므로 별도 로그로 추이를 남긴다.
 model WithdrawalLog {

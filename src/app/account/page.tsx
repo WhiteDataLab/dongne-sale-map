@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { auth, signIn } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { POINT_EXPIRY_YEARS, POINT_HISTORY_YEARS, yearsAgo } from "@/lib/points";
+import { reviewDateLabel } from "@/lib/format";
 import { deleteAccount, startLink, updateNickname } from "./actions";
 import { ProfileAvatarEditor } from "@/components/ProfileAvatarEditor";
 import { ContactVerifyForm } from "@/components/ContactVerifyForm";
@@ -14,6 +15,17 @@ const REDEMPTION_LABEL: Record<string, string> = {
   sent: "발송 완료",
   canceled: "취소(환원)",
 };
+
+/** 활동 점수 → 신뢰/활동 배지 (관리자 활동분석과 동일 가중치). */
+function activityBadge(score: number): { emoji: string; label: string; color: string } {
+  if (score >= 100) return { emoji: "🌟", label: "동네 스타", color: "bg-amber-100 text-amber-700" };
+  if (score >= 50) return { emoji: "🏅", label: "동네 지킴이", color: "bg-purple-100 text-purple-700" };
+  if (score >= 20) return { emoji: "💪", label: "단골 이웃", color: "bg-blue-100 text-blue-700" };
+  if (score >= 5) return { emoji: "🌱", label: "새싹 이웃", color: "bg-green-100 text-green-700" };
+  return { emoji: "👋", label: "새내기", color: "bg-gray-100 text-gray-600" };
+}
+
+type TimelineItem = { id: string; icon: string; text: string; href: string; date: Date };
 
 const LINK_RESULT_MSG: Record<string, string> = {
   linked: "계정이 연결됐어요.",
@@ -164,12 +176,64 @@ export default async function AccountPage() {
     // DB 미연결
   }
 
+  // 활동 배지 + 내 활동 타임라인 (가게/세일/리뷰)
+  let activityScore = 0;
+  const timeline: TimelineItem[] = [];
+  try {
+    const [storeCount, saleCount, favCount, myStores, mySales] = await Promise.all([
+      prisma.store.count({ where: { createdById: session.user.id } }),
+      prisma.sale.count({ where: { createdById: session.user.id } }),
+      prisma.favorite.count({ where: { userId: session.user.id } }),
+      prisma.store.findMany({
+        where: { createdById: session.user.id },
+        orderBy: { createdAt: "desc" },
+        take: 10,
+        select: { id: true, name: true, createdAt: true },
+      }),
+      prisma.sale.findMany({
+        where: { createdById: session.user.id },
+        orderBy: { createdAt: "desc" },
+        take: 10,
+        select: { id: true, title: true, createdAt: true, store: { select: { id: true, name: true } } },
+      }),
+    ]);
+    activityScore = storeCount * 4 + saleCount * 2 + myReviews.length * 2 + favCount * 1;
+    for (const s of myStores)
+      timeline.push({ id: `st-${s.id}`, icon: "🏪", text: `${s.name} 등록`, href: `/s/${s.id}`, date: s.createdAt });
+    for (const s of mySales)
+      timeline.push({
+        id: `sl-${s.id}`,
+        icon: "🔥",
+        text: `${s.store.name} — ${s.title} 세일 제보`,
+        href: `/s/${s.store.id}`,
+        date: s.createdAt,
+      });
+    for (const r of myReviews)
+      timeline.push({
+        id: `rv-${r.id}`,
+        icon: "✍️",
+        text: `${r.store.name} 리뷰 작성`,
+        href: `/s/${r.storeId}`,
+        date: r.createdAt,
+      });
+    timeline.sort((a, b) => b.date.getTime() - a.date.getTime());
+  } catch {
+    // DB 미연결
+  }
+  const badge = activityBadge(activityScore);
+
   return (
     <div className="h-full overflow-y-auto">
       <div className="mx-auto flex max-w-lg flex-col gap-5 p-5">
-        <Link href="/" className="text-sm text-gray-400">
-          ← 지도로
-        </Link>
+        <div className="flex items-center justify-between">
+          <Link href="/" className="text-sm text-gray-400">
+            ← 지도로
+          </Link>
+          <div className="flex gap-3 text-sm">
+            <Link href="/notifications" className="text-gray-500 hover:text-gray-800">🔔 알림</Link>
+            <Link href="/settings" className="text-gray-500 hover:text-gray-800">⚙️ 설정</Link>
+          </div>
+        </div>
 
         <section>
           <h1 className="text-xl font-bold">마이페이지</h1>
@@ -187,6 +251,12 @@ export default async function AccountPage() {
                 닉네임 저장
               </button>
             </form>
+            <div className="mt-2 flex items-center gap-2">
+              <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${badge.color}`}>
+                {badge.emoji} {badge.label}
+              </span>
+              <span className="text-xs text-gray-400">활동점수 {activityScore}</span>
+            </div>
             <p className="mt-2 text-sm text-gray-500">
               적립 포인트{" "}
               <span className="font-semibold text-gray-800">{balance}P</span>
@@ -242,6 +312,26 @@ export default async function AccountPage() {
             </ul>
           )}
         </section>
+
+        {/* 내 활동 타임라인 */}
+        {timeline.length > 0 && (
+          <section>
+            <h2 className="mb-2 text-sm font-semibold text-gray-700">내 활동</h2>
+            <ul className="flex flex-col divide-y divide-gray-100 rounded-xl border border-gray-200">
+              {timeline.slice(0, 12).map((t) => (
+                <li key={t.id}>
+                  <Link href={t.href} className="flex items-center gap-2 px-3 py-2.5 hover:bg-gray-50">
+                    <span aria-hidden>{t.icon}</span>
+                    <span className="min-w-0 flex-1 truncate text-sm text-gray-700">{t.text}</span>
+                    <span className="shrink-0 text-xs text-gray-400">
+                      {reviewDateLabel(t.date.toISOString())}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         {/* 기프티콘 교환 내역 */}
         {redemptions.length > 0 && (

@@ -1,6 +1,20 @@
 import Link from "next/link";
 import { getAdminSession } from "@/lib/admin";
 
+/** 관리 네비 그룹(라벨 + 링크 묶음). */
+function AdminGroup({ label, links }: { label: string; links: [string, string][] }) {
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+      <span className="w-20 shrink-0 text-xs font-semibold text-gray-400">{label}</span>
+      {links.map(([href, text]) => (
+        <Link key={href} href={href} className="text-gray-600 hover:text-gray-900">
+          {text}
+        </Link>
+      ))}
+    </div>
+  );
+}
+
 /** 관리 화면 가드 + 네비 (스펙 Phase 4: 최소 관리 화면). role=admin 만 접근. */
 export default async function AdminLayout({
   children,
@@ -26,41 +40,53 @@ export default async function AdminLayout({
   return (
     <div className="h-full overflow-y-auto">
       <div className="mx-auto max-w-2xl p-4">
-        <header className="mb-4 flex items-center gap-4 border-b border-gray-100 pb-3 text-sm">
-          <span className="font-bold">관리</span>
-          <Link href="/admin/dashboard" className="text-gray-600 hover:text-gray-900">
-            대시보드
-          </Link>
-          <Link href="/admin/reports" className="text-gray-600 hover:text-gray-900">
-            신고 큐
-          </Link>
-          <Link href="/admin/stores" className="text-gray-600 hover:text-gray-900">
-            가게 인증
-          </Link>
-          <Link href="/admin/merchants" className="text-gray-600 hover:text-gray-900">
-            사장님 인증
-          </Link>
-          <Link href="/admin/members" className="text-gray-600 hover:text-gray-900">
-            회원 정보
-          </Link>
-          <Link href="/admin/activity" className="text-gray-600 hover:text-gray-900">
-            활동 분석
-          </Link>
-          <Link href="/admin/redemptions" className="text-gray-600 hover:text-gray-900">
-            기프티콘 교환
-          </Link>
-          <Link href="/admin/gifts" className="text-gray-600 hover:text-gray-900">
-            기프티콘 상품
-          </Link>
-          <Link href="/admin/inquiries" className="text-gray-600 hover:text-gray-900">
-            고객센터
-          </Link>
-          <Link href="/admin/users" className="text-gray-600 hover:text-gray-900">
-            정지 계정
-          </Link>
-          <Link href="/" className="ml-auto text-gray-400">
-            ← 지도
-          </Link>
+        <header className="mb-4 border-b border-gray-100 pb-3">
+          <div className="mb-2 flex items-center justify-between">
+            <Link href="/admin" className="font-bold">
+              관리 콘솔
+            </Link>
+            <Link href="/" className="text-xs text-gray-400">
+              ← 지도
+            </Link>
+          </div>
+          <div className="flex flex-col gap-1.5 text-sm">
+            <AdminGroup
+              label="현황"
+              links={[
+                ["/admin/dashboard", "대시보드"],
+                ["/admin/activity", "활동 분석"],
+              ]}
+            />
+            <AdminGroup
+              label="심사 큐"
+              links={[
+                ["/admin/reports", "신고 큐"],
+                ["/admin/stores", "가게 인증"],
+                ["/admin/merchants", "사장님 인증"],
+              ]}
+            />
+            <AdminGroup
+              label="회원"
+              links={[
+                ["/admin/members", "회원 정보"],
+                ["/admin/users", "정지 계정"],
+              ]}
+            />
+            <AdminGroup
+              label="포인트샵"
+              links={[
+                ["/admin/redemptions", "기프티콘 교환"],
+                ["/admin/gifts", "기프티콘 상품"],
+              ]}
+            />
+            <AdminGroup
+              label="지원 · 콘텐츠"
+              links={[
+                ["/admin/inquiries", "고객센터"],
+                ["/admin/notices", "공지 · 이벤트"],
+              ]}
+            />
+          </div>
         </header>
         {children}
       </div>

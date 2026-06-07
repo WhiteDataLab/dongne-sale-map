@@ -77,6 +77,13 @@ export default async function AdminHome() {
         </span>
       </Link>
       <Link
+        href="/admin/notices"
+        className="flex items-center justify-between rounded-xl border border-gray-200 p-4"
+      >
+        <span className="font-medium">📢 공지 · 이벤트</span>
+        <span className="text-sm text-gray-400">작성·수정·노출 →</span>
+      </Link>
+      <Link
         href="/admin/reports"
         className="flex items-center justify-between rounded-xl border border-gray-200 p-4"
       >

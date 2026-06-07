@@ -11,6 +11,13 @@
 Next.js 15(App Router)·React 19·TS strict · Tailwind v4 · NextAuth v5(JWT) · Prisma 6 · Supabase(PostgreSQL + Storage) · Kakao Maps JS SDK + Local REST · Vercel.
 
 ## 3. 구현 완료 (Phase 0~7 + 추가)
+- **메뉴/IA 개편(migration 25, 분석=`docs/MENU_IA.md`)**: 사이드 메뉴를 **6그룹(탐색/기여/혜택/내정보/고객지원/관리)** 으로 재구성 + 하단 **약관·정책 묶음**(서비스소개·이용약관·개인정보·위치기반약관·운영정책·교환환불·운영정보·사이트맵). 신설 페이지: **위치기반서비스 이용약관**(`/location-terms`, P0), **운영정책·커뮤니티 가이드**(`/policy`), **포인트·기프티콘 교환/환불 정책**(`/refund`), **서비스 운영 정보**(`/company`, 사업자 정보 TODO), **FAQ**(`/faq`), **사이트맵**(`/sitemap`), **설정 허브**(`/settings`), **동네 소식**(`/news`, 최근 세일/휴업·폐업/신규가게 집계, 모델 없음).
+  - **공지·이벤트(Notice 모델)**: 관리자 `/admin/notices`(`NoticeAdmin` + `POST/PATCH/DELETE /api/admin/notices[/id]`, 종류 notice|event·상단고정·노출토글) → 공개 `/notices`.
+  - **인앱 알림함(`/notifications`)**: 별도 테이블 없이 **Notice + 내 문의 답변(Inquiry.answered) + 내 기프티콘 교환 상태(sent/canceled)** 를 파생 집계. 읽음 상태는 클라(`NotificationList`, localStorage `notif_seen_at`)에서 새 항목 강조. 푸시는 Out-of-scope.
+  - **길찾기**: 가게 상세 헤더에 카카오맵 길찾기 딥링크(`map.kakao.com/link/to/...`).
+  - **사진 인증 배지**: 사진 있는 리뷰에 “📷 사진 인증” 칩(`ReviewContent` verified).
+  - **마이페이지 보강**: 활동 배지(활동점수=가게×4+세일×2+리뷰×2+즐겨찾기×1 → 새내기~동네스타)+**내 활동 타임라인**(가게/세일/리뷰)+알림/설정 바로가기. **관리 콘솔** 네비 5그룹(현황/심사큐/회원/포인트샵/지원·콘텐츠)으로 그룹핑.
+  - ⏳ 미구현(후속): 즐겨찾기 폴더, 사장님 쿠폰(현재는 세일/행사로 갈음).
 - **0** 스캐폴딩/스키마/레이아웃, **1** 지도+검색+핀(이문동 기본), **2** 가게 상세 바텀시트(상품/세일/공지/리뷰 탭, 영업중 자동판정, 즐겨찾기), **3** 세일 제보(사진·만료·PointLog pending)+리뷰+**Naver 로그인**, **4** 신고/자동숨김(3건)+관리자 화면+회원탈퇴+약관/개인정보.
 - **5** 인증확장: 전화번호 로그인+SMS 본인확인(**개발모드 목업**)+Kakao 로그인(개발앱 키)+`Identity` 기반 **계정 병합**(포인트 합산·즐겨찾기 통합, 닉네임/프사는 **먼저 가입 계정** 기준)+포인트 내역(2년 조회/5년 소멸).
 - **6** 소비자 가게 등록 + 카테고리 확장 + 출처(소비자/사장님) 구분.
@@ -48,8 +55,8 @@ Next.js 15(App Router)·React 19·TS strict · Tailwind v4 · NextAuth v5(JWT) �
 - **서비스 소개(/about) 관리자 편집(CMS-lite)**: 콘텐츠를 `SiteConfig(about_content)` JSON으로 저장(`src/lib/about.ts` 모델+기본값, 없으면 폴백). `/about`에서 관리자에게만 '✏️ 소개 편집' 버튼(`AboutEditor`) → 히어로 글·콘텐츠 섹션(추가/삭제/순서/이미지 업로드/이모지·다크)·영상·마무리 편집. 저장 `POST /api/admin/about`(admin), 이미지=`/api/upload`(sale-photos), 영상=`/api/admin/intro-video`. '믿을 수 있게' 가치 카드 3개는 고정.
 - 프로필 사진(메뉴) 열면 지도에 열린 등록/상세 패널 자동 닫힘(`window` `app:overlay-close` 이벤트).
 
-## 4. 데이터 모델 (Prisma, migrations 0~24 적용 완료)
-User(provider?/providerId? nullable, name?, nickname, phone? unique, phoneVerified, role `user|admin|merchant`, status `active|banned`, points) · **Identity**(provider/providerId→user, 계정연결 단일출처) · Store(category `vegetable|meat|fruit|laundry|sidedish|salon|etc`, lat/lng, verified, **source `user|merchant`**, **ownerId?**, bannerUrl?, **notice?**(공지사항, 소유자/관리자만 편집), hoursJson?, status) · Product(photoUrl?, hidden, updatedAt) · Sale(photoUrls[], status, expiresAt) · Review(rating, content, **tags[]**, **productIds[]**, photoUrls[], **scored**, hidden) · Favorite · Report(targetType `store|sale|review|product`, 누적 3건 자동숨김) · PointLog(status pending|granted, refType/refId) · MerchantVerification(docPath) · PhoneVerification(codeHash) · **SiteConfig**(key/value).
+## 4. 데이터 모델 (Prisma, migrations 0~25 적용 완료)
+User(provider?/providerId? nullable, name?, nickname, phone? unique, phoneVerified, role `user|admin|merchant`, status `active|banned`, points) · **Identity**(provider/providerId→user, 계정연결 단일출처) · Store(category `vegetable|meat|fruit|laundry|sidedish|salon|etc`, lat/lng, verified, **source `user|merchant`**, **ownerId?**, bannerUrl?, **notice?**(공지사항, 소유자/관리자만 편집), hoursJson?, status) · Product(photoUrl?, hidden, updatedAt) · Sale(photoUrls[], status, expiresAt) · Review(rating, content, **tags[]**, **productIds[]**, photoUrls[], **scored**, hidden) · Favorite · Report(targetType `store|sale|review|product`, 누적 3건 자동숨김) · PointLog(status pending|granted, refType/refId) · MerchantVerification(docPath) · PhoneVerification(codeHash) · **SiteConfig**(key/value) · **Notice**(kind notice|event, title/body, pinned, active — 공지/이벤트).
 - 포인트 잔액 출처 = PointLog 합계(<5년). 세일 삭제/숨김/제재 시 해당 PointLog **회수**.
 - **세일 포인트는 즉시 적립**(status=granted). UI에서 '적립예정' 라벨 제거. **하루 1회 제한**: 같은 사용자가 오늘(KST) 같은 가게·같은 항목(productId 또는 title)으로 이미 올렸으면 등록 차단(만료 행도 카운트 → 1시간 만료 반복 파밍 방지).
 - ⚠️ **정합 규칙**: "사장님 가게" 판정·표시는 **`ownerId`(hasOwner) 기준**(인증 소유자 유무). `source`는 등록 출처 메타일 뿐. `approveMerchant`는 `ownerId+source=merchant+verified`를 **함께** 세팅하므로 둘이 항상 일치해야 함. (과거 시드가 `source=merchant`만 주고 ownerId 누락 → 상세는 "사장님 가게", 상품탭은 "사장님 미등록" 모순. 시드/라이브 데이터 모두 소유자 지정으로 복구함.)

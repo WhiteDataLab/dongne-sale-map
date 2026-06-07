@@ -9,16 +9,27 @@ export function ReviewContent({
   tags,
   content,
   products,
+  verified = false,
 }: {
   tags: string[];
   content: string;
   products: ReviewProduct[];
+  verified?: boolean; // 사진이 함께 올라온 리뷰 = 사진 인증 배지
 }) {
   return (
     <div className="mt-1 flex flex-col gap-1">
-      {products.length > 0 && (
-        <p className="text-xs text-gray-500">
-          🛒 구매 메뉴: <span className="text-gray-700">{products.map((p) => p.name).join(", ")}</span>
+      {(products.length > 0 || verified) && (
+        <p className="flex flex-wrap items-center gap-1.5 text-xs text-gray-500">
+          {verified && (
+            <span className="rounded-full bg-green-100 px-2 py-0.5 font-medium text-green-700">
+              📷 사진 인증
+            </span>
+          )}
+          {products.length > 0 && (
+            <span>
+              🛒 구매 메뉴: <span className="text-gray-700">{products.map((p) => p.name).join(", ")}</span>
+            </span>
+          )}
         </p>
       )}
       {(tags.length > 0 || content.trim()) && (

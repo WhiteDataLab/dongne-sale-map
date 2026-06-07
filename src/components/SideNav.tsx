@@ -7,7 +7,7 @@ type NavUser = { name: string; image: string | null; isAdmin: boolean } | null;
 
 /**
  * 왼쪽 슬라이드 드로어 네비게이션.
- * 트리거(프로필 사진 또는 ☰) → 좌측 패널 슬라이드. 프로필 + 마이페이지/관리/약관/로그아웃.
+ * IA: 탐색 / 기여 / 혜택 / 내 정보 / 고객지원 / 관리 그룹 + 하단 약관·정책 묶음.
  * 로그인/로그아웃은 서버 액션(props)으로 처리.
  */
 export function SideNav({
@@ -22,6 +22,13 @@ export function SideNav({
 
   const itemClass =
     "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 active:bg-gray-200";
+  const groupLabel = "px-3 pb-1 pt-3 text-xs font-semibold uppercase tracking-wide text-gray-400";
+
+  const Item = ({ href, children }: { href: string; children: React.ReactNode }) => (
+    <Link href={href} onClick={close} className={itemClass}>
+      {children}
+    </Link>
+  );
 
   return (
     <>
@@ -86,52 +93,55 @@ export function SideNav({
             </div>
           )}
 
-          {/* 메뉴 */}
+          {/* 메뉴 (그룹핑) */}
           <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto p-2">
-            <Link href="/" onClick={close} className={itemClass}>
-              🗺️ 지도
-            </Link>
-            <Link href="/?register=1" onClick={close} className={itemClass}>
-              ➕ 가게 등록
-            </Link>
-            <Link href="/about" onClick={close} className={itemClass}>
-              ✨ 서비스 소개
-            </Link>
+            <p className={groupLabel}>탐색</p>
+            <Item href="/">🗺️ 지도</Item>
+            {user && <Item href="/favorites">♥ 즐겨찾기</Item>}
+            <Item href="/news">📰 동네 소식</Item>
+
+            <p className={groupLabel}>기여</p>
+            <Item href="/?register=1">➕ 가게 등록</Item>
+
             {user && (
               <>
-                <Link href="/checkin" onClick={close} className={itemClass}>
-                  ✅ 출석체크
-                </Link>
-                <Link href="/shop" onClick={close} className={itemClass}>
-                  🎁 포인트샵
-                </Link>
-                <Link href="/invite" onClick={close} className={itemClass}>
-                  🎉 친구 초대 (+50P)
-                </Link>
-                <Link href="/favorites" onClick={close} className={itemClass}>
-                  ♥ 즐겨찾기
-                </Link>
-                <Link href="/account" onClick={close} className={itemClass}>
-                  👤 마이페이지
-                </Link>
+                <p className={groupLabel}>혜택</p>
+                <Item href="/checkin">✅ 출석체크</Item>
+                <Item href="/shop">🎁 포인트샵</Item>
+                <Item href="/invite">🎉 친구 초대 (+50P)</Item>
+                <Item href="/notices">📢 공지 · 이벤트</Item>
+
+                <p className={groupLabel}>내 정보</p>
+                <Item href="/account">👤 마이페이지</Item>
+                <Item href="/notifications">🔔 알림</Item>
+                <Item href="/settings">⚙️ 설정</Item>
               </>
             )}
+
+            <p className={groupLabel}>고객지원</p>
+            {user && <Item href="/support">🎧 고객센터</Item>}
+            <Item href="/faq">❓ 자주 묻는 질문</Item>
+
             {user?.isAdmin && (
-              <Link href="/admin" onClick={close} className={itemClass}>
-                🛠️ 관리
-              </Link>
+              <>
+                <p className={groupLabel}>관리</p>
+                <Item href="/admin">🛠️ 관리 콘솔</Item>
+              </>
             )}
-            {user && (
-              <Link href="/support" onClick={close} className={itemClass}>
-                🎧 고객센터
-              </Link>
-            )}
-            <Link href="/terms" onClick={close} className={itemClass}>
-              📄 이용약관
-            </Link>
-            <Link href="/privacy" onClick={close} className={itemClass}>
-              🔒 개인정보처리방침
-            </Link>
+
+            {/* 약관·정책 (푸터 묶음) */}
+            <div className="mt-3 border-t border-gray-100 px-3 pt-3">
+              <div className="flex flex-wrap gap-x-3 gap-y-1.5 text-xs text-gray-400">
+                <Link href="/about" onClick={close} className="hover:text-gray-600">서비스 소개</Link>
+                <Link href="/terms" onClick={close} className="hover:text-gray-600">이용약관</Link>
+                <Link href="/privacy" onClick={close} className="hover:text-gray-600">개인정보처리방침</Link>
+                <Link href="/location-terms" onClick={close} className="hover:text-gray-600">위치기반 약관</Link>
+                <Link href="/policy" onClick={close} className="hover:text-gray-600">운영정책</Link>
+                <Link href="/refund" onClick={close} className="hover:text-gray-600">교환/환불</Link>
+                <Link href="/company" onClick={close} className="hover:text-gray-600">운영 정보</Link>
+                <Link href="/sitemap" onClick={close} className="hover:text-gray-600">사이트맵</Link>
+              </div>
+            </div>
           </nav>
 
           {/* 하단: 로그인/로그아웃 */}

@@ -76,7 +76,12 @@ export function MyReviewItem({ review }: { review: MyReview }) {
           <DeleteReviewButton reviewId={review.id} />
         </div>
       </div>
-      <ReviewContent tags={review.tags} content={review.content} products={review.products} />
+      <ReviewContent
+        tags={review.tags}
+        content={review.content}
+        products={review.products}
+        verified={review.photoUrls.length > 0}
+      />
       {review.photoUrls.length > 0 && (
         <div className="mt-1.5 flex gap-1.5 overflow-x-auto">
           {review.photoUrls.map((u, i) => (

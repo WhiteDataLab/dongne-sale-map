@@ -342,6 +342,14 @@ export function StoreSheet({
                     </span>
                   )}
                   <span className="truncate text-gray-400">{detail.address}</span>
+                  <a
+                    href={`https://map.kakao.com/link/to/${encodeURIComponent(detail.name)},${detail.lat},${detail.lng}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-full bg-blue-50 px-2 py-0.5 font-medium text-blue-600 hover:bg-blue-100"
+                  >
+                    🧭 길찾기
+                  </a>
                 </div>
                 <div className="mt-1 flex items-center gap-1.5 text-xs">
                   <Avatar img={detail.registeredBy.img} />
@@ -1381,7 +1389,12 @@ function ReviewsTab({
                 </div>
                 <span className="text-amber-500 text-sm">{starString(r.rating)}</span>
               </div>
-              <ReviewContent tags={r.tags} content={r.content} products={r.products} />
+              <ReviewContent
+                tags={r.tags}
+                content={r.content}
+                products={r.products}
+                verified={r.photoUrls?.length > 0}
+              />
               {r.photoUrls?.length > 0 && (
                 <div className="mt-1.5 flex gap-1.5 overflow-x-auto">
                   {r.photoUrls.map((u, i) => (
