@@ -17,6 +17,8 @@ export type StoreDTO = {
   hasActiveSale: boolean;
   saleMinPrice: number | null; // 진행중 세일 최저가(지도 핀에 숫자로 표시) — 없으면 null
   saleSoonExpiring: boolean; // 1시간 내 마감되는 세일 존재(마감임박 강조)
+  saleSoonestExpiry: string | null; // 가장 임박한 세일 만료(ISO) — 카운트다운/마감임박순 정렬
+  saleLatestCreated: string | null; // 가장 최근 세일 등록(ISO) — 최신순 정렬
   isOpenNow: boolean | null; // 영업시간 기준 영업중 여부(정보 없으면 null)
   closedTodayReports: number; // 오늘 '갑자기 휴업' 제보 수
   shutdownReports: number; // 최근 '폐업' 제보 수

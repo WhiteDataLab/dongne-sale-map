@@ -60,7 +60,7 @@ export async function GET(req: NextRequest) {
         hoursJson: true,
         sales: {
           where: { status: "active", expiresAt: { gt: now } },
-          select: { salePrice: true, expiresAt: true },
+          select: { salePrice: true, expiresAt: true, createdAt: true },
         },
       },
       take: 200,
@@ -103,6 +103,14 @@ export async function GET(req: NextRequest) {
       hasActiveSale: s.sales.length > 0,
       saleMinPrice: s.sales.length > 0 ? Math.min(...s.sales.map((x) => x.salePrice)) : null,
       saleSoonExpiring: s.sales.some((x) => x.expiresAt <= soonThreshold),
+      saleSoonestExpiry:
+        s.sales.length > 0
+          ? new Date(Math.min(...s.sales.map((x) => x.expiresAt.getTime()))).toISOString()
+          : null,
+      saleLatestCreated:
+        s.sales.length > 0
+          ? new Date(Math.max(...s.sales.map((x) => x.createdAt.getTime()))).toISOString()
+          : null,
       isOpenNow: isOpenNow(asStoreHours(s.hoursJson), now),
       closedTodayReports: closedToday.get(s.id) ?? 0,
       shutdownReports: shutdown.get(s.id) ?? 0,

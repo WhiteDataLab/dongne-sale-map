@@ -9,6 +9,7 @@ import { FilterBar, type Filters } from "./FilterBar";
 import { StoreSheet } from "./StoreSheet";
 import { StoreRegisterForm } from "./StoreRegisterForm";
 import { SaleMarquee } from "./SaleMarquee";
+import { SaleListPanel } from "./SaleListPanel";
 import { ReviewStream } from "./ReviewStream";
 import { DEFAULT_CENTER, DEFAULT_LEVEL, CATEGORY_META } from "@/lib/constants";
 import type { StoreDTO, FeedSale, FeedReview } from "@/lib/types";
@@ -49,6 +50,7 @@ export function MapExplorer() {
     onlySoon: false,
   });
   const [loadingStores, setLoadingStores] = useState(false);
+  const [showList, setShowList] = useState(false); // 세일 목록 패널 토글
   const [searching, setSearching] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
@@ -422,6 +424,8 @@ export function MapExplorer() {
     [fetchStores, router],
   );
 
+  const saleCount = stores.filter((s) => s.hasActiveSale && s.verified).length;
+
   return (
     <div className="relative h-full w-full">
       {/* 지도 */}
@@ -528,7 +532,7 @@ export function MapExplorer() {
       )}
 
       {/* 가게 등록 FAB → 지도에서 바로 좌표 찍어 등록 */}
-      {!error && !registerMode && (
+      {!error && !registerMode && !showList && (
         <button
           type="button"
           onClick={() => {
@@ -569,6 +573,32 @@ export function MapExplorer() {
             exitRegister();
             fetchStores();
           }}
+        />
+      )}
+
+      {/* 세일 목록 보기 토글 (지도 ↔ 목록) */}
+      {!error && !registerMode && !selectedStoreId && !showList && saleCount > 0 && (
+        <button
+          type="button"
+          onClick={() => {
+            setResults(null);
+            setShowList(true);
+          }}
+          className="absolute bottom-5 left-1/2 z-20 -translate-x-1/2 rounded-full bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-black"
+        >
+          📋 세일 목록 {saleCount}
+        </button>
+      )}
+
+      {/* 세일 목록 패널 */}
+      {!error && !registerMode && showList && (
+        <SaleListPanel
+          stores={stores}
+          onSelect={(id) => {
+            setShowList(false);
+            setSelectedStoreId(id);
+          }}
+          onClose={() => setShowList(false)}
         />
       )}
 

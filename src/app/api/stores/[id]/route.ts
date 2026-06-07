@@ -106,6 +106,14 @@ export async function GET(
       hasActiveSale: store.sales.length > 0,
       saleMinPrice: store.sales.length > 0 ? Math.min(...store.sales.map((x) => x.salePrice)) : null,
       saleSoonExpiring: store.sales.some((x) => x.expiresAt <= new Date(now.getTime() + 60 * 60 * 1000)),
+      saleSoonestExpiry:
+        store.sales.length > 0
+          ? new Date(Math.min(...store.sales.map((x) => x.expiresAt.getTime()))).toISOString()
+          : null,
+      saleLatestCreated:
+        store.sales.length > 0
+          ? new Date(Math.max(...store.sales.map((x) => x.createdAt.getTime()))).toISOString()
+          : null,
       closedTodayReports: store.closureReports.filter((c) => c.kind === "closed_today").length,
       shutdownReports: store.closureReports.filter((c) => c.kind === "shutdown").length,
       avgRating,
