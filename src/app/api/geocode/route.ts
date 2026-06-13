@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { ipLimit } from "@/lib/rateLimit";
 
 /**
  * 지오코딩: 검색어 → 좌표 (스펙: 위치정보 미수집, 검색 이동만).
@@ -33,6 +34,10 @@ async function searchKakao(
 }
 
 export async function GET(req: NextRequest) {
+  // 비인증 외부 API 프록시 — IP 폭주 방어(카카오 쿼터 고갈/비용 방지)
+  const limited = ipLimit(req, "geocode", 30, 60_000);
+  if (limited) return limited;
+
   const q = req.nextUrl.searchParams.get("q")?.trim();
   if (!q) {
     return NextResponse.json({ error: "검색어를 입력해 주세요." }, { status: 400 });

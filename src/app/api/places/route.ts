@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { ipLimit } from "@/lib/rateLimit";
 
 /**
  * 카카오 로컬 키워드 장소검색 → 여러 후보 반환 (Phase: POI 연동 도입).
@@ -17,6 +18,10 @@ type Doc = {
 };
 
 export async function GET(req: NextRequest) {
+  // 비인증 외부 API 프록시 — IP 폭주 방어(카카오 쿼터 고갈/비용 방지)
+  const limited = ipLimit(req, "places", 30, 60_000);
+  if (limited) return limited;
+
   const REST_KEY = process.env.KAKAO_REST_API_KEY;
   const q = req.nextUrl.searchParams.get("q")?.trim();
   if (!q) return NextResponse.json({ places: [] });

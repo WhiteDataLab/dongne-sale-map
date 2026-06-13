@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUserId } from "@/lib/session";
+import { rateLimit } from "@/lib/rateLimit";
 import {
   isAllowedImageType,
   storageConfigured,
@@ -15,6 +16,14 @@ export async function POST(req: NextRequest) {
   const userId = await getCurrentUserId();
   if (!userId) {
     return NextResponse.json({ error: "login_required" }, { status: 401 });
+  }
+  // 업로드 남용(고아 이미지 누적·스토리지 비용) 방어: 사용자당 분당 20장
+  const { ok, retryAfter } = rateLimit(`upload:${userId}`, 20, 60_000);
+  if (!ok) {
+    return NextResponse.json(
+      { error: "업로드가 너무 많아요. 잠시 후 다시 시도해 주세요." },
+      { status: 429, headers: { "Retry-After": String(retryAfter) } },
+    );
   }
   if (!storageConfigured()) {
     return NextResponse.json(
