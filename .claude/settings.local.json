@@ -86,7 +86,10 @@
       "Bash(git commit -m 'feat\\(map\\): 카카오식 지도 컨트롤\\(현재위치/＋/－\\) + GPS 크로스헤어 아이콘 *)",
       "Bash(git commit -m 'docs: 사업·마케팅 인수인계 개요\\(BUSINESS_OVERVIEW\\) 추가 *)",
       "Bash(xargs -I{} sh -c 'cat \"prisma/migrations/{}/migration.sql\" | head -20')",
-      "Bash(git commit -m 'feat\\(monetize-M0\\): 전환 증명 + 트래픽 로깅 \\(수익화 로드맵 0순위\\) *)"
+      "Bash(git commit -m 'feat\\(monetize-M0\\): 전환 증명 + 트래픽 로깅 \\(수익화 로드맵 0순위\\) *)",
+      "Bash(curl -s \"http://localhost:3000/admin/leads\")",
+      "Bash(curl -s -o /dev/null -w \"status=%{http_code}\\\\n\" \"http://localhost:3000/api/admin/leads/export\")",
+      "Bash(git commit -m 'feat\\(monetize-M1B\\): 영업 리드 추출 /admin/leads + CSV + 아웃리치 추적 *)"
     ]
   }
 }

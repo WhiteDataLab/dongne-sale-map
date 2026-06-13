@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAdminSession } from "@/lib/admin";
 
@@ -203,6 +204,23 @@ export async function answerInquiry(formData: FormData) {
     data: { answer, status: "answered", answeredAt: new Date() },
   });
   revalidatePath("/admin/inquiries");
+}
+
+/** M1-B: 영업 리드 아웃리치 상태/메모 갱신. */
+export async function setLeadStatus(formData: FormData) {
+  const session = await getAdminSession();
+  if (!session) throw new Error("forbidden");
+  const storeId = String(formData.get("storeId"));
+  const status = String(formData.get("status"));
+  const note = String(formData.get("note") ?? "").trim().slice(0, 500);
+  const allowed = ["new", "contacted", "proposed", "converted", "dropped"];
+  if (!storeId || !allowed.includes(status)) return;
+  await prisma.leadOutreach.upsert({
+    where: { storeId },
+    update: { status: status as Prisma.LeadOutreachUpdateInput["status"], note: note || null, updatedBy: session.user?.id ?? null },
+    create: { storeId, status: status as Prisma.LeadOutreachCreateInput["status"], note: note || null, updatedBy: session.user?.id ?? null },
+  });
+  revalidatePath("/admin/leads");
 }
 
 export async function approveStore(formData: FormData) {

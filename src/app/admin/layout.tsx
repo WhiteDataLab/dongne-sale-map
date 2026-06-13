@@ -73,6 +73,10 @@ export default async function AdminLayout({
               ]}
             />
             <AdminGroup
+              label="영업"
+              links={[["/admin/leads", "리드 추출"]]}
+            />
+            <AdminGroup
               label="포인트샵"
               links={[
                 ["/admin/redemptions", "기프티콘 교환"],

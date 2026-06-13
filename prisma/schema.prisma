@@ -110,6 +110,15 @@ enum EventSource {
   other
 }
 
+// M1-B(수익화): 미전환(사장님 미인증) 가게에 대한 영업 아웃리치 상태.
+enum LeadStatus {
+  new // 신규(미접촉)
+  contacted // 접촉함
+  proposed // 제안함
+  converted // 전환(사장님 인증/계약)
+  dropped // 제외/보류
+}
+
 // ──────────────────────────────────────────────────────────────
 // Models
 // ──────────────────────────────────────────────────────────────
@@ -312,6 +321,7 @@ model Store {
   merchantVerifications MerchantVerification[]
   events                StoreEvent[]
   statDaily             StoreStatDaily[]
+  leadOutreach          LeadOutreach?
 
   @@index([ownerId])
 
@@ -507,4 +517,15 @@ model StoreStatDaily {
 
   @@unique([storeId, day])
   @@index([storeId])
+}
+
+// M1-B(수익화): 영업 리드(미전환 가게) 아웃리치 추적. 가게당 1행(1:1).
+model LeadOutreach {
+  storeId   String     @id
+  status    LeadStatus @default(new)
+  note      String? // 영업 메모
+  updatedBy String? // 처리한 관리자 id
+  updatedAt DateTime   @updatedAt
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
 }
