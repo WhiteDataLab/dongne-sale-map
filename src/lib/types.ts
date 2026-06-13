@@ -128,6 +128,8 @@ export type StoreDetailDTO = StoreDTO & {
   bannerUrl: string | null; // 가게 상단 메인 사진
   registeredBy: { nickname: string; img: string | null }; // 최초 등록자
   owner: { nickname: string; img: string | null } | null; // 사장님(소유자)
+  // M2: 이 가게의 활성 스폰서 구독(사장님 패널 진입점용). 없으면 null.
+  sponsorSubscription: { id: string; status: string; nextBillingAt: string } | null;
 };
 
 /** 지오코딩 결과 (검색어 → 좌표). */

@@ -158,10 +158,20 @@ export default async function AdminSponsors({
                           👑 노출중
                         </span>
                       )}
+                      {s.subscriptionId && (
+                        <span className="rounded bg-indigo-100 px-1.5 py-0.5 text-[11px] font-medium text-indigo-700">
+                          💳 자동결제{s.subStatus ? ` · ${s.subStatus}` : ""}
+                        </span>
+                      )}
                     </div>
                     <p className="mt-0.5 truncate text-xs text-gray-500">
                       {s.region} · {s.address}
                     </p>
+                    {s.nextBillingAt && (
+                      <p className="mt-0.5 text-[11px] text-indigo-400">
+                        다음 결제 {new Date(s.nextBillingAt).toLocaleDateString("ko-KR")}
+                      </p>
+                    )}
                     <p className="mt-0.5 text-[11px] text-gray-400">
                       {s.priceKrw.toLocaleString("ko-KR")}원/월 · 노출종료{" "}
                       {new Date(s.endsAt).toLocaleDateString("ko-KR")} ·{" "}

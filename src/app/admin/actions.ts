@@ -291,14 +291,25 @@ export async function extendSponsor(formData: FormData) {
   revalidatePath("/admin/sponsors");
 }
 
-/** M1-A: 스폰서 취소(즉시 노출 종료). */
+/** M1-A: 스폰서 취소(즉시 노출 종료). M2: 자동결제 구독 발이면 구독도 함께 해지(다음 청구 중단). */
 export async function cancelSponsor(formData: FormData) {
   await ensureAdmin();
   const id = String(formData.get("id"));
+  const sp = await prisma.sponsorship.findUnique({
+    where: { id },
+    select: { subscriptionId: true },
+  });
+  const now = new Date();
   await prisma.sponsorship.update({
     where: { id },
-    data: { status: "canceled", endsAt: new Date() },
+    data: { status: "canceled", endsAt: now },
   });
+  if (sp?.subscriptionId) {
+    await prisma.subscription.update({
+      where: { id: sp.subscriptionId },
+      data: { status: "canceled", canceledAt: now },
+    });
+  }
   revalidatePath("/admin/sponsors");
 }
 

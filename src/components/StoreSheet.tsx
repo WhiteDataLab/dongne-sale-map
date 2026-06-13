@@ -17,6 +17,7 @@ import {
 } from "@/lib/businessHours";
 import { freshnessLabel, reviewDateLabel, starString, untilLabel, won } from "@/lib/format";
 import { haversineMeters, formatDistance } from "@/lib/geo";
+import Link from "next/link";
 import { GpsIcon } from "./GpsIcon";
 import { track } from "@/lib/track";
 import type { StoreDetailDTO } from "@/lib/types";
@@ -488,6 +489,54 @@ export function StoreSheet({
                 ))}
               </div>
               <p className="mt-1.5 text-[10px] text-gray-400">오늘(큰 숫자) · 최근 7일 합계</p>
+            </div>
+          )}
+          {/* M2: 스폰서 구독 진입점 — owner/admin 전용 */}
+          {detail?.canManageStore && (
+            <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50/60 p-3">
+              {detail.sponsorSubscription ? (
+                <div className="flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-amber-800">👑 스폰서 구독중</p>
+                    <p className="mt-0.5 text-[11px] text-gray-500">
+                      {detail.sponsorSubscription.status === "trialing"
+                        ? "무료체험 중 · "
+                        : detail.sponsorSubscription.status === "past_due"
+                          ? "결제 재시도 중 · "
+                          : ""}
+                      다음 결제 {new Date(detail.sponsorSubscription.nextBillingAt).toLocaleDateString("ko-KR")}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!detail.sponsorSubscription) return;
+                      if (!window.confirm("스폰서 구독을 해지할까요? 다음 결제부터 중단되며, 현재 노출은 만료일까지 유지돼요.")) return;
+                      try {
+                        const res = await fetch(`/api/subscriptions/${detail.sponsorSubscription.id}/cancel`, { method: "POST" });
+                        if (!res.ok) throw new Error();
+                        onToast("스폰서 구독을 해지했어요.");
+                        refresh();
+                      } catch {
+                        onToast("해지에 실패했어요. 잠시 후 다시 시도해 주세요.");
+                      }
+                    }}
+                    className="shrink-0 rounded-lg border border-gray-300 px-2.5 py-1 text-[11px] font-medium text-gray-500 hover:bg-gray-100"
+                  >
+                    해지
+                  </button>
+                </div>
+              ) : (
+                <Link href={`/stores/${detail.id}/sponsor`} className="flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-amber-800">👑 우리 가게 홍보하기</p>
+                    <p className="mt-0.5 text-[11px] text-gray-500">마퀴 상단 고정 + 금색 핀 · 14일 무료체험</p>
+                  </div>
+                  <span className="shrink-0 rounded-lg bg-amber-500 px-2.5 py-1 text-[11px] font-semibold text-white">
+                    스폰서 시작 →
+                  </span>
+                </Link>
+              )}
             </div>
           )}
           {detail && (

@@ -5,14 +5,15 @@
 // Supabase 스토리지(*.supabase.co) 를 허용하되, 그 외 출처의 스크립트/연결/object 는 차단한다.
 // ⚠️ 카카오 SDK 가 eval·inline 을 쓰므로 script-src 에 'unsafe-eval'/'unsafe-inline' 이 불가피.
 //    (nonce 기반 strict CSP 는 SDK 호환성 문제로 미적용 — 그래도 출처 화이트리스트로 원격 스크립트 주입은 차단됨)
+// 토스페이먼츠(M2 결제): SDK(js.tosspayments.com) + API(api.tosspayments.com) + 인증창(*.tosspayments.com).
 const csp = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.kakao.com https://*.daumcdn.net",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.kakao.com https://*.daumcdn.net https://js.tosspayments.com",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
-  "connect-src 'self' https://*.kakao.com https://*.daumcdn.net https://*.daum.net https://*.supabase.co",
-  "frame-src 'self' https://*.kakao.com https://*.daum.net",
+  "connect-src 'self' https://*.kakao.com https://*.daumcdn.net https://*.daum.net https://*.supabase.co https://api.tosspayments.com",
+  "frame-src 'self' https://*.kakao.com https://*.daum.net https://*.tosspayments.com",
   "worker-src 'self' blob:",
   "object-src 'none'",
   "base-uri 'self'",
@@ -30,7 +31,7 @@ const securityHeaders = [
   // 외부로 referer 경로/쿼리 유출 최소화.
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   // 불필요한 강력 권한(카메라/마이크 등) 기본 차단. geolocation 은 지도 보조용으로 self 허용.
-  { key: "Permissions-Policy", value: "camera=(), microphone=(), payment=(), geolocation=(self)" },
+  { key: "Permissions-Policy", value: "camera=(), microphone=(), payment=(self), geolocation=(self)" },
   // HTTPS 강제(배포 환경). 1년 + 서브도메인.
   { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
 ];

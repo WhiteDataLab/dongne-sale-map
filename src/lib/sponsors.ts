@@ -15,6 +15,10 @@ export const TRIAL_DAYS = 14;
 export const PAID_PERIOD_DAYS = 30;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+/** M2: 토스 결제 주문명(고객 카드명세서 표기) + 연속 실패 N회 시 자동 해지. */
+export const SUBSCRIPTION_ORDER_NAME = "동네세일지도 스폰서 광고(월)";
+export const MAX_BILLING_FAILURES = 3;
+
 export const SPONSOR_STATUS_LABEL: Record<string, string> = {
   trial: "무료체험",
   active: "유료활성",
@@ -60,6 +64,9 @@ export type SponsorRow = {
   daysLeft: number; // endsAt 까지 남은 일수(음수면 만료)
   note: string | null;
   createdAt: string;
+  subscriptionId: string | null; // M2: 자동결제 구독 발이면 연결
+  subStatus: string | null; // 구독 상태(trialing|active|past_due|canceled)
+  nextBillingAt: string | null; // 다음 결제 예정(자동결제 발만)
 };
 
 /** 관리 화면용: 전 스폰서 목록(최신순) + 가게 정보 + 남은 일수. */
@@ -80,7 +87,9 @@ export async function getSponsorships(): Promise<SponsorRow[]> {
       endsAt: true,
       note: true,
       createdAt: true,
+      subscriptionId: true,
       store: { select: { name: true, category: true, address: true } },
+      subscription: { select: { status: true, nextBillingAt: true } },
     },
   });
 
@@ -103,6 +112,9 @@ export async function getSponsorships(): Promise<SponsorRow[]> {
       daysLeft: Math.ceil((s.endsAt.getTime() - now.getTime()) / DAY_MS),
       note: s.note,
       createdAt: s.createdAt.toISOString(),
+      subscriptionId: s.subscriptionId,
+      subStatus: s.subscription?.status ?? null,
+      nextBillingAt: s.subscription?.nextBillingAt?.toISOString() ?? null,
     };
   });
 }
@@ -116,4 +128,61 @@ export function trialEndDate(from: Date = new Date()): Date {
 export function extendPaidDate(currentEndsAt: Date, from: Date = new Date()): Date {
   const base = currentEndsAt > from ? currentEndsAt : from;
   return new Date(base.getTime() + PAID_PERIOD_DAYS * DAY_MS);
+}
+
+/** 주소에서 동네 라벨(동/읍/면/가) 추출 — 실패 시 '구독'. (영업/관리 표시용) */
+export function regionFromAddress(address: string): string {
+  const m = address.match(/([가-힣]+(?:동|읍|면|가))/);
+  return m?.[1] ?? "구독";
+}
+
+/** 가게의 현재 활성(노출 보장 중인) 구독 — 진입점 DTO·중복 구독 가드용. */
+export async function getActiveSubscriptionForStore(storeId: string) {
+  return prisma.subscription.findFirst({
+    where: { storeId, status: { in: ["trialing", "active", "past_due"] } },
+    orderBy: { createdAt: "desc" },
+    select: { id: true, status: true, nextBillingAt: true, trialEndsAt: true },
+  });
+}
+
+/**
+ * M2: 카드 등록(빌링키 발급) 직후 14일 무료체험 구독 + 즉시 노출 스폰서를 함께 생성(트랜잭션).
+ * 노출은 체험 시작과 동시에 켜진다(endsAt = 체험종료). 첫 청구는 nextBillingAt(=체험종료)에 크론이 수행.
+ */
+export async function createTrialSubscription(opts: {
+  storeId: string;
+  userId: string;
+  customerKey: string;
+  billingKey: string;
+  region: string;
+}) {
+  const now = new Date();
+  const ends = trialEndDate(now);
+  return prisma.$transaction(async (tx) => {
+    const sub = await tx.subscription.create({
+      data: {
+        storeId: opts.storeId,
+        userId: opts.userId,
+        customerKey: opts.customerKey,
+        billingKey: opts.billingKey,
+        status: "trialing",
+        priceKrw: SPONSOR_PRICE_KRW,
+        trialEndsAt: ends,
+        nextBillingAt: ends,
+      },
+    });
+    await tx.sponsorship.create({
+      data: {
+        storeId: opts.storeId,
+        region: opts.region,
+        status: "trial",
+        priceKrw: SPONSOR_PRICE_KRW,
+        trialEndsAt: ends,
+        startsAt: now,
+        endsAt: ends,
+        subscriptionId: sub.id,
+      },
+    });
+    return sub;
+  });
 }

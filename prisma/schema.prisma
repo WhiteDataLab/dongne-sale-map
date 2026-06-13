@@ -128,6 +128,20 @@ enum SponsorStatus {
   canceled // 취소
 }
 
+// M2(수익화): 토스 빌링키 정기결제 구독 상태.
+enum SubscriptionStatus {
+  trialing // 14일 무료체험(첫 청구 전)
+  active // 유료 자동결제 중
+  past_due // 결제 실패(재시도 대기)
+  canceled // 해지(자동결제 중단)
+}
+
+// M2(수익화): 결제 시도 결과.
+enum PaymentStatus {
+  paid // 결제 성공
+  failed // 결제 실패
+}
+
 // ──────────────────────────────────────────────────────────────
 // Models
 // ──────────────────────────────────────────────────────────────
@@ -332,6 +346,8 @@ model Store {
   statDaily             StoreStatDaily[]
   leadOutreach          LeadOutreach?
   sponsorships          Sponsorship[]
+  subscriptions         Subscription[]
+  payments              Payment[]
 
   @@index([ownerId])
 
@@ -554,11 +570,62 @@ model Sponsorship {
   startsAt    DateTime      @default(now())
   endsAt      DateTime // 현재 노출 보장 종료 시각(체험 또는 결제 주기)
   note        String? // 운영 메모
+  // M2: 자동결제 구독에서 생성·연장된 스폰서면 연결(관리자 컴프 스폰서는 null).
+  subscriptionId String?
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
-  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  store        Store         @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
 
   @@index([status, endsAt])
+  @@index([storeId])
+  @@index([subscriptionId])
+}
+
+// M2(수익화): 토스 빌링키 기반 스폰서 정기결제 구독. 사장님이 카드를 등록(빌링키)하면
+// 14일 무료체험 후 매월 자동청구된다. 결제 성공이 Sponsorship(노출)을 생성·연장한다.
+// 가게당 활성 1개를 권장하나, 해지·재구독 이력을 위해 여러 행을 허용한다.
+model Subscription {
+  id          String             @id @default(cuid())
+  storeId     String
+  userId      String // 구독한 사장님(소유자)
+  customerKey String             @unique // 토스 고객키(가게/구독 단위 고유)
+  billingKey  String? // 토스 발급 빌링키(카드 등록 성공 후) — 평문 저장은 토스 권장 보관 방식
+  status      SubscriptionStatus @default(trialing)
+  priceKrw    Int                @default(29800)
+  trialEndsAt DateTime // 무료체험 종료 = 첫 청구 예정
+  nextBillingAt DateTime // 다음 청구 예정 시각(크론이 이 값으로 청구 대상 선별)
+  lastPaymentAt DateTime?
+  canceledAt  DateTime?
+  failCount   Int                @default(0) // 연속 결제 실패 횟수(3회 누적 시 해지)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  store        Store         @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  sponsorships Sponsorship[]
+  payments     Payment[]
+
+  @@index([status, nextBillingAt])
+  @@index([storeId])
+}
+
+// M2(수익화): 결제 시도 감사 로그(성공/실패). 정산·문의 대응 근거.
+model Payment {
+  id             String        @id @default(cuid())
+  subscriptionId String
+  storeId        String
+  orderId        String        @unique // 토스 주문번호(멱등키)
+  amount         Int
+  status         PaymentStatus
+  tossPaymentKey String? // 토스 결제키(성공 시)
+  method         String? // 결제수단(카드 등)
+  failReason     String? // 실패 사유
+  createdAt      DateTime      @default(now())
+
+  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  store        Store        @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([subscriptionId])
   @@index([storeId])
 }
