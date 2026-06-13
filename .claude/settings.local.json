@@ -83,7 +83,10 @@
       "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('state:', d.get\\('state','?'\\)\\); [print\\(' -',s.get\\('context'\\),'=>',s.get\\('state'\\),'|',s.get\\('target_url',''\\)\\) for s in d.get\\('statuses',[]\\)]\")",
       "Bash(curl -s \"https://api.github.com/repos/WhiteDataLab/dongne-sale-map/deployments?per_page=3\")",
       "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); [print\\(x.get\\('sha',''\\)[:8], x.get\\('environment'\\), x.get\\('created_at'\\)\\) for x in d] if isinstance\\(d,list\\) else print\\('resp:', d.get\\('message','?'\\)\\)\")",
-      "Bash(git commit -m 'feat\\(map\\): 카카오식 지도 컨트롤\\(현재위치/＋/－\\) + GPS 크로스헤어 아이콘 *)"
+      "Bash(git commit -m 'feat\\(map\\): 카카오식 지도 컨트롤\\(현재위치/＋/－\\) + GPS 크로스헤어 아이콘 *)",
+      "Bash(git commit -m 'docs: 사업·마케팅 인수인계 개요\\(BUSINESS_OVERVIEW\\) 추가 *)",
+      "Bash(xargs -I{} sh -c 'cat \"prisma/migrations/{}/migration.sql\" | head -20')",
+      "Bash(git commit -m 'feat\\(monetize-M0\\): 전환 증명 + 트래픽 로깅 \\(수익화 로드맵 0순위\\) *)"
     ]
   }
 }

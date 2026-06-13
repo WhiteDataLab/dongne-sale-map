@@ -90,6 +90,26 @@ enum ClosureKind {
   shutdown // 폐업(영구)
 }
 
+// M0(수익화): 전환 증명을 위한 가게 행동 이벤트 종류.
+enum EventType {
+  impression // 지도/목록/마퀴에 노출됨
+  detail_open // 가게 상세 열람
+  directions_click // 길찾기 클릭
+  favorite // 즐겨찾기 추가
+  share // 공유
+  intent_visit // 방문 의향(가게 보러가기)
+}
+
+// 이벤트 발생 위치(어느 노출 슬롯에서 왔는지) — 광고 슬롯 가치 측정용.
+enum EventSource {
+  pin // 지도 핀
+  marquee // 상단 세일 광고판
+  list // 세일 목록
+  share // 공유 랜딩
+  detail // 가게 상세
+  other
+}
+
 // ──────────────────────────────────────────────────────────────
 // Models
 // ──────────────────────────────────────────────────────────────
@@ -290,6 +310,8 @@ model Store {
   favorites             Favorite[]
   closureReports        ClosureReport[]
   merchantVerifications MerchantVerification[]
+  events                StoreEvent[]
+  statDaily             StoreStatDaily[]
 
   @@index([ownerId])
 
@@ -449,4 +471,40 @@ model PointLog {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+// M0(수익화): 가게 행동 이벤트 원본(비식별 우선). 광고/구독 과금·전환 증명 근거.
+// 고빈도(impression)는 원본을 남기지 않고 StoreStatDaily 카운터만 증가시켜 쓰기량을 관리한다.
+model StoreEvent {
+  id        String      @id @default(cuid())
+  storeId   String
+  userId    String? // 로그인 사용자면 기록(비식별 분석 우선이라 nullable)
+  sessionId String // 비로그인 세션 식별(랜덤) — 봇/중복 제거용
+  eventType EventType
+  source    EventSource @default(other)
+  createdAt DateTime    @default(now())
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([storeId, createdAt])
+  @@index([storeId, eventType, createdAt])
+}
+
+// M0(수익화): 일·가게 단위 집계 카운터. /api/events 가 upsert-increment.
+// 사장님 노출 리포트·광고 가치 산정은 이 테이블을 읽어 빠르게 응답한다.
+model StoreStatDaily {
+  id               String @id @default(cuid())
+  storeId          String
+  day              String // "YYYY-MM-DD" (KST 기준)
+  impressions      Int    @default(0)
+  detailOpens      Int    @default(0)
+  directionsClicks Int    @default(0)
+  favorites        Int    @default(0)
+  shares           Int    @default(0)
+  intentVisits     Int    @default(0)
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, day])
+  @@index([storeId])
 }

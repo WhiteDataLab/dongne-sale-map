@@ -12,6 +12,7 @@ import { SaleMarquee } from "./SaleMarquee";
 import { SaleListPanel } from "./SaleListPanel";
 import { ReviewStream } from "./ReviewStream";
 import { GpsIcon } from "./GpsIcon";
+import { trackImpressions } from "@/lib/track";
 import { DEFAULT_CENTER, DEFAULT_LEVEL, CATEGORY_META } from "@/lib/constants";
 import type { StoreDTO, FeedSale, FeedReview } from "@/lib/types";
 
@@ -378,6 +379,11 @@ export function MapExplorer() {
     const map = mapRef.current;
     if (map) map.setLevel(map.getLevel() + 1, { animate: true });
   }, []);
+
+  // M0(수익화): 화면(bounds) 내 가게 노출 이벤트 집계(세션당 가게별 1회로 중복 억제).
+  useEffect(() => {
+    if (stores.length > 0) trackImpressions(stores.map((s) => s.id), "pin");
+  }, [stores]);
 
   // 거리 표시용 위치 요청(지도 이동 없이 myLoc 만 갱신). 가게 상세의 '거리 보기'에서 호출.
   const locateForDistance = useCallback(() => {

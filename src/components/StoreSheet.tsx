@@ -18,7 +18,14 @@ import {
 import { freshnessLabel, reviewDateLabel, starString, untilLabel, won } from "@/lib/format";
 import { haversineMeters, formatDistance } from "@/lib/geo";
 import { GpsIcon } from "./GpsIcon";
+import { track } from "@/lib/track";
 import type { StoreDetailDTO } from "@/lib/types";
+
+/** 사장님 노출 리포트(M0) — 오늘/최근7일 집계. */
+type StoreStats = {
+  today: Record<string, number>;
+  last7: Record<string, number>;
+};
 import { SaleReportForm } from "./SaleReportForm";
 import { ClosureReportForm } from "./ClosureReportForm";
 import { ReviewForm } from "./ReviewForm";
@@ -69,6 +76,7 @@ export function StoreSheet({
   const [bannerEditFile, setBannerEditFile] = useState<File | null>(null);
   const [closureForm, setClosureForm] = useState(false);
   const [productAddRequested, setProductAddRequested] = useState(false);
+  const [stats, setStats] = useState<StoreStats | null>(null); // 사장님 노출 리포트(M0)
 
   // 태블릿/PC(>=768px)에서는 왼쪽 사이드 패널, 모바일에서는 하단 바텀시트
   const [isDesktop, setIsDesktop] = useState(false);
@@ -113,12 +121,32 @@ export function StoreSheet({
     if (!storeId) return;
     vhRef.current = window.innerHeight;
     setDetail(null);
+    setStats(null);
     setTab("sales");
     setComposing(null);
     setClosureForm(false);
     setTranslateY(snapPoints().peek);
     loadDetail(storeId);
+    track({ storeId, type: "detail_open", source: "detail" }); // M0: 상세 열람 집계
   }, [storeId, snapPoints, loadDetail]);
+
+  // M0: 사장님/관리자면 노출 리포트 로드
+  useEffect(() => {
+    if (!storeId || !detail?.canManageStore) {
+      setStats(null);
+      return;
+    }
+    let active = true;
+    fetch(`/api/stores/${storeId}/stats`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: StoreStats | null) => {
+        if (active) setStats(d);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [storeId, detail?.canManageStore]);
 
   const refresh = useCallback(() => {
     setComposing(null);
@@ -348,10 +376,21 @@ export function StoreSheet({
                     href={`https://map.kakao.com/link/to/${encodeURIComponent(detail.name)},${detail.lat},${detail.lng}`}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={() => track({ storeId: detail.id, type: "directions_click", source: "detail" })}
                     className="rounded-full bg-blue-50 px-2 py-0.5 font-medium text-blue-600 hover:bg-blue-100"
                   >
                     🧭 길찾기
                   </a>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      track({ storeId: detail.id, type: "intent_visit", source: "detail" });
+                      onToast("사장님께 방문 의향이 전달됐어요 👍");
+                    }}
+                    className="rounded-full bg-green-50 px-2 py-0.5 font-medium text-green-700 hover:bg-green-100"
+                  >
+                    🏃 갈래요
+                  </button>
                 </div>
                 <div className="mt-1 flex items-center gap-1.5 text-xs">
                   <Avatar img={detail.registeredBy.img} />
@@ -362,6 +401,7 @@ export function StoreSheet({
                 path={`/s/${detail.id}`}
                 title={`${detail.name} 세일 정보`}
                 text="동네 세일 지도에서 확인해보세요!"
+                onShared={() => track({ storeId: detail.id, type: "share", source: "detail" })}
                 className="shrink-0 self-start rounded-full border border-gray-200 px-2 py-1 text-xs text-gray-500"
               >
                 🔗 공유
@@ -384,6 +424,8 @@ export function StoreSheet({
                         ? "로그인이 필요해요 (로그인 연결은 이후 Phase)."
                         : "즐겨찾기는 곧 제공돼요.",
                     );
+                  } else if (next) {
+                    track({ storeId: detail.id, type: "favorite", source: "detail" }); // M0
                   }
                 }}
                 className="shrink-0 text-2xl leading-none"
@@ -423,6 +465,31 @@ export function StoreSheet({
 
         {/* 탭 내용 (스크롤) */}
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3">
+          {/* 사장님 노출 리포트(M0) — owner/admin 전용 */}
+          {detail?.canManageStore && stats && (
+            <div className="mb-3 rounded-xl border border-blue-100 bg-blue-50/60 p-3">
+              <p className="text-xs font-semibold text-blue-700">📊 우리 가게 반응 (사장님 전용)</p>
+              <div className="mt-2 grid grid-cols-3 gap-1.5">
+                {(
+                  [
+                    ["노출", "impressions"],
+                    ["상세열람", "detailOpens"],
+                    ["길찾기", "directionsClicks"],
+                    ["즐겨찾기", "favorites"],
+                    ["공유", "shares"],
+                    ["방문의향", "intentVisits"],
+                  ] as const
+                ).map(([label, key]) => (
+                  <div key={key} className="rounded-lg bg-white px-1.5 py-1.5 text-center">
+                    <p className="text-[11px] text-gray-400">{label}</p>
+                    <p className="text-base font-bold text-gray-800">{stats.today[key] ?? 0}</p>
+                    <p className="text-[10px] text-gray-400">7일 {stats.last7[key] ?? 0}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-1.5 text-[10px] text-gray-400">오늘(큰 숫자) · 최근 7일 합계</p>
+            </div>
+          )}
           {detail && (
             <div className="mb-3">
               {closureForm ? (

@@ -12,12 +12,14 @@ export function ShareButton({
   text,
   className,
   children,
+  onShared,
 }: {
   path: string;
   title: string;
   text?: string;
   className?: string;
   children?: React.ReactNode;
+  onShared?: () => void; // 공유/복사 성공 시 호출(이벤트 트래킹 등)
 }) {
   const [copied, setCopied] = useState(false);
 
@@ -26,6 +28,7 @@ export function ShareButton({
     if (navigator.share) {
       try {
         await navigator.share({ title, text, url });
+        onShared?.();
         return;
       } catch (e) {
         // 사용자가 취소(AbortError)면 그대로 종료, 그 외 실패면 클립보드로 폴백
@@ -34,6 +37,7 @@ export function ShareButton({
     }
     try {
       await navigator.clipboard.writeText(url);
+      onShared?.();
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1800);
     } catch {
