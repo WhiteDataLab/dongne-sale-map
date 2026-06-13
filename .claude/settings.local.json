@@ -68,7 +68,22 @@
       "Bash(git commit -m 'docs: HANDOFF 보안 섹션에 전체 CSP·magic-byte 검증 반영 *)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"http://localhost:3000/api/geocode?q=test\")",
       "Bash(curl -s -o /dev/null -w \"%{http_code} \" \"http://localhost:3000/api/geocode?q=test\")",
-      "Bash(git commit -m 'feat\\(security\\): AUTH_SECRET 필수화 + 분산 레이트리밋\\(Upstash\\) *)"
+      "Bash(git commit -m 'feat\\(security\\): AUTH_SECRET 필수화 + 분산 레이트리밋\\(Upstash\\) *)",
+      "Bash(git check-ignore *)",
+      "Bash(curl -s -X POST \"https://relaxed-pipefish-73564.upstash.io/pipeline\" -H \"Authorization: Bearer gQAAAAAAAR9cAAIgcDIxNmFiNTcyYTAyMDk0ZjkwYWQ1ZWJmMDc3YTdmZWFkZQ\" -H \"Content-Type: application/json\" -d '[[\"PING\"],[\"INCR\",\"rl:selftest\"],[\"EXPIRE\",\"rl:selftest\",\"60\",\"NX\"]]')",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"http://localhost:3000/api/places?q=warm\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code} \" \"http://localhost:3000/api/places?q=test\")",
+      "Bash(curl -s -X POST \"https://relaxed-pipefish-73564.upstash.io/pipeline\" -H \"Authorization: Bearer gQAAAAAAAR9cAAIgcDIxNmFiNTcyYTAyMDk0ZjkwYWQ1ZWJmMDc3YTdmZWFkZQ\" -H \"Content-Type: application/json\" -d '[[\"GET\",\"rl:places:unknown\"],[\"TTL\",\"rl:places:unknown\"]]')",
+      "Bash(curl -s -X POST \"https://relaxed-pipefish-73564.upstash.io/scan/0/MATCH/*/COUNT/100\" -H \"Authorization: Bearer gQAAAAAAAR9cAAIgcDIxNmFiNTcyYTAyMDk0ZjkwYWQ1ZWJmMDc3YTdmZWFkZQ\")",
+      "Bash(curl -s -X POST \"https://relaxed-pipefish-73564.upstash.io/pipeline\" -H \"Authorization: Bearer gQAAAAAAAR9cAAIgcDIxNmFiNTcyYTAyMDk0ZjkwYWQ1ZWJmMDc3YTdmZWFkZQ\" -H \"Content-Type: application/json\" -d '[[\"GET\",\"rl:places:::1\"],[\"TTL\",\"rl:places:::1\"]]')",
+      "Bash(curl -s -o /dev/null -w \"%{http_code} \" \"http://localhost:3000/api/places?q=live\")",
+      "Bash(curl -sI \"https://dongne-sale-map.vercel.app/\")",
+      "Bash(gh api *)",
+      "Bash(curl -s \"https://api.github.com/repos/WhiteDataLab/dongne-sale-map/commits/82adb04/status\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('state:', d.get\\('state','?'\\)\\); [print\\(' -',s.get\\('context'\\),'=>',s.get\\('state'\\),'|',s.get\\('target_url',''\\)\\) for s in d.get\\('statuses',[]\\)]\")",
+      "Bash(curl -s \"https://api.github.com/repos/WhiteDataLab/dongne-sale-map/deployments?per_page=3\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); [print\\(x.get\\('sha',''\\)[:8], x.get\\('environment'\\), x.get\\('created_at'\\)\\) for x in d] if isinstance\\(d,list\\) else print\\('resp:', d.get\\('message','?'\\)\\)\")",
+      "Bash(git commit -m 'feat\\(map\\): 카카오식 지도 컨트롤\\(현재위치/＋/－\\) + GPS 크로스헤어 아이콘 *)"
     ]
   }
 }

@@ -11,6 +11,7 @@ import { StoreRegisterForm } from "./StoreRegisterForm";
 import { SaleMarquee } from "./SaleMarquee";
 import { SaleListPanel } from "./SaleListPanel";
 import { ReviewStream } from "./ReviewStream";
+import { GpsIcon } from "./GpsIcon";
 import { DEFAULT_CENTER, DEFAULT_LEVEL, CATEGORY_META } from "@/lib/constants";
 import type { StoreDTO, FeedSale, FeedReview } from "@/lib/types";
 
@@ -368,6 +369,16 @@ export function MapExplorer() {
     );
   }, [fetchStores, flashNotice]);
 
+  // 줌 인/아웃 (카카오식 ＋/－ 컨트롤). 레벨이 낮을수록 확대.
+  const zoomIn = useCallback(() => {
+    const map = mapRef.current;
+    if (map) map.setLevel(map.getLevel() - 1, { animate: true });
+  }, []);
+  const zoomOut = useCallback(() => {
+    const map = mapRef.current;
+    if (map) map.setLevel(map.getLevel() + 1, { animate: true });
+  }, []);
+
   // 거리 표시용 위치 요청(지도 이동 없이 myLoc 만 갱신). 가게 상세의 '거리 보기'에서 호출.
   const locateForDistance = useCallback(() => {
     if (!navigator.geolocation) {
@@ -478,14 +489,6 @@ export function MapExplorer() {
           <div className="flex-1">
             <SearchBar onSearch={handleSearch} pending={searching} />
           </div>
-          <button
-            type="button"
-            onClick={goToMyLocation}
-            aria-label="현재 위치"
-            className="pointer-events-auto flex size-11 shrink-0 items-center justify-center rounded-full bg-white text-lg shadow-md transition-colors hover:bg-gray-50 active:bg-gray-100"
-          >
-            📍
-          </button>
         </div>
 
         {results && (
@@ -552,6 +555,52 @@ export function MapExplorer() {
         <div className="pointer-events-none absolute inset-x-0 bottom-20 z-50 flex justify-center px-4">
           <div className="rounded-full bg-gray-900 px-4 py-2 text-sm text-white shadow-lg">
             {notice}
+          </div>
+        </div>
+      )}
+
+      {/* 지도 컨트롤 (카카오식): 현재위치 / 확대(＋) / 축소(－) 세로 스택 */}
+      {!error && !registerMode && !showList && (
+        <div
+          className={[
+            "absolute bottom-24 right-4 z-20 flex-col items-center gap-2",
+            // 모바일에서 가게 상세(바텀시트)가 열리면 가려지므로 숨김(FAB 와 동일 규칙). 데스크톱은 유지.
+            selectedStoreId ? "hidden sm:flex" : "flex",
+          ].join(" ")}
+        >
+          {/* 현재 위치 */}
+          <button
+            type="button"
+            onClick={goToMyLocation}
+            aria-label="현재 위치"
+            className="pointer-events-auto flex size-11 items-center justify-center rounded-full bg-white text-gray-700 shadow-md transition-colors hover:bg-gray-50 active:bg-gray-100"
+          >
+            <GpsIcon className="size-5" />
+          </button>
+          {/* 확대 / 축소 (한 묶음) */}
+          <div className="pointer-events-auto flex flex-col overflow-hidden rounded-full bg-white shadow-md">
+            <button
+              type="button"
+              onClick={zoomIn}
+              aria-label="확대"
+              className="flex size-11 items-center justify-center text-gray-700 transition-colors hover:bg-gray-50 active:bg-gray-100"
+            >
+              <svg viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" className="size-5" aria-hidden="true">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+            </button>
+            <div className="mx-2.5 h-px bg-gray-200" />
+            <button
+              type="button"
+              onClick={zoomOut}
+              aria-label="축소"
+              className="flex size-11 items-center justify-center text-gray-700 transition-colors hover:bg-gray-50 active:bg-gray-100"
+            >
+              <svg viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" className="size-5" aria-hidden="true">
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+            </button>
           </div>
         </div>
       )}
