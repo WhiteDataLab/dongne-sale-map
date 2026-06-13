@@ -119,6 +119,15 @@ enum LeadStatus {
   dropped // 제외/보류
 }
 
+// M1-A(수익화): 스폰서(정액 광고) 상태. 묶음 상품 = 마퀴 고정 + 금색 핀.
+// 결제(PG)는 M2에서 연결 — 현재 무료체험은 과금 없이 동작하고, 유료 전환은 입금 확인 후 관리자가 수동 처리.
+enum SponsorStatus {
+  trial // 14일 무료체험 중(과금 전)
+  active // 유료 활성(입금/결제 확인됨)
+  expired // 기간 만료(노출 종료)
+  canceled // 취소
+}
+
 // ──────────────────────────────────────────────────────────────
 // Models
 // ──────────────────────────────────────────────────────────────
@@ -322,6 +331,7 @@ model Store {
   events                StoreEvent[]
   statDaily             StoreStatDaily[]
   leadOutreach          LeadOutreach?
+  sponsorships          Sponsorship[]
 
   @@index([ownerId])
 
@@ -528,4 +538,27 @@ model LeadOutreach {
   updatedAt DateTime   @updatedAt
 
   store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+}
+
+// M1-A(수익화): 스폰서 정액 광고 계약. 묶음 = 마퀴 상단 고정 + 지도 금색 핀.
+// 노출 보장은 endsAt(시각) 기준으로 판정한다(Sale.expiresAt 과 동일 패턴) — 만료 시 별도 크론 없이 자동 종료.
+// status 는 운영 표시·정산용. 한 가게가 기간을 갱신하며 여러 행(이력)을 가질 수 있다.
+model Sponsorship {
+  id          String        @id @default(cuid())
+  storeId     String
+  plan        String        @default("bundle") // 상품 단위(현재는 묶음만)
+  region      String // 타깃 동네 라벨(영업/리포트용, 예: "이문동")
+  status      SponsorStatus @default(trial)
+  priceKrw    Int           @default(29800) // 월 정액(원)
+  trialEndsAt DateTime // 무료체험 종료 = 과금 시작 예정 시각
+  startsAt    DateTime      @default(now())
+  endsAt      DateTime // 현재 노출 보장 종료 시각(체험 또는 결제 주기)
+  note        String? // 운영 메모
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([status, endsAt])
+  @@index([storeId])
 }

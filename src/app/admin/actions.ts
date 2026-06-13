@@ -4,6 +4,12 @@ import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAdminSession } from "@/lib/admin";
+import {
+  SPONSOR_PRICE_KRW,
+  liveSponsorFilter,
+  trialEndDate,
+  extendPaidDate,
+} from "@/lib/sponsors";
 
 /** 모든 관리 액션은 호출 시 관리자 권한을 재확인한다(폼에서 직접 호출될 수 있으므로). */
 async function ensureAdmin() {
@@ -221,6 +227,79 @@ export async function setLeadStatus(formData: FormData) {
     create: { storeId, status: status as Prisma.LeadOutreachCreateInput["status"], note: note || null, updatedBy: session.user?.id ?? null },
   });
   revalidatePath("/admin/leads");
+}
+
+/**
+ * M1-A: 스폰서 14일 무료체험 시작. 인증 가게만, 진행 중 스폰서가 없을 때만.
+ * 결제(PG)는 M2 — 체험은 과금 없이 즉시 노출(마퀴 고정 + 금색 핀)된다.
+ */
+export async function startSponsorTrial(formData: FormData) {
+  await ensureAdmin();
+  const storeId = String(formData.get("storeId"));
+  const region = String(formData.get("region") ?? "").trim().slice(0, 40) || "미지정";
+  if (!storeId) return;
+
+  const store = await prisma.store.findUnique({ where: { id: storeId }, select: { verified: true } });
+  if (!store || !store.verified) return; // 미인증 가게는 광고 노출 대상이 아님
+
+  // 이미 노출 중인 스폰서가 있으면 중복 생성 금지
+  const existing = await prisma.sponsorship.findFirst({
+    where: { ...liveSponsorFilter(), storeId },
+    select: { id: true },
+  });
+  if (existing) return;
+
+  const now = new Date();
+  const ends = trialEndDate(now);
+  await prisma.sponsorship.create({
+    data: {
+      storeId,
+      region,
+      status: "trial",
+      priceKrw: SPONSOR_PRICE_KRW,
+      trialEndsAt: ends,
+      startsAt: now,
+      endsAt: ends, // 체험 종료 = 노출 보장 종료(결제 확인 시 연장)
+    },
+  });
+  revalidatePath("/admin/sponsors");
+}
+
+/** M1-A: 입금/결제 확인 → 유료 활성 + 30일 연장(기존 만료일 기준 누적). */
+export async function confirmSponsorPayment(formData: FormData) {
+  await ensureAdmin();
+  const id = String(formData.get("id"));
+  const s = await prisma.sponsorship.findUnique({ where: { id }, select: { endsAt: true } });
+  if (!s) return;
+  await prisma.sponsorship.update({
+    where: { id },
+    data: { status: "active", endsAt: extendPaidDate(s.endsAt) },
+  });
+  revalidatePath("/admin/sponsors");
+}
+
+/** M1-A: 유료 1주기(30일) 연장. */
+export async function extendSponsor(formData: FormData) {
+  await ensureAdmin();
+  const id = String(formData.get("id"));
+  const s = await prisma.sponsorship.findUnique({ where: { id }, select: { endsAt: true } });
+  if (!s) return;
+  await prisma.sponsorship.update({
+    where: { id },
+    data: { status: "active", endsAt: extendPaidDate(s.endsAt) },
+  });
+  revalidatePath("/admin/sponsors");
+}
+
+/** M1-A: 스폰서 취소(즉시 노출 종료). */
+export async function cancelSponsor(formData: FormData) {
+  await ensureAdmin();
+  const id = String(formData.get("id"));
+  await prisma.sponsorship.update({
+    where: { id },
+    data: { status: "canceled", endsAt: new Date() },
+  });
+  revalidatePath("/admin/sponsors");
 }
 
 export async function approveStore(formData: FormData) {

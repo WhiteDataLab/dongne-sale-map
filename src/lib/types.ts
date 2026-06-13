@@ -22,6 +22,7 @@ export type StoreDTO = {
   isOpenNow: boolean | null; // 영업시간 기준 영업중 여부(정보 없으면 null)
   closedTodayReports: number; // 오늘 '갑자기 휴업' 제보 수
   shutdownReports: number; // 최근 '폐업' 제보 수
+  sponsored: boolean; // M1-A: 현재 노출 중인 스폰서(금색 핀 강조)
 };
 
 /** 지도 상단 광고판(마퀴)용 최신 세일. */
@@ -33,6 +34,7 @@ export type FeedSale = {
   qty: string;
   storeName: string;
   createdAt: string;
+  sponsored?: boolean; // M1-A: 스폰서 세일(마퀴 상단 고정 + 광고 배지)
 };
 
 /** 실시간 리뷰 스트림(유튜브 채팅 느낌)용. */

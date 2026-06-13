@@ -755,12 +755,15 @@ function buildClusterElement(cluster: Cluster, onClick: () => void): HTMLElement
 function buildPinElement(store: StoreDTO, onClick: () => void): HTMLElement {
   const meta = CATEGORY_META[store.category];
   const wrap = document.createElement("div");
-  wrap.className = "store-pin" + (store.verified ? "" : " store-pin--gray");
+  // M1-A: 노출 중 스폰서(인증 가게)는 금색 핀으로 강조.
+  const sponsored = store.sponsored && store.verified;
+  wrap.className =
+    "store-pin" + (store.verified ? "" : " store-pin--gray") + (sponsored ? " store-pin--sponsor" : "");
   wrap.style.setProperty("--pin-color", store.verified ? meta.color : "#9ca3af");
 
   const icon = document.createElement("span");
   icon.className = "store-pin__icon";
-  icon.textContent = meta.icon;
+  icon.textContent = sponsored ? "👑" : meta.icon;
 
   const name = document.createElement("span");
   name.className = "store-pin__name";

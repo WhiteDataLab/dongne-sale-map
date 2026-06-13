@@ -74,7 +74,10 @@ export default async function AdminLayout({
             />
             <AdminGroup
               label="영업"
-              links={[["/admin/leads", "리드 추출"]]}
+              links={[
+                ["/admin/leads", "리드 추출"],
+                ["/admin/sponsors", "스폰서 광고"],
+              ]}
             />
             <AdminGroup
               label="포인트샵"

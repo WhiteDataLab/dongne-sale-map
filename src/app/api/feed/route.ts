@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { liveSponsorFilter } from "@/lib/sponsors";
 import type { FeedSale, FeedReview } from "@/lib/types";
 
 /**
@@ -28,6 +29,13 @@ export async function GET(req: NextRequest) {
 
   try {
     const now = new Date();
+    // 현 영역 내 '노출 중' 스폰서 가게 id (M1-A) — 이 가게 세일은 마퀴 상단에 고정 노출.
+    const sponsorRows = await prisma.sponsorship.findMany({
+      where: { ...liveSponsorFilter(now), store: inBounds },
+      select: { storeId: true },
+    });
+    const sponsorIds = new Set(sponsorRows.map((r) => r.storeId));
+
     const [saleRows, reviewRows] = await Promise.all([
       prisma.sale.findMany({
         where: { status: "active", expiresAt: { gt: now }, store: inBounds },
@@ -58,15 +66,40 @@ export async function GET(req: NextRequest) {
       }),
     ]);
 
-    const sales: FeedSale[] = saleRows.map((s) => ({
-      id: s.id,
-      storeId: s.storeId,
-      title: s.title,
-      salePrice: s.salePrice,
-      qty: s.qty,
-      storeName: s.store.name,
-      createdAt: s.createdAt.toISOString(),
-    }));
+    // 스폰서 가게의 활성 세일이 최신 15개에 안 들었을 수 있으니 별도로 끌어와 합친다(중복 제거).
+    let merged = saleRows;
+    const missingSponsorIds = [...sponsorIds].filter((id) => !saleRows.some((s) => s.storeId === id));
+    if (missingSponsorIds.length > 0) {
+      const sponsorSales = await prisma.sale.findMany({
+        where: { status: "active", expiresAt: { gt: now }, storeId: { in: missingSponsorIds } },
+        orderBy: { createdAt: "desc" },
+        take: 10,
+        select: {
+          id: true,
+          storeId: true,
+          title: true,
+          salePrice: true,
+          qty: true,
+          createdAt: true,
+          store: { select: { name: true } },
+        },
+      });
+      merged = [...sponsorSales, ...saleRows];
+    }
+
+    // 스폰서 세일을 앞으로(고정), 나머지는 최신순 유지.
+    const sales: FeedSale[] = merged
+      .map((s) => ({
+        id: s.id,
+        storeId: s.storeId,
+        title: s.title,
+        salePrice: s.salePrice,
+        qty: s.qty,
+        storeName: s.store.name,
+        createdAt: s.createdAt.toISOString(),
+        sponsored: sponsorIds.has(s.storeId),
+      }))
+      .sort((a, b) => Number(b.sponsored) - Number(a.sponsored));
     const reviews: FeedReview[] = reviewRows.map((r) => ({
       id: r.id,
       nickname: r.user.nickname,

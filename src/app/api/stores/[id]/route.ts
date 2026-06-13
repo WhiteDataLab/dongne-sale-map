@@ -5,6 +5,7 @@ import { isPublicStorageUrl, deletePublicImage } from "@/lib/supabaseStorage";
 import { getCurrentUser } from "@/lib/session";
 import { canManageMenu, canManageStore } from "@/lib/menu";
 import { asStoreHours, isOpenNow, kstTodayStart } from "@/lib/businessHours";
+import { liveSponsorFilter } from "@/lib/sponsors";
 import type { Category } from "@/lib/constants";
 import type { StoreDetailDTO, StoreSource, PriceTrend } from "@/lib/types";
 
@@ -51,6 +52,7 @@ export async function GET(
           orderBy: { createdAt: "desc" },
           take: 20,
         },
+        sponsorships: { where: liveSponsorFilter(now), select: { id: true }, take: 1 }, // M1-A
       },
     });
 
@@ -147,6 +149,7 @@ export async function GET(
           : null,
       closedTodayReports: store.closureReports.filter((c) => c.kind === "closed_today").length,
       shutdownReports: store.closureReports.filter((c) => c.kind === "shutdown").length,
+      sponsored: store.sponsorships.length > 0,
       avgRating,
       reviewCount: store.reviews.length,
       isFavorite,

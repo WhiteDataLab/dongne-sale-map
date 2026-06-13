@@ -4,6 +4,7 @@ import { getCurrentUserId } from "@/lib/session";
 import { geocodeAddress } from "@/lib/kakaoLocal";
 import { CATEGORIES, type Category } from "@/lib/constants";
 import { asStoreHours, isOpenNow, kstTodayStart } from "@/lib/businessHours";
+import { getLiveSponsorStoreIds } from "@/lib/sponsors";
 import type { StoreDTO, StoreSource } from "@/lib/types";
 
 const SHUTDOWN_WINDOW_DAYS = 14; // 폐업 제보 노출 기간
@@ -73,9 +74,10 @@ export async function GET(req: NextRequest) {
     const ids = rows.map((s) => s.id);
     const closedToday = new Map<string, number>();
     const shutdown = new Map<string, number>();
+    let sponsorIds = new Set<string>();
     if (ids.length > 0) {
       const shutdownSince = new Date(Date.now() - SHUTDOWN_WINDOW_DAYS * 24 * 60 * 60 * 1000);
-      const [ct, sd] = await Promise.all([
+      const [ct, sd, sp] = await Promise.all([
         prisma.closureReport.groupBy({
           by: ["storeId"],
           where: { storeId: { in: ids }, kind: "closed_today", createdAt: { gte: kstTodayStart() } },
@@ -86,9 +88,11 @@ export async function GET(req: NextRequest) {
           where: { storeId: { in: ids }, kind: "shutdown", createdAt: { gte: shutdownSince } },
           _count: true,
         }),
+        getLiveSponsorStoreIds(ids, now), // M1-A: 현재 노출 중인 스폰서
       ]);
       for (const g of ct) closedToday.set(g.storeId, g._count);
       for (const g of sd) shutdown.set(g.storeId, g._count);
+      sponsorIds = sp;
     }
 
     let stores: StoreDTO[] = rows.map((s) => ({
@@ -114,6 +118,7 @@ export async function GET(req: NextRequest) {
       isOpenNow: isOpenNow(asStoreHours(s.hoursJson), now),
       closedTodayReports: closedToday.get(s.id) ?? 0,
       shutdownReports: shutdown.get(s.id) ?? 0,
+      sponsored: sponsorIds.has(s.id),
     }));
 
     if (onlySale) stores = stores.filter((s) => s.hasActiveSale);

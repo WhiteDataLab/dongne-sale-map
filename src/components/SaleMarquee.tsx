@@ -40,8 +40,14 @@ export function SaleMarquee({
             className="mx-3 inline-flex items-center gap-1.5 text-xs"
             aria-label={`${s.storeName} 세일 보기`}
           >
-            <span className="text-amber-400">🔥</span>
-            <span className="font-semibold">{s.storeName}</span>
+            {s.sponsored ? (
+              <span className="rounded-sm bg-amber-400 px-1 text-[9px] font-bold text-black">광고</span>
+            ) : (
+              <span className="text-amber-400">🔥</span>
+            )}
+            <span className={s.sponsored ? "font-semibold text-amber-300" : "font-semibold"}>
+              {s.storeName}
+            </span>
             <span className="text-white/85">{s.title}</span>
             <span className="font-bold text-amber-300">{won(s.salePrice)}</span>
             {s.qty?.trim() && <span className="text-white/50">· {s.qty}</span>}
