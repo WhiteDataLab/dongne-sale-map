@@ -63,7 +63,9 @@
       "Bash(git commit -m 'feat\\(security\\): 보안 하드닝 — 전역 보안헤더 + 비용/트래픽 남용 레이트리밋' -m '- next.config: X-Frame-Options/CSP frame-ancestors\\(클릭재킹\\), nosniff, Referrer-Policy, Permissions-Policy, HSTS 전역 응답 헤더 *)",
       "Bash(git commit -m 'docs: HANDOFF 보안 섹션에 헤더·레이트리밋 하드닝 반영 *)",
       "mcp__Claude_Preview__preview_start",
-      "Bash(curl -sI http://localhost:3000/)"
+      "Bash(curl -sI http://localhost:3000/)",
+      "Bash(git commit -m 'feat\\(security\\): 전체 CSP + 업로드 magic-byte 검증 *)",
+      "Bash(git commit -m 'docs: HANDOFF 보안 섹션에 전체 CSP·magic-byte 검증 반영 *)"
     ]
   }
 }
