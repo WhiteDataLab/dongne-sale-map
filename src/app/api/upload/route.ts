@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "login_required" }, { status: 401 });
   }
   // 업로드 남용(고아 이미지 누적·스토리지 비용) 방어: 사용자당 분당 20장
-  const { ok, retryAfter } = rateLimit(`upload:${userId}`, 20, 60_000);
+  const { ok, retryAfter } = await rateLimit(`upload:${userId}`, 20, 60_000);
   if (!ok) {
     return NextResponse.json(
       { error: "업로드가 너무 많아요. 잠시 후 다시 시도해 주세요." },

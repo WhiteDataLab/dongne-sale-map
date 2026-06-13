@@ -35,7 +35,7 @@ async function searchKakao(
 
 export async function GET(req: NextRequest) {
   // 비인증 외부 API 프록시 — IP 폭주 방어(카카오 쿼터 고갈/비용 방지)
-  const limited = ipLimit(req, "geocode", 30, 60_000);
+  const limited = await ipLimit(req, "geocode", 30, 60_000);
   if (limited) return limited;
 
   const q = req.nextUrl.searchParams.get("q")?.trim();

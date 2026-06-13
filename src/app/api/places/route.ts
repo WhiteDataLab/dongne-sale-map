@@ -19,7 +19,7 @@ type Doc = {
 
 export async function GET(req: NextRequest) {
   // 비인증 외부 API 프록시 — IP 폭주 방어(카카오 쿼터 고갈/비용 방지)
-  const limited = ipLimit(req, "places", 30, 60_000);
+  const limited = await ipLimit(req, "places", 30, 60_000);
   if (limited) return limited;
 
   const REST_KEY = process.env.KAKAO_REST_API_KEY;

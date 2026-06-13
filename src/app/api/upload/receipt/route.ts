@@ -14,7 +14,7 @@ const MAX_BYTES = 5 * 1024 * 1024;
 export async function POST(req: NextRequest) {
   const userId = await getCurrentUserId();
   if (!userId) return NextResponse.json({ error: "login_required" }, { status: 401 });
-  const { ok, retryAfter } = rateLimit(`upload:${userId}`, 20, 60_000);
+  const { ok, retryAfter } = await rateLimit(`upload:${userId}`, 20, 60_000);
   if (!ok) {
     return NextResponse.json(
       { error: "업로드가 너무 많아요. 잠시 후 다시 시도해 주세요." },

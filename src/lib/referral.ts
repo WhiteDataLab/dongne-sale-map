@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { prisma } from "@/lib/prisma";
+import { requireAuthSecret } from "@/lib/secret";
 
 /** 추천인 이벤트: 추천인·친구 각 +50P. */
 export const REFERRAL_POINT = 50;
@@ -15,7 +16,7 @@ function genCode(len = 7): string {
 /** 연락처(숫자) → 해시. 영구 원장에 원문 PII 대신 해시만 저장. */
 function hashContact(phone: string): string {
   const digits = phone.replace(/\D/g, "");
-  return createHash("sha256").update(`${digits}:${process.env.AUTH_SECRET ?? "salt"}`).digest("hex");
+  return createHash("sha256").update(`${digits}:${requireAuthSecret()}`).digest("hex");
 }
 
 /** 사용자의 추천 코드를 보장(없으면 생성). 충돌 시 재시도. */

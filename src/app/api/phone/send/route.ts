@@ -16,7 +16,7 @@ const RATE_MAX = 3; // 동일 번호 1분 내 발송 횟수 제한 (어뷰징 �
 export async function POST(req: NextRequest) {
   // 번호를 바꿔가며 SMS 폭탄/발송비 남용하는 공격 방어: IP 기준 분당 5건
   // (번호별 제한은 아래에서 추가로 적용)
-  const limited = ipLimit(req, "sms-send", 5, 60_000);
+  const limited = await ipLimit(req, "sms-send", 5, 60_000);
   if (limited) return limited;
 
   let body: { phone?: string };

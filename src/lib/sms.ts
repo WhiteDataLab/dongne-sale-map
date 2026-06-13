@@ -1,4 +1,5 @@
 import { createHash, randomInt } from "node:crypto";
+import { requireAuthSecret } from "@/lib/secret";
 
 /**
  * SMS 본인확인 (Phase 5). 개발모드(목업): 실제 발송 대신 서버 로그 + 응답에 코드 노출.
@@ -19,10 +20,10 @@ export function generateCode(): string {
   return String(randomInt(0, 1_000_000)).padStart(6, "0");
 }
 
-/** 코드는 평문 저장 금지 → 솔트 해시. */
+/** 코드는 평문 저장 금지 → 솔트 해시(서버 시크릿). */
 export function hashCode(phone: string, code: string): string {
   return createHash("sha256")
-    .update(`${phone}:${code}:${process.env.AUTH_SECRET ?? "salt"}`)
+    .update(`${phone}:${code}:${requireAuthSecret()}`)
     .digest("hex");
 }
 
