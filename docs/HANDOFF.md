@@ -93,6 +93,7 @@ User(provider?/providerId? nullable, name?, nickname, phone? unique, phoneVerifi
 - Storage 버킷: `sale-photos`(public·이미지), `merchant-docs`(private·서명URL), `intro`(public·영상 50MB).
 - 시크릿은 `.env.local`(gitignore). 키: DATABASE_URL/DIRECT_URL, AUTH_SECRET, AUTH_NAVER_ID/SECRET, AUTH_KAKAO_ID/SECRET(**개발앱 키**), NEXT_PUBLIC_KAKAO_MAP_JS_KEY, KAKAO_REST_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, (선택)UPSTASH_REDIS_REST_URL/TOKEN. (`.env.example`은 placeholder)
 - **M2 결제(토스)**: `NEXT_PUBLIC_TOSS_CLIENT_KEY`(공개), `TOSS_SECRET_KEY`(서버), `CRON_SECRET`(빌링 크론 보호) — Vercel 환경변수에도 추가 필요. 미설정 시 구독 UI '준비중'·크론 no-op. 빌링 크론은 `vercel.json`(매일 03:00 UTC) — Vercel Cron이 `CRON_SECRET`을 Bearer로 자동 첨부.
+  - **2026-06 상태**: 토스 **테스트키**(`test_ck_*`/`test_sk_*`) `.env.local` 설정 완료. 시크릿키 Basic 인증을 실제 토스 테스트 API로 검증함(더미 authKey → `NOT_FOUND_BILLING` 응답 = 인증 통과·authKey만 무효). 보안키(웹훅 서명)는 `.env.local`에 주석으로 보관(미사용). **남은 일**: ① 동일 키 Vercel 등록 후 재배포, ② 배포 URL에서 사장님 로그인→토스 테스트카드로 카드등록 E2E 1회, ③ 실 자동결제는 토스 빌링 계약·심사 후 실키 교체.
 - Auth: 세션=JWT. 신원 해석/병합 = `src/lib/userIdentity.ts`. 정지(ban)·role 확인 = `src/lib/session.ts`(DB status 체크).
 
 ## 6. ⚠️ 작업 시 함정 (Windows 환경)
