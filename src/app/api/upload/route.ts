@@ -3,6 +3,7 @@ import { getCurrentUserId } from "@/lib/session";
 import { rateLimit } from "@/lib/rateLimit";
 import {
   isAllowedImageType,
+  sniffImageMime,
   storageConfigured,
   uploadSaleImage,
 } from "@/lib/supabaseStorage";
@@ -47,8 +48,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "사진은 5MB 이하만 가능해요." }, { status: 413 });
   }
 
+  // 매직바이트로 실제 이미지인지 재확인(MIME 헤더 위조 차단). 저장 타입도 실제값 사용.
+  const buf = await file.arrayBuffer();
+  const realType = sniffImageMime(buf);
+  if (!realType || !isAllowedImageType(realType)) {
+    return NextResponse.json(
+      { error: "실제 이미지 파일(png/jpg/webp/gif)만 올릴 수 있어요." },
+      { status: 415 },
+    );
+  }
+
   try {
-    const url = await uploadSaleImage(await file.arrayBuffer(), file.type);
+    const url = await uploadSaleImage(buf, realType);
     return NextResponse.json({ url });
   } catch {
     return NextResponse.json({ error: "업로드에 실패했어요." }, { status: 502 });

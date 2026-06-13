@@ -1,12 +1,30 @@
 /** @type {import('next').NextConfig} */
 
+// 전역 Content-Security-Policy.
+// 카카오맵 JS SDK(dapi.kakao.com + *.daumcdn.net 타일, 내부적으로 eval/inline 사용)와
+// Supabase 스토리지(*.supabase.co) 를 허용하되, 그 외 출처의 스크립트/연결/object 는 차단한다.
+// ⚠️ 카카오 SDK 가 eval·inline 을 쓰므로 script-src 에 'unsafe-eval'/'unsafe-inline' 이 불가피.
+//    (nonce 기반 strict CSP 는 SDK 호환성 문제로 미적용 — 그래도 출처 화이트리스트로 원격 스크립트 주입은 차단됨)
+const csp = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.kakao.com https://*.daumcdn.net",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https:",
+  "font-src 'self' data:",
+  "connect-src 'self' https://*.kakao.com https://*.daumcdn.net https://*.daum.net https://*.supabase.co",
+  "frame-src 'self' https://*.kakao.com https://*.daum.net",
+  "worker-src 'self' blob:",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'", // 클릭재킹: 외부 사이트의 iframe 임베드 차단
+].join("; ");
+
 // 전역 보안 응답 헤더 (클릭재킹·MIME 스니핑·정보유출·권한 남용 방어).
-// CSP 는 카카오맵 SDK/이미지·Supabase 스토리지 등 외부 자원을 많이 쓰므로
-// 우선 frame-ancestors(클릭재킹)만 강제하고, 전체 CSP 는 점진 도입(TODO) 한다.
 const securityHeaders = [
-  // 외부 사이트가 우리 페이지를 iframe 으로 감싸는 것을 차단(클릭재킹).
+  { key: "Content-Security-Policy", value: csp },
+  // 구형 브라우저용 클릭재킹 방어(CSP frame-ancestors 백업).
   { key: "X-Frame-Options", value: "DENY" },
-  { key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
   // 브라우저의 MIME 타입 추측 차단(업로드 콘텐츠 XSS 우회 방어).
   { key: "X-Content-Type-Options", value: "nosniff" },
   // 외부로 referer 경로/쿼리 유출 최소화.
@@ -28,7 +46,7 @@ const nextConfig = {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
   // TODO(phase-later): PWA 는 @serwist/next 로 구성 (next-pwa 대신, App Router 지원).
-  // TODO(security): 전체 Content-Security-Policy(script/style/img/connect-src) 점진 도입.
+  // TODO(security): script-src 의 'unsafe-inline'/'unsafe-eval' 을 nonce 기반으로 축소(카카오 SDK 호환 확인 후).
 };
 
 export default nextConfig;

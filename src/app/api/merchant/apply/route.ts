@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/session";
 import {
   isAllowedDocType,
+  sniffDocMime,
   storageConfigured,
   uploadMerchantDoc,
 } from "@/lib/supabaseStorage";
@@ -64,7 +65,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const docPath = await uploadMerchantDoc(await file.arrayBuffer(), file.type);
+    // 매직바이트로 실제 이미지/PDF인지 재확인(MIME 헤더 위조 차단).
+    const buf = await file.arrayBuffer();
+    const realType = sniffDocMime(buf);
+    if (!realType || !isAllowedDocType(realType)) {
+      return NextResponse.json(
+        { error: "실제 이미지(png/jpg/webp) 또는 PDF 파일만 올릴 수 있어요." },
+        { status: 415 },
+      );
+    }
+    const docPath = await uploadMerchantDoc(buf, realType);
     await prisma.merchantVerification.create({
       data: { userId, storeId, docPath },
     });

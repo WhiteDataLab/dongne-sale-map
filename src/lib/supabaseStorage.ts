@@ -26,6 +26,41 @@ export function isAllowedImageType(type: string): boolean {
   return type in EXT_BY_TYPE;
 }
 
+/**
+ * 파일의 **매직바이트(시그니처)** 로 실제 이미지 타입을 판별한다.
+ * 클라이언트가 보내는 MIME 헤더(`file.type`)는 위조 가능하므로, 실제 바이트로 재확인한다.
+ * 허용 외 타입(스크립트/HTML/SVG 등을 image 로 위장)을 스토리지에 올리는 것을 차단.
+ * @returns 판별된 MIME (png/jpeg/webp/gif) 또는 null(이미지 아님)
+ */
+export function sniffImageMime(buf: ArrayBuffer): string | null {
+  const b = new Uint8Array(buf.slice(0, 16));
+  if (b.length < 12) return null;
+  // PNG: 89 50 4E 47
+  if (b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47) return "image/png";
+  // JPEG: FF D8 FF
+  if (b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return "image/jpeg";
+  // GIF: 47 49 46 38 ("GIF8")
+  if (b[0] === 0x47 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x38) return "image/gif";
+  // WEBP: "RIFF"...."WEBP"
+  if (
+    b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46 &&
+    b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50
+  ) {
+    return "image/webp";
+  }
+  return null;
+}
+
+/** 이미지 또는 PDF(%PDF) 매직바이트 판별 — 사업자등록증 등 민감문서 업로드용. */
+export function sniffDocMime(buf: ArrayBuffer): string | null {
+  const img = sniffImageMime(buf);
+  if (img) return img;
+  const b = new Uint8Array(buf.slice(0, 5));
+  // PDF: 25 50 44 46 ("%PDF")
+  if (b[0] === 0x25 && b[1] === 0x50 && b[2] === 0x44 && b[3] === 0x46) return "application/pdf";
+  return null;
+}
+
 /** 우리 공개 스토리지에서 발급된 URL인지 검증(외부/위조 URL로 포인트 우회 방지). */
 export function isPublicStorageUrl(url: string): boolean {
   if (!SUPABASE_URL || typeof url !== "string") return false;

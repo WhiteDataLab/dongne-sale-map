@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUserId } from "@/lib/session";
 import { rateLimit } from "@/lib/rateLimit";
-import { isAllowedImageType, storageConfigured, uploadReceiptImage } from "@/lib/supabaseStorage";
+import { isAllowedImageType, sniffImageMime, storageConfigured, uploadReceiptImage } from "@/lib/supabaseStorage";
 
 /**
  * 영수증 인증 이미지 업로드 (리뷰용). 비공개 버킷에 저장하고 **경로(path)** 만 반환.
@@ -37,8 +37,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "사진은 5MB 이하만 가능해요." }, { status: 413 });
   }
 
+  // 매직바이트로 실제 이미지인지 재확인(MIME 헤더 위조 차단).
+  const buf = await file.arrayBuffer();
+  const realType = sniffImageMime(buf);
+  if (!realType || !isAllowedImageType(realType)) {
+    return NextResponse.json({ error: "실제 이미지 파일만 올릴 수 있어요." }, { status: 415 });
+  }
+
   try {
-    const path = await uploadReceiptImage(await file.arrayBuffer(), file.type);
+    const path = await uploadReceiptImage(buf, realType);
     return NextResponse.json({ path });
   } catch {
     return NextResponse.json({ error: "업로드에 실패했어요." }, { status: 502 });
