@@ -74,7 +74,9 @@ User(provider?/providerId? nullable, name?, nickname, phone? unique, phoneVerifi
 - **신고 악용 차단**: 같은 사용자가 같은 대상 **중복 신고 불가** → 자동숨김 임계치(3)는 '서로 다른 신고자 수' 기준.
 - **업로드**: 서버 경유(service_role 키 비노출), 이미지 화이트리스트(png/jpg/webp/gif, **SVG 불가**)+5MB. 민감문서(사업자등록증)=비공개 버킷+단기 서명URL.
 - **이미지 용량 정리**: 배너/프로필 사진 교체·삭제, 메뉴/리뷰/세일 삭제, 기프티콘 상품 이미지 교체·삭제 시 **이전/해당 스토리지 이미지 삭제**(`deletePublicImage`/`deletePublicImages`, best-effort). 공개 URL→`{bucket}/{path}` 파싱 후 service_role로 DELETE.
-- 잔여 위험(낮음): 업로드 자체 레이트리밋 없음(고아 이미지 누적 가능), 토큰 maxAge 동안 닉네임/이미지 지연.
+- **전역 보안 헤더(next.config `headers()`)**: `X-Frame-Options: DENY`+`CSP frame-ancestors 'none'`(클릭재킹), `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Permissions-Policy`(camera/mic/payment 차단·geolocation self), `HSTS`(1년). ⚠️ 전체 CSP(script/connect-src)는 미도입(카카오맵/Supabase 외부자원 많아 점진 도입 TODO).
+- **비용·트래픽 남용 레이트리밋(`lib/rateLimit.ts`, 인메모리 고정윈도)**: 비인증 카카오 REST 프록시 `/api/geocode`·`/api/places`=IP 분당 30회(쿼터 고갈·과금 방어), `/api/upload`·`/api/upload/receipt`=사용자당 분당 20장(스토리지 비용·고아 이미지), `/api/phone/send`=IP 분당 5회(번호 로테이션 SMS 폭탄). ⚠️ **서버리스 인스턴스별 메모리**라 전역 카운트 아님 → 정밀 분산 제한 필요 시 Upstash Redis 등으로 교체.
+- 잔여 위험(낮음): 토큰 maxAge 동안 닉네임/이미지 지연, 업로드 magic-byte 미검증(MIME만 검사), `/api/feed`·`/api/stores` 공개(단 `take` 상한으로 쿼리비용 제한), 계정연결 `link_uid`는 httpOnly+인증세션 기반(XSS 없으면 안전), `hashCode`/`hashContact`의 `AUTH_SECRET ?? "salt"` 폴백(운영선 AUTH_SECRET 항상 설정 전제).
 
 ## 5. 인프라/시크릿
 - DB: Supabase 풀러 `aws-1-ap-northeast-2.pooler.supabase.com`(user `postgres.<ref>`), 6543(앱)/5432(마이그레이션). **직접호스트 db.<ref>.supabase.co 는 IPv6-only라 사용 불가.**
