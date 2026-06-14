@@ -23,7 +23,7 @@ import { track } from "@/lib/track";
 import type { StoreDetailDTO } from "@/lib/types";
 
 /** 사장님 노출 리포트(M0) — 오늘/최근7일. M4 프로면 30·90일·요일별 확장. */
-type StoreStats = {
+export type StoreStats = {
   today: Record<string, number>;
   last7: Record<string, number>;
   pro?: boolean;
@@ -84,7 +84,6 @@ export function StoreSheet({
   const [bannerEditFile, setBannerEditFile] = useState<File | null>(null);
   const [closureForm, setClosureForm] = useState(false);
   const [productAddRequested, setProductAddRequested] = useState(false);
-  const [stats, setStats] = useState<StoreStats | null>(null); // 사장님 노출 리포트(M0)
 
   // 태블릿/PC(>=768px)에서는 왼쪽 사이드 패널, 모바일에서는 하단 바텀시트
   const [isDesktop, setIsDesktop] = useState(false);
@@ -129,7 +128,6 @@ export function StoreSheet({
     if (!storeId) return;
     vhRef.current = window.innerHeight;
     setDetail(null);
-    setStats(null);
     setTab("sales");
     setComposing(null);
     setClosureForm(false);
@@ -138,28 +136,17 @@ export function StoreSheet({
     track({ storeId, type: "detail_open", source: "detail" }); // M0: 상세 열람 집계
   }, [storeId, snapPoints, loadDetail]);
 
-  // M0: 사장님/관리자면 노출 리포트 로드
-  useEffect(() => {
-    if (!storeId || !detail?.canManageStore) {
-      setStats(null);
-      return;
-    }
-    let active = true;
-    fetch(`/api/stores/${storeId}/stats`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d: StoreStats | null) => {
-        if (active) setStats(d);
-      })
-      .catch(() => {});
-    return () => {
-      active = false;
-    };
-  }, [storeId, detail?.canManageStore]);
-
   const refresh = useCallback(() => {
     setComposing(null);
     if (storeId) loadDetail(storeId);
   }, [storeId, loadDetail]);
+
+  // M6: 사장님/관리자는 시트 내 편집을 숨기고 전용 대시보드(/manage)로 보낸다.
+  // 보기 전용 detail(관리 권한 플래그 off) — 소비자와 동일한 시트 화면을 보게 한다.
+  const viewDetail =
+    detail && detail.canManageStore
+      ? { ...detail, canManageMenu: false, canManageStore: false }
+      : detail;
 
   // 배너(메인 사진) 관리 — 소유자/관리자만 (서버에서 403 가드)
   const bannerRef = useRef<HTMLInputElement>(null);
@@ -281,7 +268,7 @@ export function StoreSheet({
               {detail.bannerUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={detail.bannerUrl} alt="" className="h-44 w-full object-cover" />
-                ) : detail.canManageStore ? (
+                ) : viewDetail?.canManageStore ? (
                   <button
                     type="button"
                     onClick={() => bannerRef.current?.click()}
@@ -302,7 +289,7 @@ export function StoreSheet({
                     <span className="text-5xl opacity-50">{meta?.icon ?? "🛒"}</span>
                   </div>
                 )}
-                {detail.canManageStore && detail.bannerUrl && (
+                {viewDetail?.canManageStore && detail.bannerUrl && (
                   <div className="absolute right-2 top-2 flex gap-1">
                     <button
                       type="button"
@@ -332,7 +319,7 @@ export function StoreSheet({
                   }}
                 />
             </div>
-            <GalleryStrip detail={detail} storeId={detail.id} onToast={onToast} refresh={refresh} />
+            <GalleryStrip detail={viewDetail!} storeId={detail.id} onToast={onToast} refresh={refresh} />
             <div className="flex items-start gap-3">
               <span className="text-2xl" aria-hidden>
                 {meta?.icon}
@@ -479,83 +466,22 @@ export function StoreSheet({
 
         {/* 탭 내용 (스크롤) */}
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3">
-          {/* 사장님 노출 리포트(M0) — owner/admin 전용 */}
-          {detail?.canManageStore && stats && (
-            <div className="mb-3 rounded-xl border border-blue-100 bg-blue-50/60 p-3">
-              <p className="text-xs font-semibold text-blue-700">📊 우리 가게 반응 (사장님 전용)</p>
-              <div className="mt-2 grid grid-cols-3 gap-1.5">
-                {(
-                  [
-                    ["노출", "impressions"],
-                    ["상세열람", "detailOpens"],
-                    ["길찾기", "directionsClicks"],
-                    ["즐겨찾기", "favorites"],
-                    ["공유", "shares"],
-                    ["방문의향", "intentVisits"],
-                  ] as const
-                ).map(([label, key]) => (
-                  <div key={key} className="rounded-lg bg-white px-1.5 py-1.5 text-center">
-                    <p className="text-[11px] text-gray-400">{label}</p>
-                    <p className="text-base font-bold text-gray-800">{stats.today[key] ?? 0}</p>
-                    <p className="text-[10px] text-gray-400">7일 {stats.last7[key] ?? 0}</p>
-                  </div>
-                ))}
-              </div>
-              <p className="mt-1.5 text-[10px] text-gray-400">오늘(큰 숫자) · 최근 7일 합계</p>
-              {stats.pro && stats.last30 && stats.last90 && (
-                <ProStats stats={stats} />
-              )}
-            </div>
-          )}
-          {/* M2: 스폰서 구독 진입점 — owner/admin 전용 */}
+          {/* M6: 사장님/관리자 — 통계·메뉴·쿠폰·구독 등 모든 관리는 전용 대시보드로. */}
           {detail?.canManageStore && (
-            <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50/60 p-3">
-              {detail.sponsorSubscription ? (
-                <div className="flex items-center justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold text-amber-800">
-                      👑 {detail.sponsorSubscription.plan === "pro" ? "프로" : "스폰서"} 구독중
-                    </p>
-                    <p className="mt-0.5 text-[11px] text-gray-500">
-                      {detail.sponsorSubscription.status === "trialing"
-                        ? "무료체험 중 · "
-                        : detail.sponsorSubscription.status === "past_due"
-                          ? "결제 재시도 중 · "
-                          : ""}
-                      다음 결제 {new Date(detail.sponsorSubscription.nextBillingAt).toLocaleDateString("ko-KR")}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      if (!detail.sponsorSubscription) return;
-                      if (!window.confirm("스폰서 구독을 해지할까요? 다음 결제부터 중단되며, 현재 노출은 만료일까지 유지돼요.")) return;
-                      try {
-                        const res = await fetch(`/api/subscriptions/${detail.sponsorSubscription.id}/cancel`, { method: "POST" });
-                        if (!res.ok) throw new Error();
-                        onToast("스폰서 구독을 해지했어요.");
-                        refresh();
-                      } catch {
-                        onToast("해지에 실패했어요. 잠시 후 다시 시도해 주세요.");
-                      }
-                    }}
-                    className="shrink-0 rounded-lg border border-gray-300 px-2.5 py-1 text-[11px] font-medium text-gray-500 hover:bg-gray-100"
-                  >
-                    해지
-                  </button>
-                </div>
-              ) : (
-                <Link href={`/stores/${detail.id}/sponsor`} className="flex items-center justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold text-amber-800">👑 우리 가게 홍보하기</p>
-                    <p className="mt-0.5 text-[11px] text-gray-500">스폰서·프로 플랜 · 14일 무료체험</p>
-                  </div>
-                  <span className="shrink-0 rounded-lg bg-amber-500 px-2.5 py-1 text-[11px] font-semibold text-white">
-                    구독 시작 →
-                  </span>
-                </Link>
-              )}
-            </div>
+            <Link
+              href={`/manage/${detail.id}`}
+              className="mb-3 flex items-center justify-between gap-2 rounded-xl border border-indigo-200 bg-indigo-50/60 p-3"
+            >
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-indigo-700">⚙️ 내 가게 관리</p>
+                <p className="mt-0.5 text-[11px] text-gray-500">
+                  통계 · 메뉴 · 세일 · 쿠폰 · 사진 · 구독을 넓은 화면에서 관리해요
+                </p>
+              </div>
+              <span className="shrink-0 rounded-lg bg-indigo-600 px-2.5 py-1 text-[11px] font-semibold text-white">
+                관리 화면 →
+              </span>
+            </Link>
           )}
           {detail && (
             <div className="mb-3">
@@ -578,7 +504,7 @@ export function StoreSheet({
             <p className="py-10 text-center text-sm text-gray-400">불러오는 중…</p>
           ) : tab === "products" ? (
             <ProductsTab
-              detail={detail}
+              detail={viewDetail!}
               onToast={onToast}
               onDone={refresh}
               requestAdd={productAddRequested}
@@ -594,9 +520,9 @@ export function StoreSheet({
               onToast={onToast}
             />
           ) : tab === "coupons" ? (
-            <CouponSection detail={detail} onToast={onToast} onDone={refresh} />
+            <CouponSection detail={viewDetail!} onToast={onToast} onDone={refresh} />
           ) : tab === "notice" ? (
-            <NoticeTab detail={detail} onToast={onToast} onClose={onClose} onDone={refresh} />
+            <NoticeTab detail={viewDetail!} onToast={onToast} onClose={onClose} onDone={refresh} />
           ) : (
             <ReviewsTab
               detail={detail}
@@ -704,7 +630,7 @@ function ClosureBanner({
 const GALLERY_MAX = 8;
 
 /** M4 프로 사진 갤러리 — 누구나 썸네일 열람, 관리는 프로 사장님/관리자(서버 403 가드). */
-function GalleryStrip({
+export function GalleryStrip({
   detail,
   storeId,
   onToast,
@@ -817,7 +743,7 @@ function GalleryStrip({
 const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 
 /** M4 프로 확장 분석: 30·90일 합계 + 30일 일별 노출 추이 + 요일별 노출. */
-function ProStats({ stats }: { stats: StoreStats }) {
+export function ProStats({ stats }: { stats: StoreStats }) {
   const l30 = stats.last30 ?? {};
   const l90 = stats.last90 ?? {};
   const daily = stats.daily ?? [];
@@ -896,7 +822,7 @@ function EmptyState({ children }: { children: React.ReactNode }) {
   return <p className="py-10 text-center text-sm text-gray-400">{children}</p>;
 }
 
-function ProductsTab({
+export function ProductsTab({
   detail,
   onToast,
   onDone,
@@ -1039,7 +965,7 @@ function Avatar({ img }: { img: string | null }) {
   );
 }
 
-function SalesTab({
+export function SalesTab({
   detail,
   composing,
   onCompose,
@@ -1588,7 +1514,7 @@ function NoticeSection({
   );
 }
 
-function NoticeTab({
+export function NoticeTab({
   detail,
   onToast,
   onClose,

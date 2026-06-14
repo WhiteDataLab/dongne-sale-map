@@ -13,6 +13,7 @@ export async function Header() {
         name: session.user.name ?? "이웃",
         image: session.user.image ?? null,
         isAdmin: session.user.role === "admin",
+        isMerchant: session.user.role === "merchant" || session.user.role === "admin",
       }
     : null;
   async function logoutAction() {

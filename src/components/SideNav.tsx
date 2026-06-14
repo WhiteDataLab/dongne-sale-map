@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 
-type NavUser = { name: string; image: string | null; isAdmin: boolean } | null;
+type NavUser = { name: string; image: string | null; isAdmin: boolean; isMerchant?: boolean } | null;
 
 /**
  * 왼쪽 슬라이드 드로어 네비게이션.
@@ -95,6 +95,12 @@ export function SideNav({
 
           {/* 메뉴 (그룹핑) */}
           <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto p-2">
+            {user?.isMerchant && (
+              <>
+                <p className={groupLabel}>사장님</p>
+                <Item href="/manage">⚙️ 내 가게 관리</Item>
+              </>
+            )}
             <p className={groupLabel}>탐색</p>
             <Item href="/">🗺️ 지도</Item>
             {user && <Item href="/favorites">♥ 즐겨찾기</Item>}
