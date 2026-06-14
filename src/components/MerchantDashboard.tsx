@@ -363,11 +363,15 @@ function SubscriptionPanel({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ plan: target }),
       });
-      if (!res.ok) throw new Error();
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) {
+        onToast(data.error || "변경에 실패했어요.");
+        return;
+      }
       onToast(target === "pro" ? "프로로 업그레이드했어요! 🎉" : "스폰서 플랜으로 변경했어요.");
       refresh();
     } catch {
-      onToast("변경에 실패했어요.");
+      onToast("네트워크 오류예요. 잠시 후 다시 시도해 주세요.");
     } finally {
       setBusy(false);
     }
@@ -416,13 +420,21 @@ function SubscriptionPanel({
           <div className="mt-3 rounded-lg border border-indigo-200 bg-white p-3">
             <p className="text-xs font-semibold text-indigo-700">⭐ 프로로 업그레이드</p>
             <p className="mt-0.5 text-[11px] text-gray-500">
-              확장통계 · 무제한쿠폰 · 사진갤러리 · 상위노출이 <b>지금 바로</b> 켜져요. 추가 청구 없이 다음 결제부터
-              49,800원으로 적용돼요.
+              확장통계 · 무제한쿠폰 · 사진갤러리 · 상위노출이 <b>지금 바로</b> 켜져요.{" "}
+              {sub.status === "trialing"
+                ? "무료체험 중엔 추가 청구가 없고, 체험 종료 후 첫 결제부터 49,800원이에요."
+                : "남은 기간 차액이 즉시 결제되고, 다음 결제부터 49,800원으로 적용돼요."}
             </p>
             <button
               type="button"
               disabled={busy}
-              onClick={() => changePlan("pro")}
+              onClick={() => {
+                const msg =
+                  sub.status === "trialing"
+                    ? "프로로 업그레이드할까요? 체험 중엔 추가 청구가 없어요."
+                    : "프로로 업그레이드할까요? 남은 기간 차액이 즉시 결제돼요.";
+                if (window.confirm(msg)) changePlan("pro");
+              }}
               className="mt-2 w-full rounded-lg bg-indigo-600 px-3 py-2 text-xs font-bold text-white hover:bg-indigo-700 disabled:opacity-50"
             >
               {busy ? "처리 중…" : "프로로 업그레이드 (49,800원/월)"}
