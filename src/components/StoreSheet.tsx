@@ -43,6 +43,8 @@ import { ProductForm } from "./ProductForm";
 import { PhotoEditor } from "./PhotoEditor";
 import { ShareButton } from "./ShareButton";
 import { CouponSection } from "./CouponSection";
+import { SaleReserveBox } from "./SaleReserveBox";
+import { SaleReserveSettings } from "./SaleReserveSettings";
 import type { ProductDTO, ReviewDTO } from "@/lib/types";
 
 type Composing = "sale" | "review" | null;
@@ -1052,6 +1054,11 @@ export function SalesTab({
                 onChanged={onDone}
               />
             </div>
+            {detail.canManageStore ? (
+              <SaleReserveSettings sale={s} onToast={onToast} onDone={onDone} />
+            ) : (
+              s.reservation && <SaleReserveBox sale={s} onToast={onToast} onDone={onDone} />
+            )}
           </div>
             </li>
           ))}

@@ -13,6 +13,7 @@ import {
   type StoreStats,
 } from "@/components/StoreSheet";
 import { CouponSection } from "@/components/CouponSection";
+import { MerchantReservations } from "@/components/MerchantReservations";
 
 /**
  * M6 — 사장님 전용 풀페이지 관리 콘솔.
@@ -20,12 +21,13 @@ import { CouponSection } from "@/components/CouponSection";
  * 시트와 동일한 섹션 컴포넌트를 재사용(중복 제거)하되, 여기선 실제 detail(소유자 권한)로 풀 관리.
  */
 
-type Section = "stats" | "menu" | "sales" | "coupons" | "photos" | "info" | "subscription";
+type Section = "stats" | "menu" | "sales" | "reservations" | "coupons" | "photos" | "info" | "subscription";
 
 const SECTIONS: { key: Section; label: string }[] = [
   { key: "stats", label: "📊 통계" },
   { key: "menu", label: "🍱 메뉴" },
   { key: "sales", label: "🔥 세일/행사" },
+  { key: "reservations", label: "🏃 예약" },
   { key: "coupons", label: "🎟️ 쿠폰" },
   { key: "photos", label: "🖼️ 사진" },
   { key: "info", label: "🏪 가게 정보" },
@@ -191,6 +193,16 @@ export function MerchantDashboard({ storeId, storeName }: { storeId: string; sto
                   }}
                   onToast={showToast}
                 />
+              </div>
+            )}
+
+            {section === "reservations" && (
+              <div>
+                <h2 className="mb-2 text-sm font-bold">픽업 예약</h2>
+                <p className="mb-3 text-xs text-gray-400">
+                  마감임박 떨이를 손님이 앱에서 선점하고 매장에서 픽업해요(현장결제). 세일/행사 탭에서 세일별로 <b>픽업 예약 받기</b>를 켜세요.
+                </p>
+                <MerchantReservations storeId={storeId} onToast={showToast} />
               </div>
             )}
 

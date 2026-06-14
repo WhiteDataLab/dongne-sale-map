@@ -7,6 +7,7 @@ import { canManageMenu, canManageStore } from "@/lib/menu";
 import { asStoreHours, isOpenNow, openStatusNow, kstTodayStart } from "@/lib/businessHours";
 import { liveSponsorFilter, getActiveSubscriptionForStore } from "@/lib/sponsors";
 import { getStoreCoupons } from "@/lib/coupons";
+import { reservedQtyMap } from "@/lib/reservations";
 import { isStorePro, PRO_GALLERY_MAX } from "@/lib/pro";
 import type { Category } from "@/lib/constants";
 import type { StoreDetailDTO, StoreSource, PriceTrend } from "@/lib/types";
@@ -95,6 +96,18 @@ export async function GET(
     const sub = canManage ? await getActiveSubscriptionForStore(id) : null;
     // M3: 현재 노출 중인 쿠폰(+ 로그인 사용자의 보유 상태).
     const coupons = await getStoreCoupons(id, userId, now);
+
+    // M7(L2): 예약 가능 세일의 점유 수량 + 로그인 소비자의 진행중 예약.
+    const reservableSaleIds = store.sales.filter((s) => s.reservable).map((s) => s.id);
+    const reservedMap = await reservedQtyMap(reservableSaleIds);
+    const myActiveResMap = new Map<string, string>();
+    if (userId && reservableSaleIds.length > 0) {
+      const mine = await prisma.reservation.findMany({
+        where: { userId, saleId: { in: reservableSaleIds }, status: "reserved" },
+        select: { id: true, saleId: true },
+      });
+      for (const r of mine) myActiveResMap.set(r.saleId, r.id);
+    }
     const isFavorite = userId
       ? Boolean(
           await prisma.favorite.findUnique({
@@ -208,6 +221,20 @@ export async function GET(
         expiresAt: s.expiresAt.toISOString(),
         createdAt: s.createdAt.toISOString(),
         isMine: Boolean(userId && s.createdById === userId),
+        reservation: s.reservable
+          ? (() => {
+              const reserved = reservedMap.get(s.id) ?? 0;
+              const remaining = s.stockTotal != null ? Math.max(0, s.stockTotal - reserved) : null;
+              return {
+                reservable: true,
+                stockTotal: s.stockTotal,
+                remaining,
+                soldOut: remaining != null && remaining <= 0,
+                pickupInfo: s.pickupInfo,
+                myActiveReservationId: myActiveResMap.get(s.id) ?? null,
+              };
+            })()
+          : null,
       })),
       priceTrends,
       reviews: store.reviews.map((r) => ({

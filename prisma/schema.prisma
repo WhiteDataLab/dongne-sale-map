@@ -155,6 +155,14 @@ enum CouponClaimStatus {
   used // 매장에서 사용 완료
 }
 
+// M7(L2): 떨이 픽업 예약 상태.
+enum ReservationStatus {
+  reserved // 예약(선점) — 매장 픽업 대기
+  picked_up // 픽업 완료(거래 확정, 수수료 확정)
+  canceled // 취소(소비자/사장님) — 재고 환원
+  no_show // 노쇼(픽업 마감까지 미수령) — 재고 환원
+}
+
 // ──────────────────────────────────────────────────────────────
 // Models
 // ──────────────────────────────────────────────────────────────
@@ -202,6 +210,7 @@ model User {
   inquiries  Inquiry[]
   couponsCreated Coupon[]      @relation("CouponCreatedBy") // 발행한 쿠폰(사장님/관리자)
   couponClaims   CouponClaim[] // 받은 쿠폰
+  reservations   Reservation[] // M7(L2): 내 떨이 픽업 예약
 }
 
 // 로그인 수단(소셜/전화) ↔ User 연결. 계정 연결(account linking)의 핵심 (Phase 5).
@@ -369,6 +378,7 @@ model Store {
   subscriptions         Subscription[]
   payments              Payment[]
   coupons               Coupon[]
+  reservations          Reservation[]
 
   @@index([ownerId])
 
@@ -412,13 +422,49 @@ model Sale {
   status    SaleStatus @default(active)
   createdAt DateTime   @default(now())
 
+  // M7(L2): 마감임박 떨이 픽업 예약. reservable=true 면 소비자가 앱에서 선점(예약)하고 매장 픽업.
+  // 결제는 v1=현장결제(매장에서 지불), 선결제(토스)·자동정산은 Phase 2. 픽업 마감은 expiresAt 기준.
+  reservable Boolean @default(false) // 픽업 예약 받기 여부
+  stockTotal Int? // 예약 가능 총 수량(reservable 일 때 필수, 남은 수량 = stockTotal − 활성예약 합)
+  pickupInfo String? // 픽업 안내 텍스트(예: "오늘 20시까지 카운터에서 픽업")
+
   store       Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
   product     Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
   createdById String
   createdBy   User     @relation("SaleCreatedBy", fields: [createdById], references: [id])
 
+  reservations Reservation[]
+
   @@index([storeId])
   @@index([status, expiresAt])
+}
+
+// M7(L2): 떨이 픽업 예약. 소비자가 마감임박 세일을 앱에서 선점(예약)하고 매장에서 픽업한다.
+// v1=현장결제(매장 지불) — 앱에선 선점/픽업확인/노쇼만 처리(쿠폰 use 자기처리 모델과 동일한 신뢰 기반).
+// feeKrw=플랫폼 수수료(픽업 완료 시 확정되는 platform receivable). 실 청구·정산분배는 Phase 2(수동/스캐폴드).
+model Reservation {
+  id           String            @id @default(cuid())
+  saleId       String
+  storeId      String
+  userId       String
+  qty          Int // 예약 수량
+  unitPriceKrw Int // 예약 시점 세일가 스냅샷
+  amountKrw    Int // 명목 거래액(GMV) = unitPriceKrw × qty
+  feeKrw       Int // 플랫폼 수수료(take). 픽업 완료 시 확정되는 미수금.
+  status       ReservationStatus @default(reserved)
+  pickupCode   String // 매장 확인용 코드(4자리)
+  canceledBy   String? // user|merchant|system (취소 주체)
+  createdAt    DateTime          @default(now())
+  pickedUpAt   DateTime?
+  canceledAt   DateTime?
+
+  sale  Sale  @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([storeId, status])
+  @@index([saleId, status])
 }
 
 model Review {

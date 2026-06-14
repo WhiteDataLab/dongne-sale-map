@@ -1,6 +1,7 @@
 import type { Category } from "@/lib/constants";
 import type { StoreHours, OpenStatus } from "@/lib/businessHours";
 import type { CouponDTO } from "@/lib/coupons";
+import type { SaleReservationInfo } from "@/lib/reservations";
 
 /** 가게 등록 출처: 소비자(주민) vs 사장님. */
 export type StoreSource = "user" | "merchant";
@@ -84,6 +85,7 @@ export type SaleDTO = {
   expiresAt: string;
   createdAt: string;
   isMine: boolean; // 현재 사용자가 올린 제보인지 (삭제 버튼 노출)
+  reservation?: SaleReservationInfo | null; // M7(L2): 픽업 예약 정보(reservable 일 때만)
 };
 
 /** 리뷰에 연결된 구매 메뉴(상품) 요약. */
