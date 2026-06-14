@@ -37,15 +37,17 @@ import { MerchantApply } from "./MerchantApply";
 import { ProductForm } from "./ProductForm";
 import { PhotoEditor } from "./PhotoEditor";
 import { ShareButton } from "./ShareButton";
+import { CouponSection } from "./CouponSection";
 import type { ProductDTO, ReviewDTO } from "@/lib/types";
 
 type Composing = "sale" | "review" | null;
 
-type TabKey = "products" | "sales" | "notice" | "reviews";
+type TabKey = "products" | "sales" | "coupons" | "notice" | "reviews";
 
 const TABS: { key: TabKey; label: string }[] = [
   { key: "products", label: "메뉴" },
   { key: "sales", label: "세일/행사" },
+  { key: "coupons", label: "쿠폰" },
   { key: "notice", label: "공지" },
   { key: "reviews", label: "리뷰" },
 ];
@@ -459,6 +461,11 @@ export function StoreSheet({
                 ].join(" ")}
               >
                 {t.label}
+                {t.key === "coupons" && detail && detail.coupons.length > 0 && (
+                  <span className="ml-0.5 rounded-full bg-rose-500 px-1.5 text-[10px] font-bold text-white align-middle">
+                    {detail.coupons.length}
+                  </span>
+                )}
               </button>
             ))}
           </div>
@@ -575,6 +582,8 @@ export function StoreSheet({
               onDone={refresh}
               onToast={onToast}
             />
+          ) : tab === "coupons" ? (
+            <CouponSection detail={detail} onToast={onToast} onDone={refresh} />
           ) : tab === "notice" ? (
             <NoticeTab detail={detail} onToast={onToast} onClose={onClose} onDone={refresh} />
           ) : (

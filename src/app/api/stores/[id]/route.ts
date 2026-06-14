@@ -6,6 +6,7 @@ import { getCurrentUser } from "@/lib/session";
 import { canManageMenu, canManageStore } from "@/lib/menu";
 import { asStoreHours, isOpenNow, openStatusNow, kstTodayStart } from "@/lib/businessHours";
 import { liveSponsorFilter, getActiveSubscriptionForStore } from "@/lib/sponsors";
+import { getStoreCoupons } from "@/lib/coupons";
 import type { Category } from "@/lib/constants";
 import type { StoreDetailDTO, StoreSource, PriceTrend } from "@/lib/types";
 
@@ -87,6 +88,8 @@ export async function GET(
     // M2: 사장님 패널 진입점용 — 관리 권한자에게만 활성 구독 상태 노출.
     const canManage = canManageStore(store, user);
     const sub = canManage ? await getActiveSubscriptionForStore(id) : null;
+    // M3: 현재 노출 중인 쿠폰(+ 로그인 사용자의 보유 상태).
+    const coupons = await getStoreCoupons(id, userId, now);
     const isFavorite = userId
       ? Boolean(
           await prisma.favorite.findUnique({
@@ -165,6 +168,7 @@ export async function GET(
       sponsorSubscription: sub
         ? { id: sub.id, status: sub.status, nextBillingAt: sub.nextBillingAt.toISOString() }
         : null,
+      coupons,
       bannerUrl: store.bannerUrl,
       registeredBy: {
         nickname: store.createdBy.nickname,

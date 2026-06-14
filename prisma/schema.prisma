@@ -142,6 +142,19 @@ enum PaymentStatus {
   failed // 결제 실패
 }
 
+// M3(수익화): 사장님 쿠폰 상태. 만료는 expiresAt(시각) 기준 자동 비활성(Sale.expiresAt 패턴).
+enum CouponStatus {
+  active // 발행·노출 중
+  expired // 기간 만료(노출 종료)
+  hidden // 사장님/관리자가 내림
+}
+
+// M3(수익화): 소비자 쿠폰 보유 상태.
+enum CouponClaimStatus {
+  claimed // 받음(미사용)
+  used // 매장에서 사용 완료
+}
+
 // ──────────────────────────────────────────────────────────────
 // Models
 // ──────────────────────────────────────────────────────────────
@@ -187,6 +200,8 @@ model User {
   referredBy User?   @relation("UserReferrals", fields: [referredById], references: [id], onDelete: SetNull)
   referrals  User[]  @relation("UserReferrals")
   inquiries  Inquiry[]
+  couponsCreated Coupon[]      @relation("CouponCreatedBy") // 발행한 쿠폰(사장님/관리자)
+  couponClaims   CouponClaim[] // 받은 쿠폰
 }
 
 // 로그인 수단(소셜/전화) ↔ User 연결. 계정 연결(account linking)의 핵심 (Phase 5).
@@ -348,6 +363,7 @@ model Store {
   sponsorships          Sponsorship[]
   subscriptions         Subscription[]
   payments              Payment[]
+  coupons               Coupon[]
 
   @@index([ownerId])
 
@@ -628,4 +644,43 @@ model Payment {
 
   @@index([subscriptionId])
   @@index([storeId])
+}
+
+// M3(수익화): 사장님 쿠폰. 인증 사장님(소유자)·관리자가 본인 가게 쿠폰을 발행하고,
+// 소비자가 받아(claim) 매장에서 사용(use)한다. 발행/관리는 canManageStore, 1인 1매(CouponClaim @@unique).
+// 노출 보장은 expiresAt(시각) 기준 — Sale 과 동일 패턴이라 만료 크론이 필요 없다.
+model Coupon {
+  id          String       @id @default(cuid())
+  storeId     String
+  title       String // 혜택 (예: "5,000원 이상 1,000원 할인")
+  description String? // 상세 설명(선택)
+  condition   String? // 사용 조건 텍스트 (예: "1만원 이상 구매 시")
+  totalLimit  Int? // 발행 수량 한도(선택, null=무제한)
+  status      CouponStatus @default(active)
+  expiresAt   DateTime // 만료 시각 지나면 자동 비활성
+  createdById String // 발행한 사장님(또는 관리자)
+  createdAt   DateTime     @default(now())
+
+  store     Store         @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  createdBy User          @relation("CouponCreatedBy", fields: [createdById], references: [id])
+  claims    CouponClaim[]
+
+  @@index([storeId])
+  @@index([status, expiresAt])
+}
+
+// M3(수익화): 소비자의 쿠폰 보유(받기→사용). 1인 1매(@@unique). 사용은 스캐너 없이 수동 처리(앱 신뢰 모델).
+model CouponClaim {
+  id        String            @id @default(cuid())
+  couponId  String
+  userId    String
+  status    CouponClaimStatus @default(claimed)
+  claimedAt DateTime          @default(now())
+  usedAt    DateTime?
+
+  coupon Coupon @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([couponId, userId])
+  @@index([userId])
 }

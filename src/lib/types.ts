@@ -1,5 +1,6 @@
 import type { Category } from "@/lib/constants";
 import type { StoreHours, OpenStatus } from "@/lib/businessHours";
+import type { CouponDTO } from "@/lib/coupons";
 
 /** 가게 등록 출처: 소비자(주민) vs 사장님. */
 export type StoreSource = "user" | "merchant";
@@ -131,6 +132,8 @@ export type StoreDetailDTO = StoreDTO & {
   owner: { nickname: string; img: string | null } | null; // 사장님(소유자)
   // M2: 이 가게의 활성 스폰서 구독(사장님 패널 진입점용). 없으면 null.
   sponsorSubscription: { id: string; status: string; nextBillingAt: string } | null;
+  // M3: 현재 노출 중인 사장님 쿠폰(소비자 받기/사장님 통계).
+  coupons: CouponDTO[];
 };
 
 /** 지오코딩 결과 (검색어 → 좌표). */

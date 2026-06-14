@@ -107,6 +107,7 @@ export function SideNav({
               <>
                 <p className={groupLabel}>혜택</p>
                 <Item href="/checkin">✅ 출석체크</Item>
+                <Item href="/coupons">🎟️ 내 쿠폰</Item>
                 <Item href="/shop">🎁 포인트샵</Item>
                 <Item href="/invite">🎉 친구 초대 (+50P)</Item>
                 <Item href="/notices">📢 공지 · 이벤트</Item>
