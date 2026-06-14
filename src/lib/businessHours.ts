@@ -87,6 +87,33 @@ export function isOpenNow(
   return minutes >= open && minutes < close;
 }
 
+/** 06:00 KST — 마감 후 이 시각까지는 '영업종료', 이후 당일 오픈 전까지는 '영업준비중'. */
+const PREPARING_FROM_MIN = 6 * 60;
+
+/** 영업 상태 3-state: 영업중 / 영업준비중(오늘 오픈 전 대기) / 영업종료(마감·휴무). */
+export type OpenStatus = "open" | "preparing" | "closed";
+
+/**
+ * 표시용 영업 상태. open=영업중, preparing=영업준비중, closed=영업종료, null=정보없음.
+ * 닫혀 있을 때 새벽 6시 이후 ~ 오늘 영업 시작 전이면 '영업준비중'(곧 엶), 그 외(마감~새벽6시·휴무)는 '영업종료'.
+ */
+export function openStatusNow(
+  hours: StoreHours | null | undefined,
+  date = new Date(),
+): OpenStatus | null {
+  const open = isOpenNow(hours, date);
+  if (open === null) return null;
+  if (open) return "open";
+  // 닫힘 → 오늘 오픈 전(06:00~오픈) 구간이면 '준비중', 아니면 '종료'
+  const { dayKey, minutes } = getKstNow(date);
+  const today = hours?.[dayKey];
+  if (today) {
+    const openMin = toMinutes(today.open);
+    if (minutes >= PREPARING_FROM_MIN && minutes < openMin) return "preparing";
+  }
+  return "closed";
+}
+
 /** KST(UTC+9) 기준 오늘 자정을 실제 UTC Date 로. (createdAt 은 UTC 저장) */
 export function kstTodayStart(): Date {
   const nowKst = new Date(Date.now() + 9 * 60 * 60 * 1000);

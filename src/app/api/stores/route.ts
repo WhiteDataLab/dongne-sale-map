@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/session";
 import { geocodeAddress } from "@/lib/kakaoLocal";
 import { CATEGORIES, type Category } from "@/lib/constants";
-import { asStoreHours, isOpenNow, kstTodayStart } from "@/lib/businessHours";
+import { asStoreHours, isOpenNow, openStatusNow, kstTodayStart } from "@/lib/businessHours";
 import { getLiveSponsorStoreIds } from "@/lib/sponsors";
 import type { StoreDTO, StoreSource } from "@/lib/types";
 
@@ -116,6 +116,7 @@ export async function GET(req: NextRequest) {
           ? new Date(Math.max(...s.sales.map((x) => x.createdAt.getTime()))).toISOString()
           : null,
       isOpenNow: isOpenNow(asStoreHours(s.hoursJson), now),
+      openStatus: openStatusNow(asStoreHours(s.hoursJson), now),
       closedTodayReports: closedToday.get(s.id) ?? 0,
       shutdownReports: shutdown.get(s.id) ?? 0,
       sponsored: sponsorIds.has(s.id),

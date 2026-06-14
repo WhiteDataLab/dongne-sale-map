@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { isPublicStorageUrl, deletePublicImage } from "@/lib/supabaseStorage";
 import { getCurrentUser } from "@/lib/session";
 import { canManageMenu, canManageStore } from "@/lib/menu";
-import { asStoreHours, isOpenNow, kstTodayStart } from "@/lib/businessHours";
+import { asStoreHours, isOpenNow, openStatusNow, kstTodayStart } from "@/lib/businessHours";
 import { liveSponsorFilter, getActiveSubscriptionForStore } from "@/lib/sponsors";
 import type { Category } from "@/lib/constants";
 import type { StoreDetailDTO, StoreSource, PriceTrend } from "@/lib/types";
@@ -140,6 +140,7 @@ export async function GET(
       notice: store.notice,
       hours,
       isOpenNow: isOpenNow(hours, now),
+      openStatus: openStatusNow(hours, now),
       hasActiveSale: store.sales.length > 0,
       saleMinPrice: store.sales.length > 0 ? Math.min(...store.sales.map((x) => x.salePrice)) : null,
       saleSoonExpiring: store.sales.some((x) => x.expiresAt <= new Date(now.getTime() + 60 * 60 * 1000)),

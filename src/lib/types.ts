@@ -1,5 +1,5 @@
 import type { Category } from "@/lib/constants";
-import type { StoreHours } from "@/lib/businessHours";
+import type { StoreHours, OpenStatus } from "@/lib/businessHours";
 
 /** 가게 등록 출처: 소비자(주민) vs 사장님. */
 export type StoreSource = "user" | "merchant";
@@ -19,7 +19,8 @@ export type StoreDTO = {
   saleSoonExpiring: boolean; // 1시간 내 마감되는 세일 존재(마감임박 강조)
   saleSoonestExpiry: string | null; // 가장 임박한 세일 만료(ISO) — 카운트다운/마감임박순 정렬
   saleLatestCreated: string | null; // 가장 최근 세일 등록(ISO) — 최신순 정렬
-  isOpenNow: boolean | null; // 영업시간 기준 영업중 여부(정보 없으면 null)
+  isOpenNow: boolean | null; // 영업시간 기준 영업중 여부(정보 없으면 null) — '영업중만 보기' 필터용
+  openStatus: OpenStatus | null; // 표시용 3-state: 영업중/영업준비중/영업종료(정보 없으면 null)
   closedTodayReports: number; // 오늘 '갑자기 휴업' 제보 수
   shutdownReports: number; // 최근 '폐업' 제보 수
   sponsored: boolean; // M1-A: 현재 노출 중인 스폰서(금색 핀 강조)

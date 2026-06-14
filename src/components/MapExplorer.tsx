@@ -784,7 +784,10 @@ function buildPinElement(store: StoreDTO, onClick: () => void): HTMLElement {
   } else if (store.closedTodayReports > 0) {
     wrap.classList.add("store-pin--alert");
     tag("오늘 휴업?", "store-pin__status--today");
-  } else if (store.isOpenNow === false) {
+  } else if (store.openStatus === "preparing") {
+    wrap.classList.add("store-pin--off");
+    tag("영업준비중", "store-pin__status--off");
+  } else if (store.openStatus === "closed") {
     wrap.classList.add("store-pin--off");
     tag("영업종료", "store-pin__status--off");
   } else if (store.hasActiveSale && store.verified) {

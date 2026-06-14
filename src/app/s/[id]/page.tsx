@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { CATEGORY_META, type Category } from "@/lib/constants";
-import { asStoreHours, isOpenNow } from "@/lib/businessHours";
+import { asStoreHours, openStatusNow } from "@/lib/businessHours";
 import { won, untilLabel, freshnessLabel, starString } from "@/lib/format";
 import { ShareButton } from "@/components/ShareButton";
 
@@ -65,7 +65,7 @@ export default async function StoreSharePage({ params }: { params: Promise<{ id:
 
   const meta = CATEGORY_META[store.category as Category];
   const hours = asStoreHours(store.hoursJson);
-  const open = isOpenNow(hours, new Date());
+  const openStatus = openStatusNow(hours, new Date());
   const ratings = store.reviews.map((r) => r.rating);
   const avg =
     ratings.length > 0 ? Math.round((ratings.reduce((a, b) => a + b, 0) / ratings.length) * 10) / 10 : null;
@@ -82,10 +82,13 @@ export default async function StoreSharePage({ params }: { params: Promise<{ id:
         <h1 className="mt-2 text-2xl font-bold">{store.name}</h1>
         <p className="mt-1 text-sm text-gray-600">{store.address}</p>
         <div className="mt-2 flex flex-wrap items-center justify-center gap-2 text-xs">
-          {open === true && (
+          {openStatus === "open" && (
             <span className="rounded-full bg-green-100 px-2 py-0.5 font-medium text-green-700">영업중</span>
           )}
-          {open === false && (
+          {openStatus === "preparing" && (
+            <span className="rounded-full bg-amber-100 px-2 py-0.5 font-medium text-amber-700">영업준비중</span>
+          )}
+          {openStatus === "closed" && (
             <span className="rounded-full bg-gray-200 px-2 py-0.5 font-medium text-gray-600">영업종료</span>
           )}
           {avg !== null && (

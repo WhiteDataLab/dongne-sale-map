@@ -350,7 +350,7 @@ export function StoreSheet({
                   )}
                 </div>
                 <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
-                  <OpenBadge isOpen={detail.isOpenNow} />
+                  <OpenBadge status={detail.openStatus} />
                   {userLoc ? (
                     <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 font-medium text-blue-600">
                       <GpsIcon className="size-3" /> 내 위치에서 {formatDistance(haversineMeters(userLoc.lat, userLoc.lng, detail.lat, detail.lng))}
@@ -681,18 +681,24 @@ function ClosureBanner({
   );
 }
 
-function OpenBadge({ isOpen }: { isOpen: boolean | null }) {
-  if (isOpen === null) {
+function OpenBadge({ status }: { status: StoreDetailDTO["openStatus"] }) {
+  if (status === null) {
     return <span className="rounded-full bg-gray-100 px-2 py-0.5 text-gray-500">영업정보 없음</span>;
   }
-  return isOpen ? (
-    <span className="rounded-full bg-green-100 px-2 py-0.5 font-medium text-green-700">
-      영업중
-    </span>
-  ) : (
-    <span className="rounded-full bg-gray-200 px-2 py-0.5 font-medium text-gray-600">
-      영업종료
-    </span>
+  if (status === "open") {
+    return (
+      <span className="rounded-full bg-green-100 px-2 py-0.5 font-medium text-green-700">영업중</span>
+    );
+  }
+  if (status === "preparing") {
+    return (
+      <span className="rounded-full bg-amber-100 px-2 py-0.5 font-medium text-amber-700">
+        영업준비중
+      </span>
+    );
+  }
+  return (
+    <span className="rounded-full bg-gray-200 px-2 py-0.5 font-medium text-gray-600">영업종료</span>
   );
 }
 
