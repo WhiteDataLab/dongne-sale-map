@@ -340,6 +340,7 @@ model Store {
   description String?
   notice     String? // 가게 공지사항 — 사장님/관리자만 작성·수정·삭제 (소비자는 조회만)
   bannerUrl   String? // 가게 상단 메인 사진 — 사장님/관리자만 설정 (Phase 7c)
+  galleryUrls String[]      @default([]) // M4: 프로 플랜 사진 갤러리(여러 장) — 프로 구독 가게만 관리
   verified    Boolean       @default(false) // 미인증 가게는 회색 핀
   source      StoreSource   @default(user) // 등록 출처 (소비자/사장님) — UI 구분
   status      StoreStatus   @default(active)
@@ -608,6 +609,7 @@ model Subscription {
   userId      String // 구독한 사장님(소유자)
   customerKey String             @unique // 토스 고객키(가게/구독 단위 고유)
   billingKey  String? // 토스 발급 빌링키(카드 등록 성공 후) — 평문 저장은 토스 권장 보관 방식
+  plan        String             @default("sponsor") // M4: "sponsor"(마퀴+금색핀) | "pro"(스폰서+프리미엄 혜택)
   status      SubscriptionStatus @default(trialing)
   priceKrw    Int                @default(29800)
   trialEndsAt DateTime // 무료체험 종료 = 첫 청구 예정

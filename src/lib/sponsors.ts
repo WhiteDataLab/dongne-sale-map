@@ -11,12 +11,33 @@ import { CATEGORY_META, type Category } from "@/lib/constants";
  */
 
 export const SPONSOR_PRICE_KRW = 29_800;
+/** M4: 프로 플랜 — 스폰서(마퀴+금색핀) + 프리미엄 혜택 4종 묶음. */
+export const PRO_PRICE_KRW = 49_800;
 export const TRIAL_DAYS = 14;
 export const PAID_PERIOD_DAYS = 30;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+/** 구독 플랜. sponsor=마퀴+금색핀 / pro=스폰서 전체 + 확장통계·무제한쿠폰·사진갤러리·상위노출. */
+export type SubPlan = "sponsor" | "pro";
+
+export const PLAN_PRICE_KRW: Record<SubPlan, number> = {
+  sponsor: SPONSOR_PRICE_KRW,
+  pro: PRO_PRICE_KRW,
+};
+export const PLAN_LABEL: Record<SubPlan, string> = {
+  sponsor: "스폰서",
+  pro: "프로",
+};
+export function asSubPlan(v: unknown): SubPlan {
+  return v === "pro" ? "pro" : "sponsor";
+}
+
 /** M2: 토스 결제 주문명(고객 카드명세서 표기) + 연속 실패 N회 시 자동 해지. */
 export const SUBSCRIPTION_ORDER_NAME = "동네세일지도 스폰서 광고(월)";
+export const PLAN_ORDER_NAME: Record<SubPlan, string> = {
+  sponsor: "동네세일지도 스폰서 광고(월)",
+  pro: "동네세일지도 프로 플랜(월)",
+};
 export const MAX_BILLING_FAILURES = 3;
 
 export const SPONSOR_STATUS_LABEL: Record<string, string> = {
@@ -66,6 +87,7 @@ export type SponsorRow = {
   createdAt: string;
   subscriptionId: string | null; // M2: 자동결제 구독 발이면 연결
   subStatus: string | null; // 구독 상태(trialing|active|past_due|canceled)
+  subPlan: SubPlan | null; // M4: 구독 플랜(sponsor|pro)
   nextBillingAt: string | null; // 다음 결제 예정(자동결제 발만)
 };
 
@@ -89,7 +111,7 @@ export async function getSponsorships(): Promise<SponsorRow[]> {
       createdAt: true,
       subscriptionId: true,
       store: { select: { name: true, category: true, address: true } },
-      subscription: { select: { status: true, nextBillingAt: true } },
+      subscription: { select: { status: true, plan: true, nextBillingAt: true } },
     },
   });
 
@@ -114,6 +136,7 @@ export async function getSponsorships(): Promise<SponsorRow[]> {
       createdAt: s.createdAt.toISOString(),
       subscriptionId: s.subscriptionId,
       subStatus: s.subscription?.status ?? null,
+      subPlan: s.subscription ? asSubPlan(s.subscription.plan) : null,
       nextBillingAt: s.subscription?.nextBillingAt?.toISOString() ?? null,
     };
   });
@@ -141,7 +164,7 @@ export async function getActiveSubscriptionForStore(storeId: string) {
   return prisma.subscription.findFirst({
     where: { storeId, status: { in: ["trialing", "active", "past_due"] } },
     orderBy: { createdAt: "desc" },
-    select: { id: true, status: true, nextBillingAt: true, trialEndsAt: true },
+    select: { id: true, status: true, plan: true, nextBillingAt: true, trialEndsAt: true },
   });
 }
 
@@ -155,9 +178,12 @@ export async function createTrialSubscription(opts: {
   customerKey: string;
   billingKey: string;
   region: string;
+  plan?: SubPlan; // 기본 sponsor. pro 면 프리미엄 혜택까지 활성(가격만 다르고 노출 스폰서는 동일 생성).
 }) {
   const now = new Date();
   const ends = trialEndDate(now);
+  const plan: SubPlan = opts.plan ?? "sponsor";
+  const price = PLAN_PRICE_KRW[plan];
   return prisma.$transaction(async (tx) => {
     const sub = await tx.subscription.create({
       data: {
@@ -165,8 +191,9 @@ export async function createTrialSubscription(opts: {
         userId: opts.userId,
         customerKey: opts.customerKey,
         billingKey: opts.billingKey,
+        plan,
         status: "trialing",
-        priceKrw: SPONSOR_PRICE_KRW,
+        priceKrw: price,
         trialEndsAt: ends,
         nextBillingAt: ends,
       },
@@ -174,9 +201,10 @@ export async function createTrialSubscription(opts: {
     await tx.sponsorship.create({
       data: {
         storeId: opts.storeId,
+        plan, // 운영 표시용(노출은 sponsor/pro 동일, 프리미엄 게이팅은 subscription.plan 기준)
         region: opts.region,
         status: "trial",
-        priceKrw: SPONSOR_PRICE_KRW,
+        priceKrw: price,
         trialEndsAt: ends,
         startsAt: now,
         endsAt: ends,

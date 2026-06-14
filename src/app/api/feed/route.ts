@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { liveSponsorFilter } from "@/lib/sponsors";
+import { getProStoreIds } from "@/lib/pro";
 import type { FeedSale, FeedReview } from "@/lib/types";
 
 /**
@@ -35,6 +36,8 @@ export async function GET(req: NextRequest) {
       select: { storeId: true },
     });
     const sponsorIds = new Set(sponsorRows.map((r) => r.storeId));
+    // M4: 프로 플랜 가게는 스폰서 중에서도 더 위로(상위 노출).
+    const proIds = await getProStoreIds([...sponsorIds], now);
 
     const [saleRows, reviewRows] = await Promise.all([
       prisma.sale.findMany({
@@ -99,7 +102,11 @@ export async function GET(req: NextRequest) {
         createdAt: s.createdAt.toISOString(),
         sponsored: sponsorIds.has(s.storeId),
       }))
-      .sort((a, b) => Number(b.sponsored) - Number(a.sponsored));
+      .sort(
+        (a, b) =>
+          Number(proIds.has(b.storeId)) - Number(proIds.has(a.storeId)) ||
+          Number(b.sponsored) - Number(a.sponsored),
+      );
     const reviews: FeedReview[] = reviewRows.map((r) => ({
       id: r.id,
       nickname: r.user.nickname,

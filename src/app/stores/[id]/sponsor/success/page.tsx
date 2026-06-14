@@ -4,6 +4,8 @@ import { getCurrentUser } from "@/lib/session";
 import { canManageStore } from "@/lib/menu";
 import {
   TRIAL_DAYS,
+  PLAN_LABEL,
+  asSubPlan,
   regionFromAddress,
   getActiveSubscriptionForStore,
   createTrialSubscription,
@@ -29,12 +31,13 @@ export default async function SponsorSuccessPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ authKey?: string; customerKey?: string }>;
+  searchParams: Promise<{ authKey?: string; customerKey?: string; plan?: string }>;
 }) {
   const { id } = await params;
   const sp = await searchParams;
   const authKey = typeof sp.authKey === "string" ? sp.authKey : "";
   const customerKey = typeof sp.customerKey === "string" ? sp.customerKey : "";
+  const plan = asSubPlan(sp.plan);
 
   const user = await getCurrentUser();
   const store = await prisma.store
@@ -81,6 +84,7 @@ export default async function SponsorSuccessPage({
       customerKey,
       billingKey: issued.billingKey,
       region: regionFromAddress(store.address),
+      plan,
     });
     ok = true;
   } catch (e) {
@@ -101,13 +105,17 @@ export default async function SponsorSuccessPage({
   return (
     <Shell>
       <p className="mt-10 text-3xl">🎉</p>
-      <p className="mt-2 text-lg font-bold">스폰서 구독이 시작됐어요!</p>
+      <p className="mt-2 text-lg font-bold">{PLAN_LABEL[plan]} 플랜 구독이 시작됐어요!</p>
       <p className="mt-1 text-sm text-gray-600">{store.name}</p>
       <p className="mt-3 text-sm text-gray-500">
-        지금부터 <b>{TRIAL_DAYS}일간 무료</b>로 마퀴 상단 고정 + 금색 핀(👑)이 노출돼요.
+        지금부터 <b>{TRIAL_DAYS}일간 무료</b>로 마퀴 상단 고정 + 금색 핀(👑)
+        {plan === "pro" && " + 프로 프리미엄 혜택"}이 노출돼요.
         <br />무료체험이 끝나면 매월 자동결제됩니다.
       </p>
-      <Link href="/" className="mt-5 inline-block rounded-xl bg-amber-500 px-5 py-2.5 text-sm font-semibold text-white">
+      <Link
+        href="/"
+        className={`mt-5 inline-block rounded-xl px-5 py-2.5 text-sm font-semibold text-white ${plan === "pro" ? "bg-indigo-600" : "bg-amber-500"}`}
+      >
         지도에서 확인하기
       </Link>
     </Shell>

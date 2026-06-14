@@ -771,6 +771,14 @@ function buildPinElement(store: StoreDTO, onClick: () => void): HTMLElement {
 
   wrap.append(icon, name);
 
+  // M3/M4: 받을 수 있는 쿠폰 보유 가게는 🎟️ 코너 배지(발견성).
+  if (store.hasCoupon) {
+    const cp = document.createElement("span");
+    cp.className = "store-pin__coupon";
+    cp.textContent = "🎟️";
+    wrap.appendChild(cp);
+  }
+
   // 상태 우선순위: 폐업 제보 > 오늘 휴업 제보 > 영업종료(시간) > 세일
   const tag = (text: string, cls: string) => {
     const b = document.createElement("span");

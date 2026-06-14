@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { chargeBilling, isTossConfigured, TossError } from "@/lib/toss";
 import {
-  SUBSCRIPTION_ORDER_NAME,
+  PLAN_ORDER_NAME,
+  asSubPlan,
   MAX_BILLING_FAILURES,
   PAID_PERIOD_DAYS,
   extendPaidDate,
@@ -49,7 +50,7 @@ export async function GET(req: NextRequest) {
         customerKey: sub.customerKey,
         amount: sub.priceKrw,
         orderId,
-        orderName: SUBSCRIPTION_ORDER_NAME,
+        orderName: PLAN_ORDER_NAME[asSubPlan(sub.plan)],
       });
 
       // 연결된 스폰서(가장 최근) 노출 +30일 — 없으면 방어적으로 생성.

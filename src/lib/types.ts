@@ -25,6 +25,8 @@ export type StoreDTO = {
   closedTodayReports: number; // 오늘 '갑자기 휴업' 제보 수
   shutdownReports: number; // 최근 '폐업' 제보 수
   sponsored: boolean; // M1-A: 현재 노출 중인 스폰서(금색 핀 강조)
+  pro: boolean; // M4: 프로 플랜 가게(상위 노출)
+  hasCoupon: boolean; // M3/M4: 현재 받을 수 있는 쿠폰 보유(🎟️ 배지)
 };
 
 /** 지도 상단 광고판(마퀴)용 최신 세일. */
@@ -128,10 +130,11 @@ export type StoreDetailDTO = StoreDTO & {
   canManageMenu: boolean; // 현재 사용자가 메뉴를 추가/수정/삭제할 수 있는지
   canManageStore: boolean; // 현재 사용자가 가게(배너 등)를 관리할 수 있는지 (소유자·관리자)
   bannerUrl: string | null; // 가게 상단 메인 사진
+  galleryUrls: string[]; // M4: 프로 플랜 사진 갤러리(여러 장)
   registeredBy: { nickname: string; img: string | null }; // 최초 등록자
   owner: { nickname: string; img: string | null } | null; // 사장님(소유자)
-  // M2: 이 가게의 활성 스폰서 구독(사장님 패널 진입점용). 없으면 null.
-  sponsorSubscription: { id: string; status: string; nextBillingAt: string } | null;
+  // M2/M4: 이 가게의 활성 구독(사장님 패널 진입점용). 없으면 null. plan = sponsor|pro.
+  sponsorSubscription: { id: string; status: string; plan: string; nextBillingAt: string } | null;
   // M3: 현재 노출 중인 사장님 쿠폰(소비자 받기/사장님 통계).
   coupons: CouponDTO[];
 };

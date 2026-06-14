@@ -42,7 +42,19 @@ function loadSdk(): Promise<void> {
   });
 }
 
-export function SponsorSubscribeButton({ storeId, clientKey }: { storeId: string; clientKey: string }) {
+export function SponsorSubscribeButton({
+  storeId,
+  clientKey,
+  plan = "sponsor",
+  label = "카드 등록하고 14일 무료로 시작",
+  accent = false,
+}: {
+  storeId: string;
+  clientKey: string;
+  plan?: "sponsor" | "pro";
+  label?: string;
+  accent?: boolean;
+}) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -56,9 +68,10 @@ export function SponsorSubscribeButton({ storeId, clientKey }: { storeId: string
       const origin = window.location.origin;
       const tp = window.TossPayments(clientKey);
       const payment = tp.payment({ customerKey });
+      // 토스는 successUrl 의 기존 쿼리를 보존하므로 ?plan= 으로 선택 플랜을 콜백까지 전달.
       await payment.requestBillingAuth({
         method: "CARD",
-        successUrl: `${origin}/stores/${storeId}/sponsor/success`,
+        successUrl: `${origin}/stores/${storeId}/sponsor/success?plan=${plan}`,
         failUrl: `${origin}/stores/${storeId}/sponsor/fail`,
       });
       // 성공 시 토스가 리다이렉트하므로 이 아래는 실행되지 않음.
@@ -76,17 +89,20 @@ export function SponsorSubscribeButton({ storeId, clientKey }: { storeId: string
       setError(code ? `${msg} (${code})` : msg);
       setPending(false);
     }
-  }, [storeId, clientKey]);
+  }, [storeId, clientKey, plan]);
 
   return (
-    <div className="mt-4">
+    <div className="mt-3">
       <button
         type="button"
         onClick={start}
         disabled={pending}
-        className="w-full rounded-xl bg-amber-500 px-4 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-amber-600 disabled:opacity-60"
+        className={[
+          "w-full rounded-xl px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-colors disabled:opacity-60",
+          accent ? "bg-indigo-600 hover:bg-indigo-700" : "bg-amber-500 hover:bg-amber-600",
+        ].join(" ")}
       >
-        {pending ? "진행 중…" : "카드 등록하고 14일 무료로 시작"}
+        {pending ? "진행 중…" : label}
       </button>
       {error && <p className="mt-2 text-center text-xs text-red-500">{error}</p>}
     </div>

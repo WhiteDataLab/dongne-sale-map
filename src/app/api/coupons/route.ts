@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 import { canManageStore } from "@/lib/menu";
 import { liveCouponFilter, COUPON_TITLE_MAX, COUPON_TEXT_MAX, COUPON_MAX_DAYS } from "@/lib/coupons";
+import { isStorePro, FREE_COUPON_ACTIVE_LIMIT, PRO_COUPON_ACTIVE_LIMIT } from "@/lib/pro";
 
 /**
  * M3(수익화) — 사장님 쿠폰 발행.
@@ -11,7 +12,6 @@ import { liveCouponFilter, COUPON_TITLE_MAX, COUPON_TEXT_MAX, COUPON_MAX_DAYS } 
 export const runtime = "nodejs";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const MAX_ACTIVE_PER_STORE = 20; // 한 가게 동시 활성 쿠폰 상한(스팸 방지)
 
 type Body = {
   storeId?: string;
@@ -75,10 +75,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "사장님·관리자만 쿠폰을 발행할 수 있어요." }, { status: 403 });
     }
 
+    // M4: 프로 플랜은 사실상 무제한, 일반은 20개 상한.
+    const limit = (await isStorePro(storeId, now)) ? PRO_COUPON_ACTIVE_LIMIT : FREE_COUPON_ACTIVE_LIMIT;
     const activeCount = await prisma.coupon.count({ where: { ...liveCouponFilter(now), storeId } });
-    if (activeCount >= MAX_ACTIVE_PER_STORE) {
+    if (activeCount >= limit) {
       return NextResponse.json(
-        { error: `진행 중인 쿠폰이 너무 많아요. (최대 ${MAX_ACTIVE_PER_STORE}개)` },
+        { error: `진행 중인 쿠폰이 너무 많아요. (최대 ${limit}개)` },
         { status: 409 },
       );
     }

@@ -160,7 +160,7 @@ export default async function AdminSponsors({
                       )}
                       {s.subscriptionId && (
                         <span className="rounded bg-indigo-100 px-1.5 py-0.5 text-[11px] font-medium text-indigo-700">
-                          💳 자동결제{s.subStatus ? ` · ${s.subStatus}` : ""}
+                          💳 {s.subPlan === "pro" ? "프로" : "스폰서"} 자동결제{s.subStatus ? ` · ${s.subStatus}` : ""}
                         </span>
                       )}
                     </div>

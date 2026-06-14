@@ -7,6 +7,7 @@ import { canManageMenu, canManageStore } from "@/lib/menu";
 import { asStoreHours, isOpenNow, openStatusNow, kstTodayStart } from "@/lib/businessHours";
 import { liveSponsorFilter, getActiveSubscriptionForStore } from "@/lib/sponsors";
 import { getStoreCoupons } from "@/lib/coupons";
+import { isStorePro, PRO_GALLERY_MAX } from "@/lib/pro";
 import type { Category } from "@/lib/constants";
 import type { StoreDetailDTO, StoreSource, PriceTrend } from "@/lib/types";
 
@@ -53,7 +54,11 @@ export async function GET(
           orderBy: { createdAt: "desc" },
           take: 20,
         },
-        sponsorships: { where: liveSponsorFilter(now), select: { id: true }, take: 1 }, // M1-A
+        sponsorships: {
+          where: liveSponsorFilter(now),
+          select: { id: true, subscription: { select: { plan: true } } },
+          take: 1,
+        }, // M1-A 노출 + M4 프로 판정
       },
     });
 
@@ -166,10 +171,13 @@ export async function GET(
       canManageMenu: canManageMenu(store, user),
       canManageStore: canManage,
       sponsorSubscription: sub
-        ? { id: sub.id, status: sub.status, nextBillingAt: sub.nextBillingAt.toISOString() }
+        ? { id: sub.id, status: sub.status, plan: sub.plan, nextBillingAt: sub.nextBillingAt.toISOString() }
         : null,
+      pro: store.sponsorships[0]?.subscription?.plan === "pro",
+      hasCoupon: coupons.length > 0,
       coupons,
       bannerUrl: store.bannerUrl,
+      galleryUrls: store.galleryUrls,
       registeredBy: {
         nickname: store.createdBy.nickname,
         img: store.createdBy.profileImgUrl,
@@ -244,6 +252,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
 
   let body: {
     bannerUrl?: string | null;
+    galleryUrls?: string[];
     notice?: string | null;
     description?: string | null;
     address?: string;
@@ -276,6 +285,22 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
       }
       data.bannerUrl = b ?? null;
     }
+    if ("galleryUrls" in body) {
+      // M4: 프로 플랜(또는 관리자)만 사진 갤러리 설정 가능.
+      const allowed = user.role === "admin" || (await isStorePro(id));
+      if (!allowed) {
+        return NextResponse.json(
+          { error: "프로 플랜에서 사진 갤러리를 사용할 수 있어요." },
+          { status: 403 },
+        );
+      }
+      const urls = Array.isArray(body.galleryUrls)
+        ? body.galleryUrls
+            .filter((u) => typeof u === "string" && isPublicStorageUrl(u))
+            .slice(0, PRO_GALLERY_MAX)
+        : [];
+      data.galleryUrls = urls;
+    }
     if ("notice" in body) {
       const n = typeof body.notice === "string" ? body.notice.trim().slice(0, 2000) : "";
       data.notice = n || null; // 빈 문자열 = 삭제
@@ -302,6 +327,13 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     // 배너가 바뀌었으면 이전 배너 이미지 정리(용량 절약)
     if ("bannerUrl" in body && store.bannerUrl && store.bannerUrl !== (body.bannerUrl ?? null)) {
       await deletePublicImage(store.bannerUrl);
+    }
+    // 갤러리에서 빠진 이미지 정리.
+    if ("galleryUrls" in body && Array.isArray(data.galleryUrls)) {
+      const kept = new Set(data.galleryUrls as string[]);
+      for (const old of store.galleryUrls) {
+        if (!kept.has(old)) await deletePublicImage(old);
+      }
     }
     return NextResponse.json({ ok: true });
   } catch {

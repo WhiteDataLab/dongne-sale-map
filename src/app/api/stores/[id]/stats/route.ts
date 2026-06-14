@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 import { canManageStore } from "@/lib/menu";
 import { kstDayString } from "@/lib/events";
+import { isStorePro } from "@/lib/pro";
 
 /**
  * M0(수익화) — 사장님 노출 리포트.
@@ -39,14 +40,18 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 
+  // M4: 프로 플랜이면 30·90일 추이 + 요일별 분석까지 확장 제공.
+  const pro = await isStorePro(id);
+  const DAY = 24 * 60 * 60 * 1000;
+  const span = pro ? 90 : 7;
   const today = kstDayString();
-  const days: string[] = [];
-  for (let i = 0; i < 7; i++) {
-    days.push(kstDayString(new Date(Date.now() - i * 24 * 60 * 60 * 1000)));
-  }
+  const dayList: string[] = [];
+  for (let i = 0; i < span; i++) dayList.push(kstDayString(new Date(Date.now() - i * DAY)));
+  const last7Set = new Set(dayList.slice(0, 7));
+  const last30Set = new Set(dayList.slice(0, 30));
 
   const rows = await prisma.storeStatDaily.findMany({
-    where: { storeId: id, day: { in: days } },
+    where: { storeId: id, day: { in: dayList } },
   });
 
   const add = (acc: Totals, r: (typeof rows)[number]): Totals => ({
@@ -58,9 +63,34 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
     intentVisits: acc.intentVisits + r.intentVisits,
   });
 
-  const last7 = rows.reduce(add, { ...ZERO });
+  const last7 = rows.filter((r) => last7Set.has(r.day)).reduce(add, { ...ZERO });
   const todayRow = rows.find((r) => r.day === today);
   const todayTotals = todayRow ? add({ ...ZERO }, todayRow) : { ...ZERO };
 
-  return NextResponse.json({ today: todayTotals, last7 });
+  if (!pro) {
+    return NextResponse.json({ today: todayTotals, last7, pro: false });
+  }
+
+  // 프로 확장: 30/90일 합계 + 최근 30일 일별 추이 + 요일별(노출/상세) 분석.
+  const last30 = rows.filter((r) => last30Set.has(r.day)).reduce(add, { ...ZERO });
+  const last90 = rows.reduce(add, { ...ZERO });
+
+  const byDay = new Map(rows.map((r) => [r.day, r]));
+  const daily = dayList
+    .slice(0, 30)
+    .reverse()
+    .map((day) => {
+      const r = byDay.get(day);
+      return { day, impressions: r?.impressions ?? 0, detailOpens: r?.detailOpens ?? 0 };
+    });
+
+  // 요일별(0=일~6=토) 노출/상세 합계 — KST 기준.
+  const weekday = Array.from({ length: 7 }, () => ({ impressions: 0, detailOpens: 0 }));
+  for (const r of rows) {
+    const dow = new Date(`${r.day}T00:00:00+09:00`).getDay();
+    weekday[dow].impressions += r.impressions;
+    weekday[dow].detailOpens += r.detailOpens;
+  }
+
+  return NextResponse.json({ today: todayTotals, last7, pro: true, last30, last90, daily, weekday });
 }

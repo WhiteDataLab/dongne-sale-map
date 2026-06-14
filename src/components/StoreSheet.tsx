@@ -22,10 +22,15 @@ import { GpsIcon } from "./GpsIcon";
 import { track } from "@/lib/track";
 import type { StoreDetailDTO } from "@/lib/types";
 
-/** 사장님 노출 리포트(M0) — 오늘/최근7일 집계. */
+/** 사장님 노출 리포트(M0) — 오늘/최근7일. M4 프로면 30·90일·요일별 확장. */
 type StoreStats = {
   today: Record<string, number>;
   last7: Record<string, number>;
+  pro?: boolean;
+  last30?: Record<string, number>;
+  last90?: Record<string, number>;
+  daily?: { day: string; impressions: number; detailOpens: number }[];
+  weekday?: { impressions: number; detailOpens: number }[];
 };
 import { SaleReportForm } from "./SaleReportForm";
 import { ClosureReportForm } from "./ClosureReportForm";
@@ -327,6 +332,7 @@ export function StoreSheet({
                   }}
                 />
             </div>
+            <GalleryStrip detail={detail} storeId={detail.id} onToast={onToast} refresh={refresh} />
             <div className="flex items-start gap-3">
               <span className="text-2xl" aria-hidden>
                 {meta?.icon}
@@ -496,6 +502,9 @@ export function StoreSheet({
                 ))}
               </div>
               <p className="mt-1.5 text-[10px] text-gray-400">오늘(큰 숫자) · 최근 7일 합계</p>
+              {stats.pro && stats.last30 && stats.last90 && (
+                <ProStats stats={stats} />
+              )}
             </div>
           )}
           {/* M2: 스폰서 구독 진입점 — owner/admin 전용 */}
@@ -504,7 +513,9 @@ export function StoreSheet({
               {detail.sponsorSubscription ? (
                 <div className="flex items-center justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="text-xs font-semibold text-amber-800">👑 스폰서 구독중</p>
+                    <p className="text-xs font-semibold text-amber-800">
+                      👑 {detail.sponsorSubscription.plan === "pro" ? "프로" : "스폰서"} 구독중
+                    </p>
                     <p className="mt-0.5 text-[11px] text-gray-500">
                       {detail.sponsorSubscription.status === "trialing"
                         ? "무료체험 중 · "
@@ -537,10 +548,10 @@ export function StoreSheet({
                 <Link href={`/stores/${detail.id}/sponsor`} className="flex items-center justify-between gap-2">
                   <div className="min-w-0">
                     <p className="text-xs font-semibold text-amber-800">👑 우리 가게 홍보하기</p>
-                    <p className="mt-0.5 text-[11px] text-gray-500">마퀴 상단 고정 + 금색 핀 · 14일 무료체험</p>
+                    <p className="mt-0.5 text-[11px] text-gray-500">스폰서·프로 플랜 · 14일 무료체험</p>
                   </div>
                   <span className="shrink-0 rounded-lg bg-amber-500 px-2.5 py-1 text-[11px] font-semibold text-white">
-                    스폰서 시작 →
+                    구독 시작 →
                   </span>
                 </Link>
               )}
@@ -686,6 +697,176 @@ function ClosureBanner({
       >
         🚪 휴업/폐업 제보하기
       </button>
+    </div>
+  );
+}
+
+const GALLERY_MAX = 8;
+
+/** M4 프로 사진 갤러리 — 누구나 썸네일 열람, 관리는 프로 사장님/관리자(서버 403 가드). */
+function GalleryStrip({
+  detail,
+  storeId,
+  onToast,
+  refresh,
+}: {
+  detail: StoreDetailDTO;
+  storeId: string;
+  onToast: (msg: string) => void;
+  refresh: () => void;
+}) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  const gallery = detail.galleryUrls ?? [];
+  const canManage = detail.canManageStore;
+
+  const patchGallery = async (urls: string[]): Promise<boolean> => {
+    const res = await fetch(`/api/stores/${storeId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ galleryUrls: urls }),
+    });
+    if (res.ok) {
+      refresh();
+      return true;
+    }
+    const d = (await res.json().catch(() => ({}))) as { error?: string };
+    onToast(d.error || "변경에 실패했어요.");
+    return false;
+  };
+
+  const addPhoto = async (file: File) => {
+    setBusy(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const up = await fetch("/api/upload", { method: "POST", body: fd });
+      if (!up.ok) {
+        onToast(up.status === 401 ? "로그인이 필요해요." : "사진 업로드 실패");
+        return;
+      }
+      const { url } = (await up.json()) as { url: string };
+      if (await patchGallery([...gallery, url].slice(0, GALLERY_MAX))) onToast("사진을 추가했어요.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const removePhoto = async (url: string) => {
+    if (await patchGallery(gallery.filter((u) => u !== url))) onToast("사진을 삭제했어요.");
+  };
+
+  if (gallery.length === 0 && !canManage) return null;
+
+  return (
+    <div className="-mx-4 mb-2 px-4">
+      {gallery.length > 0 && (
+        <div className="flex gap-1.5 overflow-x-auto pb-1">
+          {gallery.map((url) => (
+            <div key={url} className="relative shrink-0">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={url} alt="" className="h-20 w-20 rounded-lg object-cover" />
+              {canManage && (
+                <button
+                  type="button"
+                  onClick={() => removePhoto(url)}
+                  className="absolute right-0.5 top-0.5 rounded-full bg-black/60 px-1 text-[10px] leading-tight text-white"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+      {canManage &&
+        (detail.pro ? (
+          gallery.length < GALLERY_MAX && (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => fileRef.current?.click()}
+              className="mt-1 rounded-lg border border-dashed border-indigo-300 px-3 py-1 text-xs font-medium text-indigo-600 disabled:opacity-50"
+            >
+              {busy ? "업로드 중…" : `＋ 갤러리 사진 추가 (프로 · ${gallery.length}/${GALLERY_MAX})`}
+            </button>
+          )
+        ) : (
+          <Link
+            href={`/stores/${storeId}/sponsor`}
+            className="mt-1 inline-block rounded-lg border border-dashed border-gray-300 px-3 py-1 text-xs text-gray-400"
+          >
+            🖼️ 프로 플랜에서 사진 갤러리를 추가할 수 있어요 →
+          </Link>
+        ))}
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) addPhoto(f);
+          e.target.value = "";
+        }}
+      />
+    </div>
+  );
+}
+
+const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
+
+/** M4 프로 확장 분석: 30·90일 합계 + 30일 일별 노출 추이 + 요일별 노출. */
+function ProStats({ stats }: { stats: StoreStats }) {
+  const l30 = stats.last30 ?? {};
+  const l90 = stats.last90 ?? {};
+  const daily = stats.daily ?? [];
+  const weekday = stats.weekday ?? [];
+  const maxDaily = Math.max(1, ...daily.map((d) => d.impressions));
+  const maxWd = Math.max(1, ...weekday.map((w) => w.impressions));
+  return (
+    <div className="mt-2 border-t border-blue-100 pt-2">
+      <p className="text-[11px] font-semibold text-indigo-600">⭐ 프로 확장 분석</p>
+      <div className="mt-1 grid grid-cols-2 gap-1.5">
+        <div className="rounded-lg bg-white px-2 py-1.5">
+          <p className="text-[10px] text-gray-400">최근 30일</p>
+          <p className="text-xs font-bold text-gray-800">
+            노출 {l30.impressions ?? 0} · 상세 {l30.detailOpens ?? 0}
+          </p>
+        </div>
+        <div className="rounded-lg bg-white px-2 py-1.5">
+          <p className="text-[10px] text-gray-400">최근 90일</p>
+          <p className="text-xs font-bold text-gray-800">
+            노출 {l90.impressions ?? 0} · 상세 {l90.detailOpens ?? 0}
+          </p>
+        </div>
+      </div>
+
+      <p className="mt-2 text-[10px] text-gray-400">최근 30일 노출 추이</p>
+      <div className="mt-1 flex h-12 items-end gap-px">
+        {daily.map((d) => (
+          <div
+            key={d.day}
+            className="flex-1 rounded-sm bg-indigo-400"
+            style={{ height: `${Math.max(2, (d.impressions / maxDaily) * 100)}%` }}
+            title={`${d.day}: 노출 ${d.impressions}`}
+          />
+        ))}
+      </div>
+
+      <p className="mt-2 text-[10px] text-gray-400">요일별 노출</p>
+      <div className="mt-1 flex items-end gap-1">
+        {weekday.map((w, i) => (
+          <div key={i} className="flex flex-1 flex-col items-center gap-0.5">
+            <div
+              className="w-full rounded-sm bg-indigo-300"
+              style={{ height: `${Math.max(2, (w.impressions / maxWd) * 40)}px` }}
+              title={`${WEEKDAY_LABELS[i]}: ${w.impressions}`}
+            />
+            <span className="text-[9px] text-gray-400">{WEEKDAY_LABELS[i]}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
