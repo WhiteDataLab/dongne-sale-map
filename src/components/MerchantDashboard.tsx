@@ -354,6 +354,25 @@ function SubscriptionPanel({
     }
   };
 
+  const changePlan = async (target: "sponsor" | "pro") => {
+    if (!sub) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/subscriptions/${sub.id}/plan`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan: target }),
+      });
+      if (!res.ok) throw new Error();
+      onToast(target === "pro" ? "프로로 업그레이드했어요! 🎉" : "스폰서 플랜으로 변경했어요.");
+      refresh();
+    } catch {
+      onToast("변경에 실패했어요.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   if (!sub) {
     return (
       <div>
@@ -389,14 +408,43 @@ function SubscriptionPanel({
           <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-amber-700">{statusLabel}</span>
         </div>
         <p className="mt-1 text-xs text-gray-500">
-          다음 결제 예정일 {new Date(sub.nextBillingAt).toLocaleDateString("ko-KR")}
+          다음 결제 예정일 {new Date(sub.nextBillingAt).toLocaleDateString("ko-KR")} ·{" "}
+          {(sub.plan === "pro" ? 49800 : 29800).toLocaleString("ko-KR")}원/월
         </p>
+
         {sub.plan !== "pro" && (
-          <p className="mt-1 text-[11px] text-gray-400">
-            프로 전환을 원하면 현재 구독 해지 후 프로로 다시 시작해 주세요.
-          </p>
+          <div className="mt-3 rounded-lg border border-indigo-200 bg-white p-3">
+            <p className="text-xs font-semibold text-indigo-700">⭐ 프로로 업그레이드</p>
+            <p className="mt-0.5 text-[11px] text-gray-500">
+              확장통계 · 무제한쿠폰 · 사진갤러리 · 상위노출이 <b>지금 바로</b> 켜져요. 추가 청구 없이 다음 결제부터
+              49,800원으로 적용돼요.
+            </p>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => changePlan("pro")}
+              className="mt-2 w-full rounded-lg bg-indigo-600 px-3 py-2 text-xs font-bold text-white hover:bg-indigo-700 disabled:opacity-50"
+            >
+              {busy ? "처리 중…" : "프로로 업그레이드 (49,800원/월)"}
+            </button>
+          </div>
         )}
-        <div className="mt-3 flex gap-2">
+
+        <div className="mt-3 flex items-center gap-2">
+          {sub.plan === "pro" && (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => {
+                if (window.confirm("스폰서 플랜으로 변경할까요? 프로 혜택(확장통계·무제한쿠폰·갤러리·상위노출)이 해제돼요.")) {
+                  changePlan("sponsor");
+                }
+              }}
+              className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100 disabled:opacity-50"
+            >
+              스폰서로 변경
+            </button>
+          )}
           <button
             type="button"
             disabled={busy}
