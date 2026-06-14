@@ -57,9 +57,17 @@ export function SponsorSubscribeButton({ storeId, clientKey }: { storeId: string
       });
       // 성공 시 토스가 리다이렉트하므로 이 아래는 실행되지 않음.
     } catch (e) {
-      // 사용자가 인증창을 닫으면 reject 됨 — 조용히 복귀.
-      const msg = e instanceof Error ? e.message : "결제 진행 중 오류가 발생했어요.";
-      setError(msg);
+      // 토스 SDK 는 { code, message } 로 거절한다(Error 인스턴스가 아닐 수 있음).
+      const err = e as { code?: string; message?: string };
+      const code = err?.code;
+      // 사용자가 인증창을 닫음 → 에러 아님, 조용히 복귀.
+      if (code === "USER_CANCEL" || code === "PAY_PROCESS_CANCELED") {
+        setPending(false);
+        return;
+      }
+      console.error("[toss requestBillingAuth]", e);
+      const msg = err?.message || "결제 진행 중 오류가 발생했어요.";
+      setError(code ? `${msg} (${code})` : msg);
       setPending(false);
     }
   }, [storeId, clientKey]);
