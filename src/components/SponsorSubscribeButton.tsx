@@ -3,22 +3,27 @@
 import { useCallback, useState } from "react";
 
 /**
- * M2 — 토스 빌링키 카드 등록 버튼.
- * SDK(js.tosspayments.com)를 동적 로드 → requestBillingAuth('카드') 로 카드 인증창 호출.
+ * M2 — 토스 빌링키 카드 등록 버튼 (v2 SDK).
+ * SDK(js.tosspayments.com/v2/standard)를 동적 로드 →
+ * tossPayments.payment({customerKey}).requestBillingAuth({method:"CARD", ...}) 로 카드 인증창 호출.
  * 성공 시 토스가 successUrl(/stores/[id]/sponsor/success)로 authKey·customerKey 를 붙여 리다이렉트한다.
+ * (v1 방식 requestBillingAuth("카드", …)는 2024-06-01 키에서 REQUEST_ERROR → v2 방식으로 변경.)
  */
 declare global {
   interface Window {
     TossPayments?: (clientKey: string) => {
-      requestBillingAuth: (
-        method: string,
-        opts: { customerKey: string; successUrl: string; failUrl: string },
-      ) => Promise<void>;
+      payment: (opts: { customerKey: string }) => {
+        requestBillingAuth: (opts: {
+          method: string;
+          successUrl: string;
+          failUrl: string;
+        }) => Promise<void>;
+      };
     };
   }
 }
 
-const SDK_SRC = "https://js.tosspayments.com/v1/payment";
+const SDK_SRC = "https://js.tosspayments.com/v2/standard";
 
 function loadSdk(): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -50,8 +55,9 @@ export function SponsorSubscribeButton({ storeId, clientKey }: { storeId: string
       const customerKey = `dsm_${crypto.randomUUID()}`;
       const origin = window.location.origin;
       const tp = window.TossPayments(clientKey);
-      await tp.requestBillingAuth("카드", {
-        customerKey,
+      const payment = tp.payment({ customerKey });
+      await payment.requestBillingAuth({
+        method: "CARD",
         successUrl: `${origin}/stores/${storeId}/sponsor/success`,
         failUrl: `${origin}/stores/${storeId}/sponsor/fail`,
       });

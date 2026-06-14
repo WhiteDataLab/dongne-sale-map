@@ -12,7 +12,7 @@ const csp = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
-  "connect-src 'self' https://*.kakao.com https://*.daumcdn.net https://*.daum.net https://*.supabase.co https://api.tosspayments.com",
+  "connect-src 'self' https://*.kakao.com https://*.daumcdn.net https://*.daum.net https://*.supabase.co https://*.tosspayments.com",
   "frame-src 'self' https://*.kakao.com https://*.daum.net https://*.tosspayments.com",
   "worker-src 'self' blob:",
   "object-src 'none'",
