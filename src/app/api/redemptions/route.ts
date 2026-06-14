@@ -58,6 +58,9 @@ export async function POST(req: NextRequest) {
             itemName: `${item.brand} ${item.name}`,
             points: item.points,
             contact: user.contactPhone!,
+            // M5: 정산용 스냅샷(교환 시점의 원가·제휴사).
+            costKrw: item.costKrw,
+            partner: item.partner,
           },
         });
         await tx.pointLog.create({

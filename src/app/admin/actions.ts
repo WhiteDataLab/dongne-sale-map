@@ -199,6 +199,24 @@ export async function cancelRedemption(formData: FormData) {
   revalidatePath("/admin/redemptions");
 }
 
+/** M5: 제휴사 정산 완료 처리(원가 실지출 확정). 발송 완료 건만 의미. */
+export async function settleRedemption(formData: FormData) {
+  await ensureAdmin();
+  const id = String(formData.get("id"));
+  await prisma.redemption.update({ where: { id }, data: { settledAt: new Date() } });
+  revalidatePath("/admin/settlements");
+  revalidatePath("/admin/redemptions");
+}
+
+/** M5: 정산 완료 취소(미정산으로 되돌림). */
+export async function unsettleRedemption(formData: FormData) {
+  await ensureAdmin();
+  const id = String(formData.get("id"));
+  await prisma.redemption.update({ where: { id }, data: { settledAt: null } });
+  revalidatePath("/admin/settlements");
+  revalidatePath("/admin/redemptions");
+}
+
 /** 고객센터 문의 답변 등록 → 상태 answered. */
 export async function answerInquiry(formData: FormData) {
   await ensureAdmin();

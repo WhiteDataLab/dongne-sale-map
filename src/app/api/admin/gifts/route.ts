@@ -6,6 +6,11 @@ import { isPublicStorageUrl } from "@/lib/supabaseStorage";
 /** 기프티콘 상품 추가 — 관리자 전용. */
 export const runtime = "nodejs";
 
+/** 정산 금액 필드 정규화: 유효한 0 이상 정수만, 아니면 null. */
+function intOrNull(v: number | null | undefined): number | null {
+  return typeof v === "number" && Number.isInteger(v) && v >= 0 ? v : null;
+}
+
 export async function POST(req: NextRequest) {
   if (!(await getAdminSession())) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
@@ -18,6 +23,9 @@ export async function POST(req: NextRequest) {
     emoji?: string;
     color?: string;
     sortOrder?: number;
+    costKrw?: number | null;
+    faceValueKrw?: number | null;
+    partner?: string | null;
   };
   try {
     b = await req.json();
@@ -42,6 +50,9 @@ export async function POST(req: NextRequest) {
       emoji: b.emoji?.trim() || "🎁",
       color: b.color?.trim() || "#2563eb",
       sortOrder: typeof b.sortOrder === "number" ? b.sortOrder : 100,
+      costKrw: intOrNull(b.costKrw),
+      faceValueKrw: intOrNull(b.faceValueKrw),
+      partner: b.partner?.trim() || null,
     },
   });
   return NextResponse.json({ ok: true, id: item.id });

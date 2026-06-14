@@ -84,6 +84,7 @@ export default async function AdminLayout({
               links={[
                 ["/admin/redemptions", "기프티콘 교환"],
                 ["/admin/gifts", "기프티콘 상품"],
+                ["/admin/settlements", "제휴 정산"],
               ]}
             />
             <AdminGroup

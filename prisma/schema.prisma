@@ -275,6 +275,10 @@ model GiftItem {
   color     String   @default("#2563eb")
   active    Boolean  @default(true) // 비활성화하면 포인트샵에 안 보임
   sortOrder Int      @default(0)
+  // M5(수익화): 제휴 커머스 정산용. costKrw=제휴사 매입 원가(실지출), faceValueKrw=액면가, partner=공급처.
+  costKrw      Int? // 제휴사 매입 원가(실 변동비)
+  faceValueKrw Int? // 액면가(소비자 정가) — 마진 = faceValue - cost
+  partner      String? // 제휴사/공급처명
   createdAt DateTime @default(now())
 
   @@index([active, sortOrder])
@@ -486,6 +490,10 @@ model Redemption {
   contact   String // 수령 연락처 스냅샷
   status    RedemptionStatus @default(requested)
   note      String?
+  // M5(수익화): 교환 시점 스냅샷 — 정산/마진 집계용. settledAt=제휴사 정산 완료 시각.
+  costKrw   Int? // 교환 시점 매입 원가 스냅샷(실지출)
+  partner   String? // 제휴사 스냅샷
+  settledAt DateTime? // 제휴사 정산 완료 시각(null=미정산)
   createdAt DateTime         @default(now())
   sentAt    DateTime?
 

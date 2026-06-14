@@ -13,6 +13,9 @@ type Gift = {
   color: string;
   active: boolean;
   sortOrder: number;
+  costKrw: number | null; // M5: 제휴 매입 원가
+  faceValueKrw: number | null; // M5: 액면가
+  partner: string | null; // M5: 제휴사
 };
 
 const inputCls = "w-full rounded-lg border border-gray-300 px-2.5 py-1.5 text-sm outline-none focus:border-blue-500";
@@ -36,6 +39,9 @@ function GiftRow({ item }: { item: Gift }) {
   const [imageUrl, setImageUrl] = useState<string | null>(item.imageUrl);
   const [active, setActive] = useState(item.active);
   const [sortOrder, setSortOrder] = useState(String(item.sortOrder));
+  const [costKrw, setCostKrw] = useState(item.costKrw != null ? String(item.costKrw) : "");
+  const [faceValueKrw, setFaceValueKrw] = useState(item.faceValueKrw != null ? String(item.faceValueKrw) : "");
+  const [partner, setPartner] = useState(item.partner ?? "");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -54,6 +60,9 @@ function GiftRow({ item }: { item: Gift }) {
         imageUrl,
         active,
         sortOrder: Number(sortOrder),
+        costKrw: costKrw.trim() ? Number(costKrw) : null,
+        faceValueKrw: faceValueKrw.trim() ? Number(faceValueKrw) : null,
+        partner: partner.trim() || null,
       }),
     });
     setBusy(false);
@@ -101,6 +110,12 @@ function GiftRow({ item }: { item: Gift }) {
             <input value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} inputMode="numeric" placeholder="순서" className={inputCls} />
           </div>
         </div>
+      </div>
+      {/* M5: 제휴 정산 필드 — 원가/액면가/제휴사 */}
+      <div className="mt-1.5 grid grid-cols-3 gap-1.5">
+        <input value={costKrw} onChange={(e) => setCostKrw(e.target.value)} inputMode="numeric" placeholder="원가(매입)" className={inputCls} />
+        <input value={faceValueKrw} onChange={(e) => setFaceValueKrw(e.target.value)} inputMode="numeric" placeholder="액면가" className={inputCls} />
+        <input value={partner} onChange={(e) => setPartner(e.target.value)} placeholder="제휴사" className={inputCls} />
       </div>
       <input
         ref={ref}

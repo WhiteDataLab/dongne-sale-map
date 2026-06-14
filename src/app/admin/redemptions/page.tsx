@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { markRedemptionSent, cancelRedemption } from "../actions";
+import { markRedemptionSent, cancelRedemption, settleRedemption, unsettleRedemption } from "../actions";
 
 /** 기프티콘 교환 관리 (관리자): 신청 목록 → 등록 연락처로 발송 후 완료 처리 / 취소(환원). */
 export const dynamic = "force-dynamic";
@@ -17,6 +17,9 @@ export default async function AdminRedemptions() {
     points: number;
     contact: string;
     status: string;
+    costKrw: number | null;
+    partner: string | null;
+    settledAt: Date | null;
     createdAt: Date;
     user: { nickname: string };
   }[] = [];
@@ -31,6 +34,9 @@ export default async function AdminRedemptions() {
         points: true,
         contact: true,
         status: true,
+        costKrw: true,
+        partner: true,
+        settledAt: true,
         createdAt: true,
         user: { select: { nickname: true } },
       },
@@ -70,6 +76,17 @@ export default async function AdminRedemptions() {
                   <p className="text-xs text-gray-400">
                     {new Date(r.createdAt).toLocaleString("ko-KR")} · {r.points.toLocaleString("ko-KR")}P
                   </p>
+                  {(r.partner || r.costKrw != null) && (
+                    <p className="text-[11px] text-gray-400">
+                      {r.partner?.trim() || "제휴사 미지정"}
+                      {r.costKrw != null && ` · 원가 ${r.costKrw.toLocaleString("ko-KR")}원`}
+                      {r.status === "sent" && (
+                        <span className={r.settledAt ? "ml-1 text-emerald-600" : "ml-1 text-rose-500"}>
+                          · {r.settledAt ? "정산완료" : "미정산"}
+                        </span>
+                      )}
+                    </p>
+                  )}
                 </div>
                 <span
                   className={[

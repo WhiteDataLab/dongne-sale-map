@@ -20,6 +20,9 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     color?: string;
     active?: boolean;
     sortOrder?: number;
+    costKrw?: number | null;
+    faceValueKrw?: number | null;
+    partner?: string | null;
   };
   try {
     b = await req.json();
@@ -46,6 +49,13 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   if (b.color !== undefined) data.color = b.color.trim() || "#2563eb";
   if (b.active !== undefined) data.active = Boolean(b.active);
   if (b.sortOrder !== undefined && Number.isInteger(b.sortOrder)) data.sortOrder = b.sortOrder;
+  // M5: 정산 필드(원가/액면가/제휴사). null = 비움.
+  if (b.costKrw !== undefined)
+    data.costKrw = typeof b.costKrw === "number" && Number.isInteger(b.costKrw) && b.costKrw >= 0 ? b.costKrw : null;
+  if (b.faceValueKrw !== undefined)
+    data.faceValueKrw =
+      typeof b.faceValueKrw === "number" && Number.isInteger(b.faceValueKrw) && b.faceValueKrw >= 0 ? b.faceValueKrw : null;
+  if (b.partner !== undefined) data.partner = b.partner?.trim() || null;
 
   try {
     const prev = await prisma.giftItem.findUnique({ where: { id }, select: { imageUrl: true } });
