@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 import { canManageStore } from "@/lib/menu";
 import { liveCouponFilter, COUPON_TITLE_MAX, COUPON_TEXT_MAX, COUPON_MAX_DAYS } from "@/lib/coupons";
-import { isStorePro, FREE_COUPON_ACTIVE_LIMIT, PRO_COUPON_ACTIVE_LIMIT } from "@/lib/pro";
+import { storeTier, couponLimitForTier } from "@/lib/pro";
 
 /**
  * M3(수익화) — 사장님 쿠폰 발행.
@@ -75,8 +75,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "사장님·관리자만 쿠폰을 발행할 수 있어요." }, { status: 403 });
     }
 
-    // M4: 프로 플랜은 사실상 무제한, 일반은 20개 상한.
-    const limit = (await isStorePro(storeId, now)) ? PRO_COUPON_ACTIVE_LIMIT : FREE_COUPON_ACTIVE_LIMIT;
+    // M4/M8: 티어별 활성 쿠폰 상한(무료 20 / 라이트 50 / 프로 200).
+    const limit = couponLimitForTier(await storeTier(storeId));
     const activeCount = await prisma.coupon.count({ where: { ...liveCouponFilter(now), storeId } });
     if (activeCount >= limit) {
       return NextResponse.json(

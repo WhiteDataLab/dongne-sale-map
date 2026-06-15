@@ -108,13 +108,21 @@ export default async function SponsorSuccessPage({
       <p className="mt-2 text-lg font-bold">{PLAN_LABEL[plan]} 플랜 구독이 시작됐어요!</p>
       <p className="mt-1 text-sm text-gray-600">{store.name}</p>
       <p className="mt-3 text-sm text-gray-500">
-        지금부터 <b>{TRIAL_DAYS}일간 무료</b>로 마퀴 상단 고정 + 금색 핀(👑)
-        {plan === "pro" && " + 프로 프리미엄 혜택"}이 노출돼요.
+        {plan === "lite" ? (
+          <>
+            지금부터 <b>{TRIAL_DAYS}일간 무료</b>로 세일 알림 발송·단골 식별·리뷰 답글·공식 배지를 쓸 수 있어요.
+          </>
+        ) : (
+          <>
+            지금부터 <b>{TRIAL_DAYS}일간 무료</b>로 마퀴 상단 고정 + 금색 핀(👑)
+            {plan === "pro" && " + 프로 프리미엄 혜택"}이 노출돼요.
+          </>
+        )}
         <br />무료체험이 끝나면 매월 자동결제됩니다.
       </p>
       <Link
         href="/"
-        className={`mt-5 inline-block rounded-xl px-5 py-2.5 text-sm font-semibold text-white ${plan === "pro" ? "bg-indigo-600" : "bg-amber-500"}`}
+        className={`mt-5 inline-block rounded-xl px-5 py-2.5 text-sm font-semibold text-white ${plan === "pro" ? "bg-indigo-600" : plan === "lite" ? "bg-emerald-600" : "bg-amber-500"}`}
       >
         지도에서 확인하기
       </Link>

@@ -6,7 +6,7 @@ import { ReviewForm } from "./ReviewForm";
 import { DeleteReviewButton } from "./DeleteReviewButton";
 import { ReviewContent } from "./ReviewContent";
 import { ymd, starString } from "@/lib/format";
-import type { ReviewDTO, ReviewProduct } from "@/lib/types";
+import type { ReviewDTO, ReviewProduct, ReviewReplyDTO } from "@/lib/types";
 
 export type MyReview = {
   id: string;
@@ -20,6 +20,7 @@ export type MyReview = {
   receiptVerified: boolean;
   createdAt: string; // ISO
   scored: boolean;
+  reply: ReviewReplyDTO | null; // M8: 사장님 답글(내 리뷰에 달린)
 };
 
 /** 마이페이지: 내 리뷰 1건 (표시 + 인라인 수정 + 삭제). */
@@ -39,6 +40,7 @@ export function MyReviewItem({ review }: { review: MyReview }) {
     createdAt: review.createdAt,
     scored: review.scored,
     isMine: true,
+    reply: review.reply,
   };
 
   if (editing) {
@@ -93,6 +95,12 @@ export function MyReviewItem({ review }: { review: MyReview }) {
               <img src={u} alt="" className="size-full object-cover" />
             </div>
           ))}
+        </div>
+      )}
+      {review.reply && (
+        <div className="mt-2 rounded-lg border border-gray-100 bg-gray-50 p-2">
+          <p className="text-xs font-semibold text-indigo-700">🏪 사장님 답글</p>
+          <p className="mt-0.5 whitespace-pre-wrap text-sm text-gray-700">{review.reply.body}</p>
         </div>
       )}
       <p className="mt-1 text-xs text-gray-400">

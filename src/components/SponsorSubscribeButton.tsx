@@ -51,7 +51,7 @@ export function SponsorSubscribeButton({
 }: {
   storeId: string;
   clientKey: string;
-  plan?: "sponsor" | "pro";
+  plan?: "sponsor" | "lite" | "pro";
   label?: string;
   accent?: boolean;
 }) {

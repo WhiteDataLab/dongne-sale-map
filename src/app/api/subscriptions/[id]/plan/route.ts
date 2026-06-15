@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
-import { asSubPlan, PLAN_PRICE_KRW, PLAN_ORDER_NAME, PAID_PERIOD_DAYS } from "@/lib/sponsors";
+import {
+  asSubPlan,
+  type SubPlan,
+  planHasExposure,
+  regionFromAddress,
+  PLAN_PRICE_KRW,
+  PLAN_ORDER_NAME,
+  PAID_PERIOD_DAYS,
+} from "@/lib/sponsors";
 import { chargeBilling, isTossConfigured, TossError } from "@/lib/toss";
 
 /**
@@ -23,7 +31,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "login_required" }, { status: 401 });
 
-  let plan: "sponsor" | "pro";
+  let plan: SubPlan;
   try {
     plan = asSubPlan(((await req.json()) as { plan?: string }).plan);
   } catch {
@@ -101,11 +109,43 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     }
   }
 
-  await prisma.$transaction([
-    prisma.subscription.update({ where: { id }, data: { plan, priceKrw: newPrice } }),
-    // 연결 스폰서십 plan/가격도 맞춤(관리자 표기·다음 주기 일관성). 노출 기간(endsAt)은 그대로.
-    prisma.sponsorship.updateMany({ where: { subscriptionId: id }, data: { plan, priceKrw: newPrice } }),
-  ]);
+  // M8: 노출(Sponsorship)은 sponsor/pro 만 가진다. 플랜 변경 시 노출도 함께 reconcile.
+  const wantExposure = planHasExposure(plan);
+  const liveSp = await prisma.sponsorship.findFirst({
+    where: { subscriptionId: id, status: { in: ["trial", "active"] }, endsAt: { gt: now } },
+    orderBy: { endsAt: "desc" },
+    select: { id: true, region: true },
+  });
+
+  await prisma.$transaction(async (tx) => {
+    await tx.subscription.update({ where: { id }, data: { plan, priceKrw: newPrice } });
+
+    if (wantExposure) {
+      if (liveSp) {
+        // 이미 노출 중(sponsor↔pro) → plan/가격만 맞춤. 노출 기간(endsAt)은 유지.
+        await tx.sponsorship.update({ where: { id: liveSp.id }, data: { plan, priceKrw: newPrice } });
+      } else {
+        // lite→sponsor/pro 업그레이드: 노출이 없었으므로 현재 결제 주기까지 노출 생성.
+        const store = await tx.store.findUnique({ where: { id: sub.storeId }, select: { address: true } });
+        await tx.sponsorship.create({
+          data: {
+            storeId: sub.storeId,
+            plan,
+            region: store ? regionFromAddress(store.address) : "구독",
+            status: sub.status === "active" ? "active" : "trial",
+            priceKrw: newPrice,
+            trialEndsAt: sub.nextBillingAt,
+            startsAt: now,
+            endsAt: sub.nextBillingAt,
+            subscriptionId: id,
+          },
+        });
+      }
+    } else if (liveSp) {
+      // pro/sponsor→lite 다운그레이드: 노출 즉시 종료(환불 없음, 혜택 즉시 해제 정책과 일관).
+      await tx.sponsorship.update({ where: { id: liveSp.id }, data: { status: "canceled", endsAt: now } });
+    }
+  });
 
   return NextResponse.json({ ok: true, plan });
 }

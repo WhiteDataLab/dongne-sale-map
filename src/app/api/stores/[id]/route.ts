@@ -8,7 +8,7 @@ import { asStoreHours, isOpenNow, openStatusNow, kstTodayStart } from "@/lib/bus
 import { liveSponsorFilter, getActiveSubscriptionForStore } from "@/lib/sponsors";
 import { getStoreCoupons } from "@/lib/coupons";
 import { reservedQtyMap } from "@/lib/reservations";
-import { isStorePro, PRO_GALLERY_MAX } from "@/lib/pro";
+import { isStorePro, storeTier, PRO_GALLERY_MAX } from "@/lib/pro";
 import type { Category } from "@/lib/constants";
 import type { StoreDetailDTO, StoreSource, PriceTrend } from "@/lib/types";
 
@@ -39,6 +39,7 @@ export async function GET(
           where: { hidden: false }, // 자동 숨김된 리뷰 제외 (Phase 4)
           include: {
             user: { select: { nickname: true } },
+            reply: { include: { author: { select: { nickname: true } } } }, // M8: 사장님 답글
           },
           orderBy: { createdAt: "desc" },
         },
@@ -96,6 +97,8 @@ export async function GET(
     const sub = canManage ? await getActiveSubscriptionForStore(id) : null;
     // M3: 현재 노출 중인 쿠폰(+ 로그인 사용자의 보유 상태).
     const coupons = await getStoreCoupons(id, userId, now);
+    // M8: 가게 기능 티어(공식 배지·리뷰 답글 게이팅 표시용).
+    const tier = await storeTier(id);
 
     // M7(L2): 예약 가능 세일의 점유 수량 + 로그인 소비자의 진행중 예약.
     const reservableSaleIds = store.sales.filter((s) => s.reservable).map((s) => s.id);
@@ -189,6 +192,7 @@ export async function GET(
       pro: store.sponsorships[0]?.subscription?.plan === "pro",
       hasCoupon: coupons.length > 0,
       coupons,
+      tier,
       bannerUrl: store.bannerUrl,
       galleryUrls: store.galleryUrls,
       registeredBy: {
@@ -251,6 +255,13 @@ export async function GET(
         createdAt: r.createdAt.toISOString(),
         scored: r.scored,
         isMine: Boolean(userId && r.userId === userId),
+        reply: r.reply
+          ? {
+              body: r.reply.body,
+              authorNickname: r.reply.author.nickname,
+              createdAt: r.reply.createdAt.toISOString(),
+            }
+          : null,
       })),
       closureReports: store.closureReports.map((c) => ({
         id: c.id,

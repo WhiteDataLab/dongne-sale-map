@@ -4,9 +4,11 @@ import { getCurrentUser } from "@/lib/session";
 import { canManageStore } from "@/lib/menu";
 import {
   SPONSOR_PRICE_KRW,
+  LITE_PRICE_KRW,
   PRO_PRICE_KRW,
   TRIAL_DAYS,
   PLAN_LABEL,
+  asSubPlan,
   getActiveSubscriptionForStore,
 } from "@/lib/sponsors";
 import { isTossConfigured, tossClientKey } from "@/lib/toss";
@@ -51,7 +53,7 @@ export default async function SponsorSubscribePage({
       <div className="mt-8 text-center">
         <p className="text-2xl">👑</p>
         <p className="mt-2 font-semibold">
-          이미 {PLAN_LABEL[active.plan === "pro" ? "pro" : "sponsor"]} 플랜 구독 중이에요
+          이미 {PLAN_LABEL[asSubPlan(active.plan)]} 플랜 구독 중이에요
         </p>
         <p className="mt-1 text-sm text-gray-500">
           다음 결제 예정일: {new Date(active.nextBillingAt).toLocaleDateString("ko-KR")}
@@ -70,6 +72,27 @@ export default async function SponsorSubscribePage({
         <h1 className="text-lg font-bold">👑 우리 가게 홍보 구독</h1>
         <p className="mt-1 text-sm text-gray-500">{store.name}</p>
         <p className="mt-1 text-xs text-amber-700">🎁 두 플랜 모두 <b>{TRIAL_DAYS}일 무료체험</b> · 체험 중 해지하면 청구되지 않아요.</p>
+      </div>
+
+      {/* 라이트 플랜 — 관계(알림·단골·답글) 진입 티어 */}
+      <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-4">
+        <div className="flex items-baseline justify-between">
+          <p className="text-sm font-bold text-emerald-800">라이트</p>
+          <p className="text-sm">
+            <b className="text-base">{LITE_PRICE_KRW.toLocaleString("ko-KR")}원</b>
+            <span className="text-gray-400"> / 월</span>
+          </p>
+        </div>
+        <ul className="mt-2 space-y-1 text-sm text-gray-700">
+          <li>· 🔔 <b>세일 알림 발송</b> (즐겨찾기 단골에게)</li>
+          <li>· 🧑‍🤝‍🧑 <b>단골 식별</b> + ⭐ <b>리뷰 답글</b></li>
+          <li>· ✅ <b>공식 배지</b> (소비자 신뢰)</li>
+          <li>· 🎟️ 쿠폰 활성 50개</li>
+        </ul>
+        <p className="mt-1 text-[11px] text-gray-400">※ 지도 노출 부스트(마퀴·금색핀)는 스폰서/프로에 포함돼요.</p>
+        {configured && clientKey ? (
+          <SponsorSubscribeButton storeId={id} clientKey={clientKey} plan="lite" label="라이트로 시작" />
+        ) : null}
       </div>
 
       {/* 스폰서 플랜 */}

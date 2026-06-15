@@ -2,6 +2,7 @@ import type { Category } from "@/lib/constants";
 import type { StoreHours, OpenStatus } from "@/lib/businessHours";
 import type { CouponDTO } from "@/lib/coupons";
 import type { SaleReservationInfo } from "@/lib/reservations";
+import type { StoreTier } from "@/lib/pro";
 
 /** 가게 등록 출처: 소비자(주민) vs 사장님. */
 export type StoreSource = "user" | "merchant";
@@ -91,6 +92,9 @@ export type SaleDTO = {
 /** 리뷰에 연결된 구매 메뉴(상품) 요약. */
 export type ReviewProduct = { id: string; name: string };
 
+/** M8: 사장님 리뷰 답글(소비자에게도 공개 노출). */
+export type ReviewReplyDTO = { body: string; authorNickname: string; createdAt: string };
+
 export type ReviewDTO = {
   id: string;
   rating: number;
@@ -103,6 +107,7 @@ export type ReviewDTO = {
   createdAt: string;
   scored: boolean; // 포인트·별점 반영 여부(같은 날 재작성=false)
   isMine: boolean;
+  reply: ReviewReplyDTO | null; // M8: 사장님 답글(없으면 null)
 };
 
 /** 품목별 세일가 추이(과거 세일 제보에서 파생). 가격 변동 그래프용. */
@@ -139,6 +144,8 @@ export type StoreDetailDTO = StoreDTO & {
   sponsorSubscription: { id: string; status: string; plan: string; nextBillingAt: string } | null;
   // M3: 현재 노출 중인 사장님 쿠폰(소비자 받기/사장님 통계).
   coupons: CouponDTO[];
+  // M8: 가게 기능 티어(free|lite|pro) — 공식 배지·리뷰 답글 게이팅 표시용.
+  tier: StoreTier;
 };
 
 /** 지오코딩 결과 (검색어 → 좌표). */

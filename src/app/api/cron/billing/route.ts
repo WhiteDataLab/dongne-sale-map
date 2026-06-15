@@ -4,6 +4,7 @@ import { chargeBilling, isTossConfigured, TossError } from "@/lib/toss";
 import {
   PLAN_ORDER_NAME,
   asSubPlan,
+  planHasExposure,
   MAX_BILLING_FAILURES,
   PAID_PERIOD_DAYS,
   extendPaidDate,
@@ -53,11 +54,15 @@ export async function GET(req: NextRequest) {
         orderName: PLAN_ORDER_NAME[asSubPlan(sub.plan)],
       });
 
-      // 연결된 스폰서(가장 최근) 노출 +30일 — 없으면 방어적으로 생성.
-      const sponsorship = await prisma.sponsorship.findFirst({
-        where: { subscriptionId: sub.id },
-        orderBy: { endsAt: "desc" },
-      });
+      // M8: lite 는 노출 부스트가 없는 '관계' 플랜 → 스폰서십 생성/연장 안 함.
+      const exposurePlan = planHasExposure(asSubPlan(sub.plan));
+      // 연결된 스폰서(가장 최근) 노출 +30일 — 없으면(노출 플랜만) 방어적으로 생성.
+      const sponsorship = exposurePlan
+        ? await prisma.sponsorship.findFirst({
+            where: { subscriptionId: sub.id },
+            orderBy: { endsAt: "desc" },
+          })
+        : null;
       const nextEnds = extendPaidDate(sponsorship?.endsAt ?? now, now);
 
       await prisma.$transaction(async (tx) => {
@@ -86,7 +91,7 @@ export async function GET(req: NextRequest) {
             where: { id: sponsorship.id },
             data: { status: "active", endsAt: nextEnds },
           });
-        } else {
+        } else if (exposurePlan) {
           await tx.sponsorship.create({
             data: {
               storeId: sub.storeId,

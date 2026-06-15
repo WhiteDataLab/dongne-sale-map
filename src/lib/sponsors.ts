@@ -11,31 +11,50 @@ import { CATEGORY_META, type Category } from "@/lib/constants";
  */
 
 export const SPONSOR_PRICE_KRW = 29_800;
+/** M8: 라이트 플랜 — 세일 알림·단골 식별/리뷰 답글·공식 배지(관계). 노출 부스트는 미포함(스폰서 add-on). */
+export const LITE_PRICE_KRW = 14_900;
 /** M4: 프로 플랜 — 스폰서(마퀴+금색핀) + 프리미엄 혜택 4종 묶음. */
 export const PRO_PRICE_KRW = 49_800;
 export const TRIAL_DAYS = 14;
 export const PAID_PERIOD_DAYS = 30;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-/** 구독 플랜. sponsor=마퀴+금색핀 / pro=스폰서 전체 + 확장통계·무제한쿠폰·사진갤러리·상위노출. */
-export type SubPlan = "sponsor" | "pro";
+/**
+ * 구독 플랜.
+ * - sponsor = 노출 부스트(마퀴 고정 + 금색핀) — 기능(알림/단골)은 없는 add-on.
+ * - lite    = 관계(세일 알림·단골 식별·리뷰 답글·공식 배지). 노출 부스트는 미포함.
+ * - pro     = 라이트 전체 + 노출 부스트 + 확장통계·무제한쿠폰·사진갤러리·상위노출.
+ *
+ * 기능 티어(free|lite|pro) 판정은 lib/pro.ts `storeTier`(구독 기반). 노출(Sponsorship)과는 분리한다.
+ */
+export type SubPlan = "sponsor" | "lite" | "pro";
+
+/** lite 는 노출 부스트(Sponsorship)를 생성하지 않는 '관계' 플랜이다. */
+export function planHasExposure(plan: SubPlan): boolean {
+  return plan !== "lite";
+}
 
 export const PLAN_PRICE_KRW: Record<SubPlan, number> = {
   sponsor: SPONSOR_PRICE_KRW,
+  lite: LITE_PRICE_KRW,
   pro: PRO_PRICE_KRW,
 };
 export const PLAN_LABEL: Record<SubPlan, string> = {
   sponsor: "스폰서",
+  lite: "라이트",
   pro: "프로",
 };
 export function asSubPlan(v: unknown): SubPlan {
-  return v === "pro" ? "pro" : "sponsor";
+  if (v === "pro") return "pro";
+  if (v === "lite") return "lite";
+  return "sponsor";
 }
 
 /** M2: 토스 결제 주문명(고객 카드명세서 표기) + 연속 실패 N회 시 자동 해지. */
 export const SUBSCRIPTION_ORDER_NAME = "동네세일지도 스폰서 광고(월)";
 export const PLAN_ORDER_NAME: Record<SubPlan, string> = {
   sponsor: "동네세일지도 스폰서 광고(월)",
+  lite: "동네세일지도 라이트 플랜(월)",
   pro: "동네세일지도 프로 플랜(월)",
 };
 export const MAX_BILLING_FAILURES = 3;
@@ -198,19 +217,22 @@ export async function createTrialSubscription(opts: {
         nextBillingAt: ends,
       },
     });
-    await tx.sponsorship.create({
-      data: {
-        storeId: opts.storeId,
-        plan, // 운영 표시용(노출은 sponsor/pro 동일, 프리미엄 게이팅은 subscription.plan 기준)
-        region: opts.region,
-        status: "trial",
-        priceKrw: price,
-        trialEndsAt: ends,
-        startsAt: now,
-        endsAt: ends,
-        subscriptionId: sub.id,
-      },
-    });
+    // M8: lite 는 '관계' 플랜이라 노출 부스트(Sponsorship)를 만들지 않는다. sponsor/pro 만 노출 생성.
+    if (planHasExposure(plan)) {
+      await tx.sponsorship.create({
+        data: {
+          storeId: opts.storeId,
+          plan, // 운영 표시용(노출은 sponsor/pro 동일, 프리미엄 게이팅은 subscription.plan 기준)
+          region: opts.region,
+          status: "trial",
+          priceKrw: price,
+          trialEndsAt: ends,
+          startsAt: now,
+          endsAt: ends,
+          subscriptionId: sub.id,
+        },
+      });
+    }
     return sub;
   });
 }

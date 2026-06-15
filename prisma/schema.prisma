@@ -211,6 +211,7 @@ model User {
   couponsCreated Coupon[]      @relation("CouponCreatedBy") // 발행한 쿠폰(사장님/관리자)
   couponClaims   CouponClaim[] // 받은 쿠폰
   reservations   Reservation[] // M7(L2): 내 떨이 픽업 예약
+  reviewReplies  ReviewReply[] @relation("ReviewReplyAuthor") // M8: 내가 단 리뷰 답글(사장님)
 }
 
 // 로그인 수단(소셜/전화) ↔ User 연결. 계정 연결(account linking)의 핵심 (Phase 5).
@@ -379,6 +380,7 @@ model Store {
   payments              Payment[]
   coupons               Coupon[]
   reservations          Reservation[]
+  reviewReplies         ReviewReply[]
 
   @@index([ownerId])
 
@@ -483,9 +485,29 @@ model Review {
 
   store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reply ReviewReply? // M8: 사장님(소유자/관리자) 답글 — 리뷰당 1개
 
   @@index([storeId])
   @@index([userId])
+}
+
+// M8(수익화): 사장님 리뷰 답글. 라이트+ 플랜의 '관계' 기능 — 인증 사장님(소유자)·관리자가
+// 본인 가게 리뷰에 1:1 답글을 단다. 소비자에게도 공개 노출. 발행/수정/삭제는 canManageStore.
+model ReviewReply {
+  id        String   @id @default(cuid())
+  reviewId  String   @unique // 리뷰당 답글 1개
+  storeId   String
+  authorId  String // 답글 작성자(소유자/관리자)
+  body      String
+  hidden    Boolean  @default(false) // 신고 누적 시 soft hide(후속)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  store  Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  author User   @relation("ReviewReplyAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([storeId])
 }
 
 model Favorite {

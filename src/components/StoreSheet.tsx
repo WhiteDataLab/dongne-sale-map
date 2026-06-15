@@ -37,6 +37,7 @@ import { ClosureReportForm } from "./ClosureReportForm";
 import { ReviewForm } from "./ReviewForm";
 import { ReportButton } from "./ReportButton";
 import { ReviewContent } from "./ReviewContent";
+import { ReviewReplyBox } from "./ReviewReplyBox";
 import { PriceChart } from "./PriceChart";
 import { MerchantApply } from "./MerchantApply";
 import { ProductForm } from "./ProductForm";
@@ -345,6 +346,16 @@ export function StoreSheet({
                       인증중
                     </span>
                   )}
+                  {/* M8: 공식 배지 — 라이트(기본)/프로(프리미엄) 구독 가게 */}
+                  {detail.tier === "pro" ? (
+                    <span className="shrink-0 rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-semibold text-indigo-700">
+                      ✅ 공식 프로
+                    </span>
+                  ) : detail.tier === "lite" ? (
+                    <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                      ✅ 공식
+                    </span>
+                  ) : null}
                 </div>
                 <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
                   <OpenBadge status={detail.openStatus} />
@@ -1693,6 +1704,15 @@ function ReviewsTab({
                   />
                 </div>
               </div>
+              <ReviewReplyBox
+                reviewId={r.id}
+                storeId={detail.id}
+                reply={r.reply}
+                canManage={detail.canManageStore}
+                tier={detail.tier}
+                onToast={onToast}
+                onChanged={onDone}
+              />
             </li>
           ))}
         </ul>
