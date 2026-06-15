@@ -15,6 +15,7 @@ import {
 import { CouponSection } from "@/components/CouponSection";
 import { MerchantReservations } from "@/components/MerchantReservations";
 import { MerchantAlerts } from "@/components/MerchantAlerts";
+import { MerchantRegulars } from "@/components/MerchantRegulars";
 
 /**
  * M6 — 사장님 전용 풀페이지 관리 콘솔.
@@ -27,6 +28,7 @@ type Section =
   | "menu"
   | "sales"
   | "alerts"
+  | "regulars"
   | "reservations"
   | "coupons"
   | "photos"
@@ -38,6 +40,7 @@ const SECTIONS: { key: Section; label: string }[] = [
   { key: "menu", label: "🍱 메뉴" },
   { key: "sales", label: "🔥 세일/행사" },
   { key: "alerts", label: "🔔 단골 알림" },
+  { key: "regulars", label: "🧑‍🤝‍🧑 단골 관리" },
   { key: "reservations", label: "🏃 예약" },
   { key: "coupons", label: "🎟️ 쿠폰" },
   { key: "photos", label: "🖼️ 사진" },
@@ -214,6 +217,16 @@ export function MerchantDashboard({ storeId, storeName }: { storeId: string; sto
                   우리 가게를 즐겨찾기한 손님에게 세일·소식을 인앱 알림으로 보내요. 손님이 알림함에서 확인해요.
                 </p>
                 <MerchantAlerts storeId={storeId} sales={detail.sales} onToast={showToast} />
+              </div>
+            )}
+
+            {section === "regulars" && (
+              <div>
+                <h2 className="mb-2 text-sm font-bold">단골 관리</h2>
+                <p className="mb-3 text-xs text-gray-400">
+                  누가 우리 단골이고 요즘 안 오는 손님이 누군지 보고, (프로) 이탈 단골에게 컴백 쿠폰을 보내요.
+                </p>
+                <MerchantRegulars storeId={storeId} onToast={showToast} />
               </div>
             )}
 
