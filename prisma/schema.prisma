@@ -155,6 +155,12 @@ enum CouponClaimStatus {
   used // 매장에서 사용 완료
 }
 
+// M9(수익화): 가게 브로드캐스트 알림 종류.
+enum StoreAlertKind {
+  sale // 세일/행사 알림
+  notice // 일반 소식
+}
+
 // M7(L2): 떨이 픽업 예약 상태.
 enum ReservationStatus {
   reserved // 예약(선점) — 매장 픽업 대기
@@ -381,6 +387,7 @@ model Store {
   coupons               Coupon[]
   reservations          Reservation[]
   reviewReplies         ReviewReply[]
+  storeAlerts           StoreAlert[]
 
   @@index([ownerId])
 
@@ -511,14 +518,33 @@ model ReviewReply {
 }
 
 model Favorite {
-  userId  String
-  storeId String
+  userId    String
+  storeId   String
+  createdAt DateTime @default(now()) // M9: 알림함은 '즐겨찾기한 시점 이후' 알림만 보여준다.
 
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
   store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
 
   @@id([userId, storeId])
   @@index([storeId])
+}
+
+// M9(수익화): 가게 브로드캐스트 알림(세일/소식). 라이트+ '관계' 기능 — 사장님이 즐겨찾기 손님에게 발송.
+// 팬아웃 없음: 수신자별 행을 만들지 않고 1행만 저장 → 각 사용자 알림함은 (StoreAlert ⋈ 내 Favorite) 조인으로 파생.
+// 발송 한도는 storeId+월(KST) count 로 게이팅(Lite 월 4회 / Pro 무제한). 정리는 createdAt 조회 윈도우로 제한.
+model StoreAlert {
+  id          String         @id @default(cuid())
+  storeId     String
+  createdById String // 발송한 사장님/관리자
+  kind        StoreAlertKind @default(sale)
+  saleId      String? // 세일 연동 시(없으면 일반 소식) — FK 미설정(세일 삭제와 독립)
+  title       String
+  body        String
+  createdAt   DateTime       @default(now())
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([storeId, createdAt])
 }
 
 model Report {

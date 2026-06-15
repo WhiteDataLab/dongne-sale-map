@@ -14,6 +14,7 @@ import {
 } from "@/components/StoreSheet";
 import { CouponSection } from "@/components/CouponSection";
 import { MerchantReservations } from "@/components/MerchantReservations";
+import { MerchantAlerts } from "@/components/MerchantAlerts";
 
 /**
  * M6 — 사장님 전용 풀페이지 관리 콘솔.
@@ -21,12 +22,22 @@ import { MerchantReservations } from "@/components/MerchantReservations";
  * 시트와 동일한 섹션 컴포넌트를 재사용(중복 제거)하되, 여기선 실제 detail(소유자 권한)로 풀 관리.
  */
 
-type Section = "stats" | "menu" | "sales" | "reservations" | "coupons" | "photos" | "info" | "subscription";
+type Section =
+  | "stats"
+  | "menu"
+  | "sales"
+  | "alerts"
+  | "reservations"
+  | "coupons"
+  | "photos"
+  | "info"
+  | "subscription";
 
 const SECTIONS: { key: Section; label: string }[] = [
   { key: "stats", label: "📊 통계" },
   { key: "menu", label: "🍱 메뉴" },
   { key: "sales", label: "🔥 세일/행사" },
+  { key: "alerts", label: "🔔 단골 알림" },
   { key: "reservations", label: "🏃 예약" },
   { key: "coupons", label: "🎟️ 쿠폰" },
   { key: "photos", label: "🖼️ 사진" },
@@ -193,6 +204,16 @@ export function MerchantDashboard({ storeId, storeName }: { storeId: string; sto
                   }}
                   onToast={showToast}
                 />
+              </div>
+            )}
+
+            {section === "alerts" && (
+              <div>
+                <h2 className="mb-2 text-sm font-bold">단골 알림 발송</h2>
+                <p className="mb-3 text-xs text-gray-400">
+                  우리 가게를 즐겨찾기한 손님에게 세일·소식을 인앱 알림으로 보내요. 손님이 알림함에서 확인해요.
+                </p>
+                <MerchantAlerts storeId={storeId} sales={detail.sales} onToast={showToast} />
               </div>
             )}
 

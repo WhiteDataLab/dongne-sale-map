@@ -2,6 +2,7 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { NotificationList, type NotificationItem } from "@/components/NotificationList";
+import { getMyStoreAlerts } from "@/lib/alerts";
 
 export const metadata = { title: "알림 — 동네 세일 지도" };
 export const dynamic = "force-dynamic";
@@ -41,6 +42,19 @@ export default async function NotificationsPage() {
     }
 
     if (session?.user) {
+      // M9: 내가 즐겨찾기한 가게의 세일/소식 알림(팔로우 이후·최근 30일).
+      const storeAlerts = await getMyStoreAlerts(session.user.id);
+      for (const a of storeAlerts) {
+        items.push({
+          id: `alert-${a.id}`,
+          icon: a.kind === "sale" ? "🔥" : "📣",
+          title: `${a.storeName} · ${a.title}`,
+          body: a.body,
+          href: `/?store=${a.storeId}`,
+          createdAt: a.createdAt,
+        });
+      }
+
       const [inquiries, redemptions] = await Promise.all([
         prisma.inquiry.findMany({
           where: { userId: session.user.id, status: "answered" },
