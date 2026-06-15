@@ -31,6 +31,14 @@ export type StoreStats = {
   last90?: Record<string, number>;
   daily?: { day: string; impressions: number; detailOpens: number }[];
   weekday?: { impressions: number; detailOpens: number }[];
+  // M11: 동종업종(같은 동·업종) 벤치마크. peer 0곳이면 null.
+  benchmark?: {
+    region: string;
+    peerCount: number;
+    avg: { impressions: number; detailOpens: number; intentVisits: number };
+    mine: { impressions: number; detailOpens: number; intentVisits: number };
+    percentile: number;
+  } | null;
 };
 import { SaleReportForm } from "./SaleReportForm";
 import { ClosureReportForm } from "./ClosureReportForm";
@@ -805,6 +813,47 @@ export function ProStats({ stats }: { stats: StoreStats }) {
             <span className="text-[9px] text-gray-400">{WEEKDAY_LABELS[i]}</span>
           </div>
         ))}
+      </div>
+
+      {stats.benchmark && <Benchmark b={stats.benchmark} />}
+    </div>
+  );
+}
+
+/** M11: 동종업종 벤치마크 — 같은 동·업종 평균 대비 우리 가게(최근 30일). */
+function Benchmark({ b }: { b: NonNullable<StoreStats["benchmark"]> }) {
+  const cmp = (mine: number, avg: number) => {
+    if (avg === 0) return { txt: mine > 0 ? "평균 0" : "—", cls: "text-gray-400" };
+    const pct = Math.round((mine / avg) * 100);
+    return pct >= 100
+      ? { txt: `평균의 ${pct}%`, cls: "text-green-600" }
+      : { txt: `평균의 ${pct}%`, cls: "text-amber-600" };
+  };
+  const ROWS: [string, number, number][] = [
+    ["노출", b.mine.impressions, b.avg.impressions],
+    ["상세열람", b.mine.detailOpens, b.avg.detailOpens],
+    ["방문의향", b.mine.intentVisits, b.avg.intentVisits],
+  ];
+  return (
+    <div className="mt-3 rounded-lg border border-indigo-100 bg-indigo-50/50 p-2.5">
+      <div className="flex items-center justify-between">
+        <p className="text-[11px] font-semibold text-indigo-700">📊 동종업종 벤치마크</p>
+        <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-indigo-700">
+          {b.region} 동종 상위 {100 - b.percentile}%
+        </span>
+      </div>
+      <p className="mt-0.5 text-[10px] text-gray-400">{b.region} 같은 업종 {b.peerCount}곳 평균 대비(최근 30일)</p>
+      <div className="mt-1.5 grid grid-cols-3 gap-1.5">
+        {ROWS.map(([label, mine, avg]) => {
+          const c = cmp(mine, avg);
+          return (
+            <div key={label} className="rounded-lg bg-white px-2 py-1.5 text-center">
+              <p className="text-[10px] text-gray-400">{label}</p>
+              <p className="text-sm font-bold text-gray-800">{mine}</p>
+              <p className={`text-[10px] font-medium ${c.cls}`}>{c.txt}</p>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
