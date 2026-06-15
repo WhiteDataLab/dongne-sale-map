@@ -10,7 +10,7 @@ import { REPORT_HIDE_THRESHOLD } from "@/lib/constants";
  */
 export const runtime = "nodejs";
 
-const TARGET_TYPES = ["store", "sale", "review", "product"] as const;
+const TARGET_TYPES = ["store", "sale", "review", "product", "reply"] as const;
 type TargetType = (typeof TARGET_TYPES)[number];
 
 type Body = { targetType?: string; targetId?: string; reason?: string };
@@ -69,6 +69,9 @@ export async function POST(req: NextRequest) {
         } else if (type === "product") {
           await prisma.product.update({ where: { id: targetId }, data: { hidden: true } });
           await prisma.pointLog.deleteMany({ where: { refType: "product", refId: targetId } });
+        } else if (type === "reply") {
+          // M10: 사장님 답글 자동 숨김(포인트 없음 → 회수 불필요).
+          await prisma.reviewReply.update({ where: { id: targetId }, data: { hidden: true } });
         } else {
           await prisma.review.update({ where: { id: targetId }, data: { hidden: true } });
           // 제재 시 해당 리뷰 적립 포인트 회수

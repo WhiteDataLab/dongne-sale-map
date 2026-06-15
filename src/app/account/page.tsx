@@ -120,7 +120,7 @@ export default async function AccountPage() {
     scored: boolean;
     createdAt: Date;
     store: { name: string };
-    reply: { body: string; createdAt: Date; author: { nickname: string } } | null;
+    reply: { id: string; body: string; hidden: boolean; createdAt: Date; author: { nickname: string } } | null;
   }[] = [];
   const productNameMap = new Map<string, string>();
   try {
@@ -140,7 +140,7 @@ export default async function AccountPage() {
         scored: true,
         createdAt: true,
         store: { select: { name: true } },
-        reply: { select: { body: true, createdAt: true, author: { select: { nickname: true } } } },
+        reply: { select: { id: true, body: true, hidden: true, createdAt: true, author: { select: { nickname: true } } } },
       },
     });
     // 연결된 구매 메뉴 이름 해석(현재 존재하는 상품만)
@@ -303,13 +303,15 @@ export default async function AccountPage() {
               receiptVerified: Boolean(r.receiptUrl),
               scored: r.scored,
               createdAt: r.createdAt.toISOString(),
-              reply: r.reply
-                ? {
-                    body: r.reply.body,
-                    authorNickname: r.reply.author.nickname,
-                    createdAt: r.reply.createdAt.toISOString(),
-                  }
-                : null,
+              reply:
+                r.reply && !r.reply.hidden
+                  ? {
+                      id: r.reply.id,
+                      body: r.reply.body,
+                      authorNickname: r.reply.author.nickname,
+                      createdAt: r.reply.createdAt.toISOString(),
+                    }
+                  : null,
             }))}
           />
         </section>

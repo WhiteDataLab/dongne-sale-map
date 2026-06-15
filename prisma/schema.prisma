@@ -72,6 +72,7 @@ enum ReportTargetType {
   sale
   review
   product
+  reply // M10: 사장님 리뷰 답글(ReviewReply)
 }
 
 enum ReportStatus {

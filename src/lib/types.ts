@@ -92,8 +92,8 @@ export type SaleDTO = {
 /** 리뷰에 연결된 구매 메뉴(상품) 요약. */
 export type ReviewProduct = { id: string; name: string };
 
-/** M8: 사장님 리뷰 답글(소비자에게도 공개 노출). */
-export type ReviewReplyDTO = { body: string; authorNickname: string; createdAt: string };
+/** M8: 사장님 리뷰 답글(소비자에게도 공개 노출). id 는 신고용. */
+export type ReviewReplyDTO = { id: string; body: string; authorNickname: string; createdAt: string };
 
 export type ReviewDTO = {
   id: string;

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { CATEGORY_META } from "@/lib/constants";
 import type { StoreDetailDTO } from "@/lib/types";
+import { PLAN_LABEL, PLAN_PRICE_KRW, asSubPlan, type SubPlan } from "@/lib/sponsors";
 import {
   ProductsTab,
   SalesTab,
@@ -99,12 +100,7 @@ export function MerchantDashboard({ storeId, storeName }: { storeId: string; sto
     loadStats();
   }, [load, loadStats]);
 
-  const planLabel =
-    detail?.sponsorSubscription?.plan === "pro"
-      ? "프로"
-      : detail?.sponsorSubscription
-        ? "스폰서"
-        : null;
+  const planLabel = detail?.sponsorSubscription ? PLAN_LABEL[asSubPlan(detail.sponsorSubscription.plan)] : null;
 
   return (
     <div className="h-full overflow-y-auto bg-gray-50">
@@ -369,7 +365,16 @@ function BannerEditor({
   );
 }
 
-/** 구독(스폰서/프로) 상태 + 해지 또는 업셀 링크. */
+/** 플랜별 한 줄 혜택 요약(스위처 버튼용). */
+const PLAN_BENEFIT: Record<SubPlan, string> = {
+  lite: "세일 알림·단골 관리·리뷰 답글·공식 배지",
+  sponsor: "마퀴 고정 + 금색 핀 (노출 부스트)",
+  pro: "라이트 전체 + 노출 + 확장통계·무제한쿠폰·갤러리·상위노출",
+};
+/** 스위처에 노출할 플랜 순서(가격 오름차순). */
+const PLAN_ORDER: SubPlan[] = ["lite", "sponsor", "pro"];
+
+/** 구독(라이트/스폰서/프로) 상태 + 플랜 변경(3-way) + 해지. */
 function SubscriptionPanel({
   detail,
   storeId,
@@ -400,7 +405,7 @@ function SubscriptionPanel({
     }
   };
 
-  const changePlan = async (target: "sponsor" | "pro") => {
+  const changePlan = async (target: SubPlan) => {
     if (!sub) return;
     setBusy(true);
     try {
@@ -414,7 +419,7 @@ function SubscriptionPanel({
         onToast(data.error || "변경에 실패했어요.");
         return;
       }
-      onToast(target === "pro" ? "프로로 업그레이드했어요! 🎉" : "스폰서 플랜으로 변경했어요.");
+      onToast(`${PLAN_LABEL[target]} 플랜으로 변경했어요! 🎉`);
       refresh();
     } catch {
       onToast("네트워크 오류예요. 잠시 후 다시 시도해 주세요.");
@@ -431,7 +436,7 @@ function SubscriptionPanel({
           <p className="text-2xl">👑</p>
           <p className="mt-1 text-sm font-semibold">아직 구독 중이 아니에요</p>
           <p className="mt-1 text-xs text-gray-500">
-            스폰서(마퀴 고정 + 금색 핀) 또는 프로(스폰서 + 확장통계·무제한쿠폰·갤러리·상위노출) 플랜으로 가게를 키워보세요.
+            라이트(알림·단골·답글)·스폰서(노출 부스트)·프로(전체)로 가게를 키워보세요.
           </p>
           <Link
             href={`/stores/${storeId}/sponsor`}
@@ -444,65 +449,66 @@ function SubscriptionPanel({
     );
   }
 
+  const current = asSubPlan(sub.plan);
+  const currentPrice = PLAN_PRICE_KRW[current];
   const statusLabel =
     sub.status === "trialing" ? "무료체험 중" : sub.status === "past_due" ? "결제 재시도 중" : "이용 중";
+  const others = PLAN_ORDER.filter((p) => p !== current);
+
+  const onSwitch = (target: SubPlan) => {
+    const up = PLAN_PRICE_KRW[target] > currentPrice;
+    const msg = up
+      ? sub.status === "trialing"
+        ? `${PLAN_LABEL[target]}로 업그레이드할까요? 체험 중엔 추가 청구가 없어요.`
+        : `${PLAN_LABEL[target]}로 업그레이드할까요? 남은 기간 차액이 즉시 결제돼요.`
+      : `${PLAN_LABEL[target]} 플랜으로 변경할까요? 상위 혜택이 해제되고 다음 결제부터 ${PLAN_PRICE_KRW[
+          target
+        ].toLocaleString("ko-KR")}원이에요.`;
+    if (window.confirm(msg)) changePlan(target);
+  };
 
   return (
     <div>
       <h2 className="mb-2 text-sm font-bold">구독·플랜</h2>
       <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-4">
         <div className="flex items-center justify-between">
-          <p className="font-semibold text-amber-800">
-            👑 {sub.plan === "pro" ? "프로" : "스폰서"} 플랜
-          </p>
+          <p className="font-semibold text-amber-800">👑 {PLAN_LABEL[current]} 플랜</p>
           <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-amber-700">{statusLabel}</span>
         </div>
         <p className="mt-1 text-xs text-gray-500">
           다음 결제 예정일 {new Date(sub.nextBillingAt).toLocaleDateString("ko-KR")} ·{" "}
-          {(sub.plan === "pro" ? 49800 : 29800).toLocaleString("ko-KR")}원/월
+          {currentPrice.toLocaleString("ko-KR")}원/월
         </p>
+        <p className="mt-0.5 text-[11px] text-gray-400">{PLAN_BENEFIT[current]}</p>
 
-        {sub.plan !== "pro" && (
-          <div className="mt-3 rounded-lg border border-indigo-200 bg-white p-3">
-            <p className="text-xs font-semibold text-indigo-700">⭐ 프로로 업그레이드</p>
-            <p className="mt-0.5 text-[11px] text-gray-500">
-              확장통계 · 무제한쿠폰 · 사진갤러리 · 상위노출이 <b>지금 바로</b> 켜져요.{" "}
-              {sub.status === "trialing"
-                ? "무료체험 중엔 추가 청구가 없고, 체험 종료 후 첫 결제부터 49,800원이에요."
-                : "남은 기간 차액이 즉시 결제되고, 다음 결제부터 49,800원으로 적용돼요."}
-            </p>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => {
-                const msg =
-                  sub.status === "trialing"
-                    ? "프로로 업그레이드할까요? 체험 중엔 추가 청구가 없어요."
-                    : "프로로 업그레이드할까요? 남은 기간 차액이 즉시 결제돼요.";
-                if (window.confirm(msg)) changePlan("pro");
-              }}
-              className="mt-2 w-full rounded-lg bg-indigo-600 px-3 py-2 text-xs font-bold text-white hover:bg-indigo-700 disabled:opacity-50"
-            >
-              {busy ? "처리 중…" : "프로로 업그레이드 (49,800원/월)"}
-            </button>
-          </div>
-        )}
+        {/* 3-way 플랜 변경 */}
+        <div className="mt-3 flex flex-col gap-1.5">
+          {others.map((target) => {
+            const up = PLAN_PRICE_KRW[target] > currentPrice;
+            return (
+              <button
+                key={target}
+                type="button"
+                disabled={busy}
+                onClick={() => onSwitch(target)}
+                className={[
+                  "rounded-lg border px-3 py-2 text-left text-xs disabled:opacity-50",
+                  up
+                    ? "border-indigo-200 bg-white hover:bg-indigo-50"
+                    : "border-gray-200 bg-white hover:bg-gray-50",
+                ].join(" ")}
+              >
+                <span className={`font-bold ${up ? "text-indigo-700" : "text-gray-600"}`}>
+                  {up ? "⬆ " : "⬇ "}
+                  {PLAN_LABEL[target]}로 변경 ({PLAN_PRICE_KRW[target].toLocaleString("ko-KR")}원/월)
+                </span>
+                <span className="mt-0.5 block text-[10px] text-gray-400">{PLAN_BENEFIT[target]}</span>
+              </button>
+            );
+          })}
+        </div>
 
-        <div className="mt-3 flex items-center gap-2">
-          {sub.plan === "pro" && (
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => {
-                if (window.confirm("스폰서 플랜으로 변경할까요? 프로 혜택(확장통계·무제한쿠폰·갤러리·상위노출)이 해제돼요.")) {
-                  changePlan("sponsor");
-                }
-              }}
-              className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100 disabled:opacity-50"
-            >
-              스폰서로 변경
-            </button>
-          )}
+        <div className="mt-3">
           <button
             type="button"
             disabled={busy}

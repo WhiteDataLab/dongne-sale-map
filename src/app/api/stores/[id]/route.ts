@@ -255,13 +255,15 @@ export async function GET(
         createdAt: r.createdAt.toISOString(),
         scored: r.scored,
         isMine: Boolean(userId && r.userId === userId),
-        reply: r.reply
-          ? {
-              body: r.reply.body,
-              authorNickname: r.reply.author.nickname,
-              createdAt: r.reply.createdAt.toISOString(),
-            }
-          : null,
+        reply:
+          r.reply && !r.reply.hidden
+            ? {
+                id: r.reply.id,
+                body: r.reply.body,
+                authorNickname: r.reply.author.nickname,
+                createdAt: r.reply.createdAt.toISOString(),
+              }
+            : null,
       })),
       closureReports: store.closureReports.map((c) => ({
         id: c.id,

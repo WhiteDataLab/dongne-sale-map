@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { ReviewReplyDTO } from "@/lib/types";
 import type { StoreTier } from "@/lib/pro";
+import { ReportButton } from "./ReportButton";
 
 /**
  * M8 — 리뷰 답글 표시 + (사장님/관리자) 인라인 작성/수정/삭제.
@@ -109,7 +110,13 @@ export function ReviewReplyBox({
   if (reply) {
     return (
       <div className="mt-2 rounded-lg border border-gray-100 bg-gray-50 p-2">
-        <p className="text-xs font-semibold text-indigo-700">🏪 사장님 답글</p>
+        <div className="flex items-start justify-between gap-2">
+          <p className="text-xs font-semibold text-indigo-700">🏪 사장님 답글</p>
+          {/* 소비자는 답글 신고 가능(사장님 본인은 제외) */}
+          {!canManage && onToast && (
+            <ReportButton targetType="reply" targetId={reply.id} onToast={onToast} onChanged={onChanged} />
+          )}
+        </div>
         <p className="mt-0.5 whitespace-pre-wrap text-sm text-gray-700">{reply.body}</p>
         {canManage && (
           <div className="mt-1 flex items-center gap-3">
