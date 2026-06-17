@@ -3,6 +3,7 @@ import { auth, signIn } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getPointBalance } from "@/lib/points";
 import { getActiveGifts, type GiftItem } from "@/lib/gifts";
+import { getSponsoredBrandMap } from "@/lib/brands";
 import { RedeemButton } from "@/components/RedeemButton";
 
 /** 포인트샵: 포인트로 커피 기프티콘 교환. (5000P = 5000원 상당) */
@@ -34,6 +35,7 @@ export default async function ShopPage() {
   let balance = 0;
   let contact: string | null = null;
   let gifts: GiftItem[] = [];
+  let sponsoredMap = new Map<string, string>();
   try {
     balance = await getPointBalance(session.user.id);
     const me = await prisma.user.findUnique({
@@ -42,6 +44,7 @@ export default async function ShopPage() {
     });
     contact = me?.contactPhone ?? null;
     gifts = await getActiveGifts();
+    sponsoredMap = await getSponsoredBrandMap(gifts.map((g) => g.id));
   } catch {
     // DB 미연결
   }
@@ -79,8 +82,14 @@ export default async function ShopPage() {
           <div className="grid grid-cols-2 gap-3">
             {gifts.map((g) => {
               const affordable = balance >= g.points && !!contact;
+              const sponsorBrand = sponsoredMap.get(g.id);
               return (
-                <div key={g.id} className="flex flex-col rounded-2xl border border-gray-100 bg-white p-3 shadow-sm">
+                <div key={g.id} className="relative flex flex-col rounded-2xl border border-gray-100 bg-white p-3 shadow-sm">
+                  {sponsorBrand && (
+                    <span className="absolute right-2 top-2 z-10 rounded-full bg-indigo-600 px-2 py-0.5 text-[10px] font-bold text-white shadow">
+                      {sponsorBrand} 후원
+                    </span>
+                  )}
                   <div
                     className="mb-2 flex h-20 items-center justify-center overflow-hidden rounded-xl text-4xl"
                     style={{ background: `${g.color}1a` }}

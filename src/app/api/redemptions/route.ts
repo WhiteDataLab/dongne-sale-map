@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/session";
 import { getGiftItem } from "@/lib/gifts";
+import { accrueBrandReward } from "@/lib/brands";
 import { POINT_EXPIRY_YEARS, yearsAgo } from "@/lib/points";
 
 /**
@@ -93,6 +94,8 @@ export async function POST(req: NextRequest) {
         { status: 409 },
       );
     }
+    // L5: 후원 브랜드가 있으면 상환당 CPA 적립(best-effort, 교환 성공 후·교환에 영향 없음).
+    await accrueBrandReward({ giftItemId: item.id, redemptionId: result.redemptionId, userId }).catch(() => {});
     return NextResponse.json({
       ok: true,
       balance: result.balance,

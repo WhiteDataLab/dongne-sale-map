@@ -86,6 +86,7 @@ export default async function AdminLayout({
                 ["/admin/redemptions", "기프티콘 교환"],
                 ["/admin/gifts", "기프티콘 상품"],
                 ["/admin/settlements", "제휴 정산"],
+                ["/admin/brands", "브랜드 리워드"],
               ]}
             />
             <AdminGroup

@@ -170,6 +170,13 @@ enum AdCampaignStatus {
   canceled // 종료
 }
 
+// L5(수익화): 브랜드 스폰서 리워드 캠페인 상태.
+enum BrandCampaignStatus {
+  active // 집행 중
+  paused // 일시중지
+  ended // 종료(예산 소진/기간 만료)
+}
+
 // M7(L2): 떨이 픽업 예약 상태.
 enum ReservationStatus {
   reserved // 예약(선점) — 매장 픽업 대기
@@ -306,7 +313,48 @@ model GiftItem {
   partner      String? // 제휴사/공급처명
   createdAt DateTime @default(now())
 
+  brandCampaigns BrandCampaign[] // L5: 이 상품을 후원하는 브랜드 캠페인
+
   @@index([active, sortOrder])
+}
+
+// L5(수익화): 브랜드 스폰서 리워드. 브랜드가 특정 기프티콘(리워드)을 후원하고, 상환(redeem)당 CPA 를 낸다.
+// → 기프티콘 원가(변동비)를 브랜드 광고 매출로 전환. 예산 소진/기간 만료 시 ended.
+model BrandCampaign {
+  id           String              @id @default(cuid())
+  brand        String // 후원 브랜드명(예: "○○음료")
+  giftItemId   String // 후원 대상 기프티콘
+  cpaKrw       Int // 상환 1건당 브랜드가 지불하는 광고비
+  budgetKrw    Int // 총 예산. spentKrw 도달 시 ended
+  spentKrw     Int                 @default(0)
+  redeemedCount Int                @default(0)
+  perUserLimit Int                 @default(1) // 1인당 CPA 인정 횟수(어뷰징 방어)
+  status       BrandCampaignStatus @default(active)
+  note         String?
+  endsAt       DateTime? // 종료 예정(선택)
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  giftItem    GiftItem          @relation(fields: [giftItemId], references: [id], onDelete: Cascade)
+  redemptions BrandRedemption[]
+
+  @@index([giftItemId, status])
+  @@index([status])
+}
+
+// L5(수익화): 브랜드 CPA 적립 원장(감사·1인 한도). redemptionId 1:1 — 한 교환은 1회만 브랜드 매출 인정.
+model BrandRedemption {
+  id           String   @id @default(cuid())
+  campaignId   String
+  redemptionId String   @unique
+  userId       String
+  amountKrw    Int // 적립 시점 cpaKrw 스냅샷
+  createdAt    DateTime @default(now())
+
+  campaign BrandCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId])
+  @@index([userId])
 }
 
 // 사이트 전역 설정 (key-value). 예: intro_video_url(소개 페이지 업로드 영상)
