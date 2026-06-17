@@ -77,6 +77,7 @@ export default async function AdminLayout({
               links={[
                 ["/admin/leads", "리드 추출"],
                 ["/admin/sponsors", "스폰서 광고"],
+                ["/admin/ads", "성과형 광고"],
               ]}
             />
             <AdminGroup

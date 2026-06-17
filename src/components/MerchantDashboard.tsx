@@ -17,6 +17,7 @@ import { CouponSection } from "@/components/CouponSection";
 import { MerchantReservations } from "@/components/MerchantReservations";
 import { MerchantAlerts } from "@/components/MerchantAlerts";
 import { MerchantRegulars } from "@/components/MerchantRegulars";
+import { MerchantAdCampaign } from "@/components/MerchantAdCampaign";
 
 /**
  * M6 — 사장님 전용 풀페이지 관리 콘솔.
@@ -32,6 +33,7 @@ type Section =
   | "regulars"
   | "reservations"
   | "coupons"
+  | "ads"
   | "photos"
   | "info"
   | "subscription";
@@ -44,6 +46,7 @@ const SECTIONS: { key: Section; label: string }[] = [
   { key: "regulars", label: "🧑‍🤝‍🧑 단골 관리" },
   { key: "reservations", label: "🏃 예약" },
   { key: "coupons", label: "🎟️ 쿠폰" },
+  { key: "ads", label: "🚀 광고(CPA)" },
   { key: "photos", label: "🖼️ 사진" },
   { key: "info", label: "🏪 가게 정보" },
   { key: "subscription", label: "👑 구독·플랜" },
@@ -240,6 +243,16 @@ export function MerchantDashboard({ storeId, storeName }: { storeId: string; sto
               <div>
                 <h2 className="mb-2 text-sm font-bold">쿠폰 발행·관리</h2>
                 <CouponSection detail={detail} onToast={showToast} onDone={refresh} />
+              </div>
+            )}
+
+            {section === "ads" && (
+              <div>
+                <h2 className="mb-2 text-sm font-bold">성과형 광고 (CPA)</h2>
+                <p className="mb-3 text-xs text-gray-400">
+                  구독과 별개로, 손님이 갈래요·길찾기를 누를 때만 건당 과금되는 광고예요.
+                </p>
+                <MerchantAdCampaign storeId={storeId} onToast={showToast} />
               </div>
             )}
 

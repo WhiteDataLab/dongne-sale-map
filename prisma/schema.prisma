@@ -162,6 +162,14 @@ enum StoreAlertKind {
   notice // 일반 소식
 }
 
+// L3(수익화): 성과형 광고(CPA) 캠페인 상태.
+enum AdCampaignStatus {
+  active // 집행 중
+  paused // 사장님 일시중지
+  depleted // 예산 소진(자동 중지)
+  canceled // 종료
+}
+
 // M7(L2): 떨이 픽업 예약 상태.
 enum ReservationStatus {
   reserved // 예약(선점) — 매장 픽업 대기
@@ -389,6 +397,7 @@ model Store {
   reservations          Reservation[]
   reviewReplies         ReviewReply[]
   storeAlerts           StoreAlert[]
+  adCampaigns           AdCampaign[]
 
   @@index([ownerId])
 
@@ -749,6 +758,47 @@ model Payment {
 
   @@index([subscriptionId])
   @@index([storeId])
+}
+
+// L3(수익화): 성과형 광고(CPA). 정액 구독 대신 '결과당 과금' — 방문의향(갈래요)·길찾기 1건당 입찰가.
+// M0 이벤트(StoreEvent)가 과금 근거. 예산(budgetKrw) 소진 시 자동 중지. 집행분은 월말 청구(스캐폴드).
+model AdCampaign {
+  id          String           @id @default(cuid())
+  storeId     String
+  userId      String // 캠페인 소유 사장님
+  action      String // "intent_visit" | "directions_click"
+  bidKrw      Int // 액션 1건당 과금액(입찰가)
+  budgetKrw   Int // 총 예산(예치 한도). spentKrw 가 도달하면 depleted
+  spentKrw    Int              @default(0) // 누적 집행액
+  chargedCount Int             @default(0) // 과금된 액션 수
+  dailyCapKrw Int? // 일 집행 상한(선택)
+  status      AdCampaignStatus @default(active)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  store   Store      @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  charges AdCharge[]
+
+  @@index([storeId, status])
+  @@index([status])
+}
+
+// L3(수익화): CPA 과금 원장(감사·어뷰징 방어). 세션·일 단위 1회 과금(@@unique)으로 자가/봇 클릭 드레인 차단.
+model AdCharge {
+  id         String   @id @default(cuid())
+  campaignId String
+  storeId    String
+  sessionId  String // 비식별 세션(과금 중복 방지 키)
+  userId     String? // 로그인 시 부가(자가 클릭 판정 보조)
+  action     String
+  amountKrw  Int // 과금 시점 bidKrw 스냅샷
+  day        String // KST YYYY-MM-DD (세션·일 단위 1회 과금)
+  createdAt  DateTime @default(now())
+
+  campaign AdCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, sessionId, day])
+  @@index([campaignId])
 }
 
 // M3(수익화): 사장님 쿠폰. 인증 사장님(소유자)·관리자가 본인 가게 쿠폰을 발행하고,

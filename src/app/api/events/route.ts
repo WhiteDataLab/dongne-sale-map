@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ipLimit } from "@/lib/rateLimit";
 import { getCurrentUserId } from "@/lib/session";
 import { recordEvents, isEventType, isEventSource, type IncomingEvent } from "@/lib/events";
+import { accrueCpa } from "@/lib/ads";
 
 /**
  * M0(수익화) — 트래픽/전환 이벤트 수집(공개, 배치).
@@ -47,6 +48,8 @@ export async function POST(req: NextRequest) {
   const userId = await getCurrentUserId(); // 비로그인이면 null (정지 계정도 null)
   try {
     const accepted = await recordEvents(events, { userId, sessionId });
+    // L3: 성과형 광고 — billable 액션(갈래요·길찾기)에 활성 캠페인이 있으면 예산 차감(best-effort).
+    await accrueCpa(events, { userId, sessionId }).catch(() => {});
     return NextResponse.json({ ok: true, accepted });
   } catch {
     // 수집 실패가 사용자 경험을 막지 않도록 200 으로 조용히 무시(베스트에포트)
