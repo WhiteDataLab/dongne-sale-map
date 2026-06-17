@@ -55,6 +55,7 @@ export default async function AdminLayout({
               links={[
                 ["/admin/dashboard", "대시보드"],
                 ["/admin/activity", "활동 분석"],
+                ["/admin/insights", "물가 데이터"],
               ]}
             />
             <AdminGroup
