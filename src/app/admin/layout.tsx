@@ -78,6 +78,7 @@ export default async function AdminLayout({
                 ["/admin/leads", "리드 추출"],
                 ["/admin/sponsors", "스폰서 광고"],
                 ["/admin/ads", "성과형 광고"],
+                ["/admin/local-ads", "지역 광고"],
               ]}
             />
             <AdminGroup

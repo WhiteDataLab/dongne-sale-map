@@ -177,6 +177,13 @@ enum BrandCampaignStatus {
   ended // 종료(예산 소진/기간 만료)
 }
 
+// L4(수익화): 지역 광고(로컬 광고주) 상태.
+enum LocalAdStatus {
+  active // 노출 중
+  paused // 일시중지
+  ended // 기간 종료
+}
+
 // M7(L2): 떨이 픽업 예약 상태.
 enum ReservationStatus {
   reserved // 예약(선점) — 매장 픽업 대기
@@ -847,6 +854,31 @@ model AdCharge {
 
   @@unique([campaignId, sessionId, day])
   @@index([campaignId])
+}
+
+// L4(수익화): 지역 광고 플랫폼. 식료품 밖 로컬 광고주(부동산·학원·병원·헬스장·음식점 등)에게
+// 동네 타게팅 정액 광고를 판매한다(당근 비즈프로필 모델). 노출은 region(동) 매칭 + status/기간 기준.
+// 노출 슬롯은 지도 상단 마퀴 옆 전용 스트립. 현재는 관리자 대행 등록(셀프서브 콘솔은 후속).
+model LocalAd {
+  id          String        @id @default(cuid())
+  advertiser  String // 광고주명
+  category    String // 업종(부동산/학원/병원/헬스장/음식점/기타)
+  title       String
+  body        String
+  imageUrl    String? // 소재 이미지(우리 공개 스토리지 URL만)
+  linkUrl     String? // 외부 랜딩(클릭 시 새 탭)
+  region      String // 타깃 동네 라벨(예: "이문동")
+  status      LocalAdStatus @default(active)
+  startsAt    DateTime      @default(now())
+  endsAt      DateTime? // 정액 노출 종료(없으면 무기한)
+  priceKrw    Int           @default(0) // 정액 광고비(운영 표기)
+  clicks      Int           @default(0)
+  createdById String // 등록 관리자
+  note        String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([status, region])
 }
 
 // M3(수익화): 사장님 쿠폰. 인증 사장님(소유자)·관리자가 본인 가게 쿠폰을 발행하고,

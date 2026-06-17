@@ -11,10 +11,12 @@ import { StoreRegisterForm } from "./StoreRegisterForm";
 import { SaleMarquee } from "./SaleMarquee";
 import { SaleListPanel } from "./SaleListPanel";
 import { ReviewStream } from "./ReviewStream";
+import { LocalAdStrip } from "./LocalAdStrip";
 import { GpsIcon } from "./GpsIcon";
 import { trackImpressions } from "@/lib/track";
 import { DEFAULT_CENTER, DEFAULT_LEVEL, CATEGORY_META } from "@/lib/constants";
 import type { StoreDTO, FeedSale, FeedReview } from "@/lib/types";
+import type { LocalAdDTO } from "@/lib/localAds";
 
 /**
  * Phase 1 지도 화면: 카카오맵 렌더링 + 검색 이동 + bounds 핀 + 필터.
@@ -59,7 +61,7 @@ export function MapExplorer() {
   const [results, setResults] = useState<Place[] | null>(null);
   const [registerMode, setRegisterMode] = useState(false);
   const [picked, setPicked] = useState<{ lat: number; lng: number; address: string } | null>(null);
-  const [feed, setFeed] = useState<{ sales: FeedSale[]; reviews: FeedReview[] }>({ sales: [], reviews: [] });
+  const [feed, setFeed] = useState<{ sales: FeedSale[]; reviews: FeedReview[]; localAds: LocalAdDTO[] }>({ sales: [], reviews: [], localAds: [] });
   const feedSigRef = useRef("");
   // 현재 위치(좌표 미저장 — 거리 표시/지도 이동용 화면 상태)
   const [myLoc, setMyLoc] = useState<{ lat: number; lng: number } | null>(null);
@@ -128,14 +130,15 @@ export function MapExplorer() {
     });
     try {
       const res = await fetch(`/api/feed?${params.toString()}`);
-      const data = (await res.json()) as { sales?: FeedSale[]; reviews?: FeedReview[] };
+      const data = (await res.json()) as { sales?: FeedSale[]; reviews?: FeedReview[]; localAds?: LocalAdDTO[] };
       const sales = data.sales ?? [];
       const reviews = data.reviews ?? [];
+      const localAds = data.localAds ?? [];
       // 데이터가 동일하면 갱신 생략 → 마퀴/스트림 애니메이션이 폴링마다 끊기지 않게
-      const sig = `${sales.map((s) => s.id).join(",")}|${reviews.map((r) => r.id).join(",")}`;
+      const sig = `${sales.map((s) => s.id).join(",")}|${reviews.map((r) => r.id).join(",")}|${localAds.map((a) => a.id).join(",")}`;
       if (sig !== feedSigRef.current) {
         feedSigRef.current = sig;
-        setFeed({ sales, reviews });
+        setFeed({ sales, reviews, localAds });
       }
     } catch {
       // 무시(피드는 부가 효과)
@@ -537,6 +540,9 @@ export function MapExplorer() {
             }}
           />
         )}
+
+        {/* L4: 지역 광고 스트립(로컬 광고주, '광고' 라벨) */}
+        {!registerMode && <LocalAdStrip ads={feed.localAds} />}
       </div>
 
       {/* 실시간 리뷰 스트림 (우측 상단, 아래→위로 올라가며 옅어짐) */}

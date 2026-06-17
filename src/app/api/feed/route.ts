@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { liveSponsorFilter } from "@/lib/sponsors";
+import { liveSponsorFilter, regionFromAddress } from "@/lib/sponsors";
 import { getProStoreIds } from "@/lib/pro";
+import { getLocalAdsForRegions } from "@/lib/localAds";
 import type { FeedSale, FeedReview } from "@/lib/types";
 
 /**
@@ -115,7 +116,16 @@ export async function GET(req: NextRequest) {
       storeName: r.store.name,
     }));
 
-    return NextResponse.json({ sales, reviews });
+    // L4: 현 지도에 보이는 가게들의 동(region) 으로 로컬 광고 타게팅(GPS 미수집 — 보이는 가게 주소 기반).
+    const inViewStores = await prisma.store.findMany({
+      where: inBounds,
+      select: { address: true },
+      take: 200,
+    });
+    const regions = [...new Set(inViewStores.map((s) => regionFromAddress(s.address)).filter((r) => r !== "구독"))];
+    const localAds = await getLocalAdsForRegions(regions, now);
+
+    return NextResponse.json({ sales, reviews, localAds });
   } catch {
     return NextResponse.json({ sales: [], reviews: [] });
   }
