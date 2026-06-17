@@ -31,6 +31,7 @@ export function SaleReportForm({
   onDone,
   onCancel,
   onToast,
+  canNotify = false,
 }: {
   storeId: string;
   category: Category;
@@ -38,8 +39,10 @@ export function SaleReportForm({
   onDone: () => void;
   onCancel: () => void;
   onToast: (msg: string) => void;
+  canNotify?: boolean; // M12: 사장님(라이트+) — 등록 시 즐겨찾기 손님 알림 토글 노출
 }) {
   const hasQty = categoryHasQuantity(category);
+  const [notify, setNotify] = useState(true);
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [title, setTitle] = useState("");
@@ -157,7 +160,33 @@ export function SaleReportForm({
         onToast(res.status === 401 ? "로그인이 필요해요." : e.error ?? "제보 등록 실패");
         return;
       }
-      const { pointGranted } = (await res.json()) as { pointGranted?: number };
+      const { pointGranted, saleId } = (await res.json()) as { pointGranted?: number; saleId?: string };
+
+      // M12: 사장님이 알림 토글을 켰으면 즐겨찾기 손님에게 세일 알림 발송(라이트+ 게이팅은 서버가 처리).
+      if (canNotify && notify && saleId) {
+        try {
+          const al = await fetch(`/api/stores/${storeId}/alerts`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              kind: "sale",
+              saleId,
+              title: title.trim().slice(0, 60),
+              body: `${won(price)}${qty.trim() ? ` · ${qty.trim()}` : ""} 세일이 떴어요!`,
+            }),
+          });
+          const aj = (await al.json().catch(() => ({}))) as { error?: string; favoriteCount?: number };
+          if (al.ok) {
+            onToast(`세일 제보 완료! +${pointGranted ?? 0}P · 단골 ${aj.favoriteCount ?? 0}명에게 알림 발송`);
+          } else {
+            onToast(`세일 제보 완료! +${pointGranted ?? 0}P (알림 미발송: ${aj.error ?? "한도/권한"})`);
+          }
+          onDone();
+          return;
+        } catch {
+          /* 알림 실패해도 제보는 성공 */
+        }
+      }
       onToast(`세일 제보 완료! +${pointGranted ?? 0}P 적립됐어요`);
       onDone();
     } catch {
@@ -309,14 +338,27 @@ export function SaleReportForm({
           </button>
         </div>
       ) : (
-        <button
-          type="button"
-          onClick={submit}
-          disabled={submitting}
-          className="rounded-lg bg-blue-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 active:bg-blue-800 disabled:bg-gray-300"
-        >
-          {submitting ? "등록 중…" : "세일 제보 등록"}
-        </button>
+        <>
+          {canNotify && (
+            <label className="flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+              <input
+                type="checkbox"
+                checked={notify}
+                onChange={(e) => setNotify(e.target.checked)}
+                className="size-4 accent-emerald-600"
+              />
+              🔔 즐겨찾기한 단골에게 이 세일 알림 보내기
+            </label>
+          )}
+          <button
+            type="button"
+            onClick={submit}
+            disabled={submitting}
+            className="rounded-lg bg-blue-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 active:bg-blue-800 disabled:bg-gray-300"
+          >
+            {submitting ? "등록 중…" : "세일 제보 등록"}
+          </button>
+        </>
       )}
 
       {editIdx !== null && files[editIdx] && (

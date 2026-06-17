@@ -1052,6 +1052,7 @@ export function SalesTab({
           onDone={onDone}
           onCancel={onClose}
           onToast={onToast}
+          canNotify={detail.canManageStore && (detail.tier === "lite" || detail.tier === "pro")}
         />
       ) : (
         <button
