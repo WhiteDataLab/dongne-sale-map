@@ -16,7 +16,7 @@ export default async function AdminUsers() {
   }
 
   if (banned.length === 0) {
-    return <p className="py-10 text-center text-sm text-gray-400">정지된 계정이 없어요.</p>;
+    return <p className="py-10 text-center text-sm text-ink-3">정지된 계정이 없어요.</p>;
   }
 
   return (
@@ -24,15 +24,15 @@ export default async function AdminUsers() {
       {banned.map((u) => (
         <li
           key={u.id}
-          className="flex items-center justify-between rounded-xl border border-gray-200 p-3"
+          className="flex items-center justify-between rounded-xl border border-line p-3"
         >
           <div>
             <p className="font-medium">{u.nickname}</p>
-            <p className="text-xs text-gray-400">가입 {new Date(u.createdAt).toLocaleDateString("ko-KR")}</p>
+            <p className="text-xs text-ink-3">가입 {new Date(u.createdAt).toLocaleDateString("ko-KR")}</p>
           </div>
           <form action={unbanUser}>
             <input type="hidden" name="id" value={u.id} />
-            <button className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100">
+            <button className="rounded-lg border border-line px-3 py-1.5 text-xs font-medium text-ink-2 transition-colors hover:bg-surface-2">
               정지 해제
             </button>
           </form>

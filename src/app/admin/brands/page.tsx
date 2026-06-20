@@ -23,7 +23,7 @@ export default async function AdminBrandsPage() {
   return (
     <div>
       <h1 className="mb-1 text-lg font-bold">브랜드 스폰서 리워드</h1>
-      <p className="mb-3 text-xs text-gray-400">
+      <p className="mb-3 text-xs text-ink-3">
         브랜드가 기프티콘을 후원하고 상환당 CPA 를 내요. 리워드 원가(변동비)를 브랜드 광고 매출로 전환해요.
       </p>
       <BrandAdmin

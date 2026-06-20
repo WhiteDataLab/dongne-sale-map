@@ -32,18 +32,18 @@ export default async function AdminMerchants() {
   const signed = await Promise.all(rows.map((r) => createSignedDocUrl(r.docPath)));
 
   if (rows.length === 0) {
-    return <p className="py-10 text-center text-sm text-gray-400">대기 중인 사장님 인증 신청이 없어요.</p>;
+    return <p className="py-10 text-center text-sm text-ink-3">대기 중인 사장님 인증 신청이 없어요.</p>;
   }
 
   return (
     <ul className="flex flex-col gap-3">
       {rows.map((r, i) => (
-        <li key={r.id} className="rounded-xl border border-gray-200 p-3">
+        <li key={r.id} className="rounded-xl border border-line p-3">
           <div className="flex items-center gap-2">
             <span className="font-medium">{r.store.name}</span>
-            <span className="text-xs text-gray-400">신청자 {r.user.nickname}</span>
+            <span className="text-xs text-ink-3">신청자 {r.user.nickname}</span>
           </div>
-          <p className="mt-0.5 text-xs text-gray-500">{r.store.address}</p>
+          <p className="mt-0.5 text-xs text-ink-3">{r.store.address}</p>
 
           {/* 사업자등록증 (서명 URL, 새 탭에서 확인) */}
           <div className="mt-2">
@@ -52,13 +52,13 @@ export default async function AdminMerchants() {
                 href={signed[i] as string}
                 target="_blank"
                 rel="noreferrer"
-                className="block overflow-hidden rounded-lg border border-gray-100"
+                className="block overflow-hidden rounded-lg border border-line-2"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={signed[i] as string} alt="사업자등록증" className="max-h-64 w-full object-contain bg-gray-50" />
+                <img src={signed[i] as string} alt="사업자등록증" className="max-h-64 w-full object-contain bg-surface-2" />
               </a>
             ) : (
-              <p className="text-xs text-gray-400">이미지를 불러올 수 없어요(스토리지 미설정/만료).</p>
+              <p className="text-xs text-ink-3">이미지를 불러올 수 없어요(스토리지 미설정/만료).</p>
             )}
           </div>
 
@@ -71,7 +71,7 @@ export default async function AdminMerchants() {
             </form>
             <form action={rejectMerchant}>
               <input type="hidden" name="id" value={r.id} />
-              <button className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100 active:bg-gray-200">
+              <button className="rounded-lg border border-line px-3 py-1.5 text-xs font-medium text-ink-2 transition-colors hover:bg-surface-2 active:bg-gray-200">
                 반려
               </button>
             </form>

@@ -46,7 +46,7 @@ export default async function AdminRedemptions() {
   }
 
   if (dbError) {
-    return <p className="py-10 text-center text-sm text-gray-400">교환 내역을 불러오지 못했어요.</p>;
+    return <p className="py-10 text-center text-sm text-ink-3">교환 내역을 불러오지 못했어요.</p>;
   }
 
   const pending = rows.filter((r) => r.status === "requested").length;
@@ -57,27 +57,27 @@ export default async function AdminRedemptions() {
         <h2 className="text-lg font-bold">기프티콘 교환</h2>
         <span className="rounded-full bg-amber-100 px-2 py-0.5 text-sm text-amber-700">발송 대기 {pending}</span>
       </div>
-      <p className="text-xs text-gray-400">
+      <p className="text-xs text-ink-3">
         외부 기프티콘 전문샵에서 구매해 아래 <b>연락처(문자)</b>로 보낸 뒤 ‘발송 완료’를 눌러 주세요.
       </p>
 
       {rows.length === 0 ? (
-        <p className="py-10 text-center text-sm text-gray-400">교환 내역이 없어요.</p>
+        <p className="py-10 text-center text-sm text-ink-3">교환 내역이 없어요.</p>
       ) : (
         <ul className="flex flex-col gap-2">
           {rows.map((r) => (
-            <li key={r.id} className="rounded-xl border border-gray-200 p-3">
+            <li key={r.id} className="rounded-xl border border-line p-3">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <p className="font-medium">🎁 {r.itemName}</p>
-                  <p className="mt-0.5 text-sm text-gray-600">
+                  <p className="mt-0.5 text-sm text-ink-2">
                     {r.user.nickname} · <span className="font-medium">{r.contact}</span>
                   </p>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-ink-3">
                     {new Date(r.createdAt).toLocaleString("ko-KR")} · {r.points.toLocaleString("ko-KR")}P
                   </p>
                   {(r.partner || r.costKrw != null) && (
-                    <p className="text-[11px] text-gray-400">
+                    <p className="text-[11px] text-ink-3">
                       {r.partner?.trim() || "제휴사 미지정"}
                       {r.costKrw != null && ` · 원가 ${r.costKrw.toLocaleString("ko-KR")}원`}
                       {r.status === "sent" && (
@@ -95,7 +95,7 @@ export default async function AdminRedemptions() {
                       ? "bg-amber-100 text-amber-700"
                       : r.status === "sent"
                         ? "bg-green-100 text-green-700"
-                        : "bg-gray-100 text-gray-500",
+                        : "bg-surface-2 text-ink-3",
                   ].join(" ")}
                 >
                   {STATUS_LABEL[r.status] ?? r.status}
@@ -105,13 +105,13 @@ export default async function AdminRedemptions() {
                 <div className="mt-2 flex justify-end gap-2">
                   <form action={cancelRedemption}>
                     <input type="hidden" name="id" value={r.id} />
-                    <button className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100">
+                    <button className="rounded-lg border border-line px-3 py-1.5 text-xs font-medium text-ink-2 hover:bg-surface-2">
                       취소(환원)
                     </button>
                   </form>
                   <form action={markRedemptionSent}>
                     <input type="hidden" name="id" value={r.id} />
-                    <button className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700">
+                    <button className="rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-ink">
                       발송 완료
                     </button>
                   </form>

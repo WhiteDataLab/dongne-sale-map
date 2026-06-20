@@ -43,23 +43,23 @@ export default async function AdminReports() {
   }
 
   if (reports.length === 0) {
-    return <p className="py-10 text-center text-sm text-gray-400">처리할 신고가 없어요.</p>;
+    return <p className="py-10 text-center text-sm text-ink-3">처리할 신고가 없어요.</p>;
   }
 
   return (
     <ul className="flex flex-col gap-3">
       {reports.map((r) => (
-        <li key={r.id} className="rounded-xl border border-gray-200 p-3">
+        <li key={r.id} className="rounded-xl border border-line p-3">
           <div className="flex items-center gap-2">
-            <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+            <span className="rounded bg-surface-2 px-2 py-0.5 text-xs font-medium text-ink-2">
               {TYPE_LABEL[r.targetType] ?? r.targetType}
             </span>
             <span className="truncate text-sm font-medium">
               {labels.get(r.targetId) ?? "(삭제됨)"}
             </span>
           </div>
-          <p className="mt-1 text-sm text-gray-700">사유: {r.reason}</p>
-          <p className="mt-0.5 text-xs text-gray-400">
+          <p className="mt-1 text-sm text-ink-2">사유: {r.reason}</p>
+          <p className="mt-0.5 text-xs text-ink-3">
             {new Date(r.createdAt).toLocaleString("ko-KR")}
           </p>
 
@@ -74,7 +74,7 @@ export default async function AdminReports() {
             </form>
             <form action={resolveReport}>
               <input type="hidden" name="id" value={r.id} />
-              <button className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100 active:bg-gray-200">
+              <button className="rounded-lg border border-line px-3 py-1.5 text-xs font-medium text-ink-2 transition-colors hover:bg-surface-2 active:bg-gray-200">
                 반려(처리완료)
               </button>
             </form>

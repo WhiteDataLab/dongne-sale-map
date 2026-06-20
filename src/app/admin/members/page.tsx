@@ -61,18 +61,18 @@ export default async function AdminMembers() {
   }
 
   if (dbError) {
-    return <p className="py-10 text-center text-sm text-gray-400">회원 정보를 불러오지 못했어요 (DB 연결 확인).</p>;
+    return <p className="py-10 text-center text-sm text-ink-3">회원 정보를 불러오지 못했어요 (DB 연결 확인).</p>;
   }
 
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-baseline justify-between">
         <h2 className="text-lg font-bold">회원 정보</h2>
-        <span className="text-xs text-gray-400">최근 가입순 · 최대 300명</span>
+        <span className="text-xs text-ink-3">최근 가입순 · 최대 300명</span>
       </div>
 
       {members.length === 0 ? (
-        <p className="py-10 text-center text-sm text-gray-400">회원이 없어요.</p>
+        <p className="py-10 text-center text-sm text-ink-3">회원이 없어요.</p>
       ) : (
         <ul className="flex flex-col gap-2">
           {members.map((u) => {
@@ -83,7 +83,7 @@ export default async function AdminMembers() {
                 : PROVIDER_LABEL[u.provider ?? ""] ?? "기타";
             const locked = u.status === "banned";
             return (
-              <li key={u.id} className="rounded-xl border border-gray-200 p-3">
+              <li key={u.id} className="rounded-xl border border-line p-3">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-1.5">
@@ -98,16 +98,16 @@ export default async function AdminMembers() {
                         <span className="rounded bg-red-100 px-1.5 py-0.5 text-[11px] font-medium text-red-600">잠금</span>
                       )}
                     </div>
-                    <p className="mt-0.5 text-xs text-gray-500">{linked}</p>
-                    <p className="truncate text-xs text-gray-400">
+                    <p className="mt-0.5 text-xs text-ink-3">{linked}</p>
+                    <p className="truncate text-xs text-ink-3">
                       ID {u.accountId ?? "—"}
                     </p>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-ink-3">
                       가입 {new Date(u.createdAt).toLocaleDateString("ko-KR")}
                     </p>
                   </div>
                   <div className="shrink-0 text-right">
-                    <p className="text-xs text-gray-400">적립포인트</p>
+                    <p className="text-xs text-ink-3">적립포인트</p>
                     <p className="font-bold tabular-nums">{(pointsByUser.get(u.id) ?? 0).toLocaleString("ko-KR")}P</p>
                   </div>
                 </div>
@@ -117,14 +117,14 @@ export default async function AdminMembers() {
                     {locked ? (
                       <form action={unlockUser}>
                         <input type="hidden" name="id" value={u.id} />
-                        <button className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100">
+                        <button className="rounded-lg border border-line px-3 py-1.5 text-xs font-medium text-ink-2 hover:bg-surface-2">
                           잠금 해제
                         </button>
                       </form>
                     ) : (
                       <form action={lockUser}>
                         <input type="hidden" name="id" value={u.id} />
-                        <button className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100">
+                        <button className="rounded-lg border border-line px-3 py-1.5 text-xs font-medium text-ink-2 hover:bg-surface-2">
                           계정 잠금
                         </button>
                       </form>
@@ -146,7 +146,7 @@ export default async function AdminMembers() {
         </ul>
       )}
 
-      <p className="text-xs text-gray-400">
+      <p className="text-xs text-ink-3">
         · 적립포인트 = 최근 {POINT_EXPIRY_YEARS}년 내 적립 합계. · 관리자 계정은 잠금/탈퇴할 수 없어요. · 강제 탈퇴 시 콘텐츠는 익명화되고 개인정보는 파기돼요.
       </p>
     </div>

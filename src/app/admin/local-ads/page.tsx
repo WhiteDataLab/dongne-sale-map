@@ -14,7 +14,7 @@ export default async function AdminLocalAdsPage() {
   return (
     <div>
       <h1 className="mb-1 text-lg font-bold">지역 광고 플랫폼</h1>
-      <p className="mb-3 text-xs text-gray-400">
+      <p className="mb-3 text-xs text-ink-3">
         부동산·학원·병원 등 로컬 광고주에게 동네 타게팅 정액 광고를 판매해요. 보이는 가게의 동(洞)에 매칭돼 지도 상단에 노출돼요.
       </p>
       <LocalAdAdmin ads={ads} />

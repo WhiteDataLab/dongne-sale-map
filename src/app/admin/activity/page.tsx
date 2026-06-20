@@ -104,7 +104,7 @@ export default async function AdminActivity() {
   }
 
   if (dbError) {
-    return <p className="py-10 text-center text-sm text-gray-400">활동 데이터를 불러오지 못했어요 (DB 연결 확인).</p>;
+    return <p className="py-10 text-center text-sm text-ink-3">활동 데이터를 불러오지 못했어요 (DB 연결 확인).</p>;
   }
 
   const byScore = [...rows].sort((a, b) => b.score - a.score).slice(0, 20);
@@ -118,22 +118,22 @@ export default async function AdminActivity() {
     <div className="flex flex-col gap-6">
       <div>
         <h2 className="text-lg font-bold">회원 활동 분석</h2>
-        <p className="text-xs text-gray-400">콘텐츠 기여 기반. 순수 페이지뷰 트래픽은 미수집(아래 안내).</p>
+        <p className="text-xs text-ink-3">콘텐츠 기여 기반. 순수 페이지뷰 트래픽은 미수집(아래 안내).</p>
       </div>
 
       {/* 활발한 회원 (활동 점수) */}
       <section>
         <h3 className="mb-1 text-sm font-bold">🔥 활발한 회원 (활동 점수)</h3>
-        <p className="mb-2 text-xs text-gray-400">
+        <p className="mb-2 text-xs text-ink-3">
           점수 = 가게×{W.store} + 세일×{W.sale} + 리뷰×{W.review} + 즐겨찾기×{W.favorite}
         </p>
         {byScore.length === 0 ? (
           <Empty />
         ) : (
-          <div className="overflow-hidden rounded-xl border border-gray-200">
+          <div className="overflow-hidden rounded-xl border border-line">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-100 bg-gray-50 text-xs text-gray-500">
+                <tr className="border-b border-line-2 bg-surface-2 text-xs text-ink-3">
                   <th className="px-3 py-2 text-left font-medium">#</th>
                   <th className="px-3 py-2 text-left font-medium">회원</th>
                   <th className="px-2 py-2 text-right font-medium">점수</th>
@@ -146,16 +146,16 @@ export default async function AdminActivity() {
               <tbody>
                 {byScore.map((r, i) => (
                   <tr key={r.id} className="border-b border-gray-50 last:border-0">
-                    <td className="px-3 py-2 text-gray-400">{i + 1}</td>
+                    <td className="px-3 py-2 text-ink-3">{i + 1}</td>
                     <td className="px-3 py-2">
                       <div className="font-medium">{r.nickname}</div>
-                      {r.accountId && <div className="truncate text-[11px] text-gray-400">{r.accountId}</div>}
+                      {r.accountId && <div className="truncate text-[11px] text-ink-3">{r.accountId}</div>}
                     </td>
                     <td className="px-2 py-2 text-right font-bold tabular-nums">{r.score}</td>
-                    <td className="px-2 py-2 text-right tabular-nums text-gray-500">{r.stores}</td>
-                    <td className="px-2 py-2 text-right tabular-nums text-gray-500">{r.sales}</td>
-                    <td className="px-2 py-2 text-right tabular-nums text-gray-500">{r.reviews}</td>
-                    <td className="px-3 py-2 text-right text-xs text-gray-400">{fmtDate(r.lastAt)}</td>
+                    <td className="px-2 py-2 text-right tabular-nums text-ink-3">{r.stores}</td>
+                    <td className="px-2 py-2 text-right tabular-nums text-ink-3">{r.sales}</td>
+                    <td className="px-2 py-2 text-right tabular-nums text-ink-3">{r.reviews}</td>
+                    <td className="px-3 py-2 text-right text-xs text-ink-3">{fmtDate(r.lastAt)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -208,15 +208,15 @@ function RankList({
       ) : (
         <ul className="flex flex-col gap-1.5">
           {rows.map((r, i) => (
-            <li key={r.id} className="flex items-center gap-3 rounded-lg border border-gray-100 px-3 py-2 text-sm">
-              <span className="w-5 shrink-0 text-center text-xs font-bold text-gray-400">{i + 1}</span>
+            <li key={r.id} className="flex items-center gap-3 rounded-lg border border-line-2 px-3 py-2 text-sm">
+              <span className="w-5 shrink-0 text-center text-xs font-bold text-ink-3">{i + 1}</span>
               <div className="min-w-0 flex-1">
                 <div className="truncate font-medium">{r.nickname}</div>
-                {r.accountId && <div className="truncate text-[11px] text-gray-400">{r.accountId}</div>}
+                {r.accountId && <div className="truncate text-[11px] text-ink-3">{r.accountId}</div>}
               </div>
               <span className="shrink-0 font-bold tabular-nums">
                 {metric(r)}
-                <span className="ml-0.5 text-xs font-normal text-gray-400">{unit}</span>
+                <span className="ml-0.5 text-xs font-normal text-ink-3">{unit}</span>
               </span>
             </li>
           ))}
@@ -227,5 +227,5 @@ function RankList({
 }
 
 function Empty() {
-  return <p className="rounded-lg border border-gray-100 py-6 text-center text-sm text-gray-400">아직 데이터가 없어요.</p>;
+  return <p className="rounded-lg border border-line-2 py-6 text-center text-sm text-ink-3">아직 데이터가 없어요.</p>;
 }

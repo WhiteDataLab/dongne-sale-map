@@ -71,32 +71,32 @@ export default async function AdminDashboard() {
     .slice(0, 10);
 
   if (dbError) {
-    return <p className="py-10 text-center text-sm text-gray-400">통계를 불러오지 못했어요 (DB 연결 확인).</p>;
+    return <p className="py-10 text-center text-sm text-ink-3">통계를 불러오지 못했어요 (DB 연결 확인).</p>;
   }
 
   return (
     <div className="flex flex-col gap-4">
       <div>
         <h2 className="text-lg font-bold">대시보드</h2>
-        <p className="text-xs text-gray-400">기준 시각: {kstToday} (KST) · 자동 갱신은 새로고침</p>
+        <p className="text-xs text-ink-3">기준 시각: {kstToday} (KST) · 자동 갱신은 새로고침</p>
       </div>
 
       {/* 오늘 활동 하이라이트 */}
       <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
         {rows.map((r) => (
-          <div key={r.label} className="rounded-xl border border-gray-200 p-3 text-center">
+          <div key={r.label} className="rounded-xl border border-line p-3 text-center">
             <div className="text-xl">{r.emoji}</div>
             <div className="mt-1 text-2xl font-bold tabular-nums">{r.data.today}</div>
-            <div className="text-[11px] text-gray-400">오늘 {r.label}</div>
+            <div className="text-[11px] text-ink-3">오늘 {r.label}</div>
           </div>
         ))}
       </div>
 
       {/* 상세 표 */}
-      <div className="overflow-hidden rounded-xl border border-gray-200">
+      <div className="overflow-hidden rounded-xl border border-line">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-gray-100 bg-gray-50 text-xs text-gray-500">
+            <tr className="border-b border-line-2 bg-surface-2 text-xs text-ink-3">
               <th className="px-3 py-2 text-left font-medium">항목</th>
               <th className="px-3 py-2 text-right font-medium">오늘</th>
               <th className="px-3 py-2 text-right font-medium">어제</th>
@@ -111,9 +111,9 @@ export default async function AdminDashboard() {
                   {r.emoji} {r.label}
                 </td>
                 <td className="px-3 py-2.5 text-right font-semibold tabular-nums">{r.data.today}</td>
-                <td className="px-3 py-2.5 text-right tabular-nums text-gray-500">{r.data.yesterday}</td>
-                <td className="px-3 py-2.5 text-right tabular-nums text-gray-500">{r.data.week}</td>
-                <td className="px-3 py-2.5 text-right tabular-nums text-gray-700">{r.data.total}</td>
+                <td className="px-3 py-2.5 text-right tabular-nums text-ink-3">{r.data.yesterday}</td>
+                <td className="px-3 py-2.5 text-right tabular-nums text-ink-3">{r.data.week}</td>
+                <td className="px-3 py-2.5 text-right tabular-nums text-ink-2">{r.data.total}</td>
               </tr>
             ))}
           </tbody>
@@ -127,7 +127,7 @@ export default async function AdminDashboard() {
           {[
             { label: "카카오", emoji: "💬", n: providers.kakao, color: "bg-yellow-50 text-yellow-700" },
             { label: "네이버", emoji: "🟢", n: providers.naver, color: "bg-green-50 text-green-700" },
-            { label: "전화번호", emoji: "📱", n: providers.phone, color: "bg-blue-50 text-blue-700" },
+            { label: "전화번호", emoji: "📱", n: providers.phone, color: "bg-brand-wash text-brand-ink" },
           ].map((p) => (
             <div key={p.label} className={`rounded-xl p-3 text-center ${p.color}`}>
               <div className="text-lg">{p.emoji}</div>
@@ -136,12 +136,12 @@ export default async function AdminDashboard() {
             </div>
           ))}
         </div>
-        <p className="mt-1 text-xs text-gray-400">
+        <p className="mt-1 text-xs text-ink-3">
           현재 회원 합계 {providers.kakao + providers.naver + providers.phone}명 (탈퇴·sentinel 제외)
         </p>
       </div>
 
-      <p className="text-xs text-gray-400">
+      <p className="text-xs text-ink-3">
         · 일자 경계는 한국시간(KST) 자정 기준이에요. · 누적은 전체 기간 합계예요. · 회원 탈퇴는 로그 도입 이후부터 집계돼요.
       </p>
     </div>

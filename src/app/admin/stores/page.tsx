@@ -6,7 +6,7 @@ import { approveStore, rejectStore } from "../actions";
 
 /** 주소 지오코딩 결과와 가게 좌표(핀) 대조 결과 라벨. */
 function addressMatch(distance: number | null): { text: string; cls: string } {
-  if (distance === null) return { text: "주소 확인 불가", cls: "bg-gray-100 text-gray-500" };
+  if (distance === null) return { text: "주소 확인 불가", cls: "bg-surface-2 text-ink-3" };
   if (distance <= 300)
     return { text: `주소 일치 ✓ (≈${Math.round(distance)}m)`, cls: "bg-green-100 text-green-700" };
   if (distance <= 1000)
@@ -58,7 +58,7 @@ export default async function AdminStores() {
   );
 
   if (stores.length === 0) {
-    return <p className="py-10 text-center text-sm text-gray-400">승인 대기 가게가 없어요.</p>;
+    return <p className="py-10 text-center text-sm text-ink-3">승인 대기 가게가 없어요.</p>;
   }
 
   return (
@@ -66,21 +66,21 @@ export default async function AdminStores() {
       {stores.map((s, i) => {
         const match = addressMatch(distances[i]);
         return (
-          <li key={s.id} className="rounded-xl border border-gray-200 p-3">
+          <li key={s.id} className="rounded-xl border border-line p-3">
             <div className="flex items-center gap-2">
               <span aria-hidden>{CATEGORY_META[s.category as Category].icon}</span>
               <span className="font-medium">{s.name}</span>
             </div>
-            <p className="mt-0.5 text-xs text-gray-500">{s.address}</p>
+            <p className="mt-0.5 text-xs text-ink-3">{s.address}</p>
 
             <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs">
               <span className={`rounded px-1.5 py-0.5 font-medium ${match.cls}`}>
                 {match.text}
               </span>
-              <span className="text-gray-400">
-                제보자: <b className="text-gray-600">{s.createdBy.nickname}</b>
+              <span className="text-ink-3">
+                제보자: <b className="text-ink-2">{s.createdBy.nickname}</b>
               </span>
-              <span className="text-gray-400">
+              <span className="text-ink-3">
                 {new Date(s.createdAt).toLocaleDateString("ko-KR")}
               </span>
             </div>
@@ -94,7 +94,7 @@ export default async function AdminStores() {
               </form>
               <form action={rejectStore}>
                 <input type="hidden" name="id" value={s.id} />
-                <button className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100 active:bg-gray-200">
+                <button className="rounded-lg border border-line px-3 py-1.5 text-xs font-medium text-ink-2 transition-colors hover:bg-surface-2 active:bg-gray-200">
                   반려(숨김)
                 </button>
               </form>

@@ -132,4 +132,11 @@
 - **AS-IS**: 네비/헤더·허브 카드가 `gray-*`/`blue-600`/`red-100`/`blue-100` 등 기본색.
 - **TO-BE**: 네비 라벨 `--ink-3`·링크 `--ink-2`(hover `--ink`), 헤더 `border-line-2`·"관리 콘솔" 800/`--ink`, 권한 안내 링크 `--brand`. 허브 카드 `border-line`·제목 `font-bold/--ink`·설명 `--ink-3`, 대기 배지 = 신고 `deal-wash/deal-ink`·사장님 `brand-wash/brand-ink`·기타 대기 amber(경고 유지) + `.num`.
 - **변화 형태**: 전 admin 페이지가 공유하는 크롬을 토큰으로 통일(내부 화면 일관성).
-- **남은 후속(선택)**: 개별 admin 하위 페이지(dashboard/members/리포트 등) 본문 토큰 확산 — 내부 운영 화면이라 한계효용 낮아 보류.
+### P2-7. 스크롤 등장 확산 + admin 본문 토큰 일괄
+파일: [`s/[id]/page.tsx`](../src/app/s/[id]/page.tsx) (`Reveal`) · `src/app/admin/**` + admin 컴포넌트(`BrandAdmin`/`GiftAdmin`/`LocalAdAdmin`/`NoticeAdmin`)
+- **스크롤 등장**: 공개 스크롤 페이지 `/s/[id]`의 세일 카드를 `Reveal`(fade+up)로 **스태거 등장**(delay = index×70ms, 최대 6단). `/about`에만 있던 Apple식 등장 모션을 공개 공유 표면으로 확산.
+- **admin 본문 토큰(코드모드 1회)**: 17개 admin 페이지 + 4개 admin 컴포넌트의 **중성 회색·일반 블루** 클래스 **311건**을 토큰으로 일괄 치환(`gray-* → ink/line/surface-2`, `blue-600/700 → brand/brand-ink`, `bg-blue-50 → brand-wash`). **의미색(red 위험·green 성공·amber 경고·emerald·indigo·rose)은 보존**. 매핑 검토 후 1회 적용·스크립트 삭제.
+- **변화 형태**: 공개 페이지 모션 일관 + 운영 화면까지 토큰 단일화(앱 전체 톤 수렴).
+- 검증: tsc·lint·프로덕션 빌드 통과, `/admin`·`/s/[id]` 200 렌더 확인.
+
+**남은 후속(선택, 낮음)**: 개별 admin 본문의 의미색 미세 정리(현재 보존), 정적 안내 페이지(/faq·/policy 등) 모션 — 한계효용 낮음.

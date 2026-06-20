@@ -14,14 +14,14 @@ export default async function AdminGifts() {
   }
 
   if (dbError) {
-    return <p className="py-10 text-center text-sm text-gray-400">상품을 불러오지 못했어요.</p>;
+    return <p className="py-10 text-center text-sm text-ink-3">상품을 불러오지 못했어요.</p>;
   }
 
   return (
     <div className="flex flex-col gap-3">
       <div>
         <h2 className="text-lg font-bold">기프티콘 상품 관리</h2>
-        <p className="text-xs text-gray-400">포인트샵(/shop)에 노출되는 상품이에요. 포인트 = 원.</p>
+        <p className="text-xs text-ink-3">포인트샵(/shop)에 노출되는 상품이에요. 포인트 = 원.</p>
       </div>
       <GiftAdmin items={items} />
     </div>

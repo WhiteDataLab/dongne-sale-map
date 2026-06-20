@@ -18,7 +18,7 @@ type Gift = {
   partner: string | null; // M5: 제휴사
 };
 
-const inputCls = "w-full rounded-lg border border-gray-300 px-2.5 py-1.5 text-sm outline-none focus:border-blue-500";
+const inputCls = "w-full rounded-lg border border-line px-2.5 py-1.5 text-sm outline-none focus:border-blue-500";
 
 async function uploadImage(file: File): Promise<string | null> {
   const fd = new FormData();
@@ -85,7 +85,7 @@ function GiftRow({ item }: { item: Gift }) {
   };
 
   return (
-    <div className="rounded-xl border border-gray-200 p-3">
+    <div className="rounded-xl border border-line p-3">
       <div className="flex gap-3">
         <button
           type="button"
@@ -134,20 +134,20 @@ function GiftRow({ item }: { item: Gift }) {
         }}
       />
       <div className="mt-2 flex items-center justify-between">
-        <label className="flex items-center gap-1 text-xs text-gray-600">
+        <label className="flex items-center gap-1 text-xs text-ink-2">
           <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} /> 노출
         </label>
         <div className="flex items-center gap-2">
           {imageUrl && (
-            <button type="button" onClick={() => setImageUrl(null)} className="text-xs text-gray-400">
+            <button type="button" onClick={() => setImageUrl(null)} className="text-xs text-ink-3">
               이미지 제거
             </button>
           )}
-          {msg && <span className="text-xs text-gray-500">{msg}</span>}
-          <button type="button" onClick={del} disabled={busy} className="rounded-lg border border-gray-300 px-2.5 py-1 text-xs text-red-500">
+          {msg && <span className="text-xs text-ink-3">{msg}</span>}
+          <button type="button" onClick={del} disabled={busy} className="rounded-lg border border-line px-2.5 py-1 text-xs text-red-500">
             삭제
           </button>
-          <button type="button" onClick={save} disabled={busy} className="rounded-lg bg-blue-600 px-3 py-1 text-xs font-semibold text-white disabled:bg-gray-300">
+          <button type="button" onClick={save} disabled={busy} className="rounded-lg bg-brand px-3 py-1 text-xs font-semibold text-white disabled:bg-gray-300">
             {busy ? "처리 중…" : "저장"}
           </button>
         </div>
@@ -187,7 +187,7 @@ function AddGift() {
 
   return (
     <div className="rounded-xl border border-dashed border-blue-300 p-3">
-      <p className="mb-2 text-sm font-semibold text-blue-700">＋ 상품 추가</p>
+      <p className="mb-2 text-sm font-semibold text-brand-ink">＋ 상품 추가</p>
       <div className="grid grid-cols-3 gap-1.5">
         <input value={brand} onChange={(e) => setBrand(e.target.value)} placeholder="브랜드" className={inputCls} />
         <input value={name} onChange={(e) => setName(e.target.value)} placeholder="상품명" className={inputCls} />
@@ -195,7 +195,7 @@ function AddGift() {
       </div>
       <div className="mt-2 flex items-center justify-end gap-2">
         {msg && <span className="text-xs text-red-500">{msg}</span>}
-        <button type="button" onClick={add} disabled={busy} className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white disabled:bg-gray-300">
+        <button type="button" onClick={add} disabled={busy} className="rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-white disabled:bg-gray-300">
           추가 (추가 후 사진·이모지 편집)
         </button>
       </div>

@@ -37,7 +37,7 @@ export default async function AdminInquiries() {
     dbError = true;
   }
 
-  if (dbError) return <p className="py-10 text-center text-sm text-gray-400">문의를 불러오지 못했어요.</p>;
+  if (dbError) return <p className="py-10 text-center text-sm text-ink-3">문의를 불러오지 못했어요.</p>;
 
   const open = rows.filter((r) => r.status === "open").length;
 
@@ -49,18 +49,18 @@ export default async function AdminInquiries() {
       </div>
 
       {rows.length === 0 ? (
-        <p className="py-10 text-center text-sm text-gray-400">문의가 없어요.</p>
+        <p className="py-10 text-center text-sm text-ink-3">문의가 없어요.</p>
       ) : (
         <ul className="flex flex-col gap-2">
           {rows.map((q) => (
-            <li key={q.id} className="rounded-xl border border-gray-200 p-3">
+            <li key={q.id} className="rounded-xl border border-line p-3">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <p className="font-medium">{q.title}</p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-ink-3">
                     {q.nickname} · {q.email}
                   </p>
-                  <p className="text-xs text-gray-400">{new Date(q.createdAt).toLocaleString("ko-KR")}</p>
+                  <p className="text-xs text-ink-3">{new Date(q.createdAt).toLocaleString("ko-KR")}</p>
                 </div>
                 <span
                   className={[
@@ -71,16 +71,16 @@ export default async function AdminInquiries() {
                   {q.status === "answered" ? "답변완료" : "문의중"}
                 </span>
               </div>
-              <p className="mt-2 whitespace-pre-wrap text-sm text-gray-700">{q.content}</p>
+              <p className="mt-2 whitespace-pre-wrap text-sm text-ink-2">{q.content}</p>
               {q.attachmentUrl && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={q.attachmentUrl} alt="" className="mt-2 w-40 rounded-lg object-cover" />
               )}
 
               {q.answer && (
-                <div className="mt-2 rounded-lg bg-blue-50 p-2.5">
-                  <p className="text-xs font-semibold text-blue-700">💬 내 답변</p>
-                  <p className="mt-1 whitespace-pre-wrap text-sm text-gray-700">{q.answer}</p>
+                <div className="mt-2 rounded-lg bg-brand-wash p-2.5">
+                  <p className="text-xs font-semibold text-brand-ink">💬 내 답변</p>
+                  <p className="mt-1 whitespace-pre-wrap text-sm text-ink-2">{q.answer}</p>
                 </div>
               )}
 
@@ -91,9 +91,9 @@ export default async function AdminInquiries() {
                   rows={2}
                   defaultValue={q.answer ?? ""}
                   placeholder="답변을 작성하세요."
-                  className="w-full resize-none rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-blue-500"
+                  className="w-full resize-none rounded-lg border border-line px-3 py-2 text-sm outline-none focus:border-blue-500"
                 />
-                <button className="self-end rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700">
+                <button className="self-end rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-ink">
                   {q.status === "answered" ? "답변 수정" : "답변 등록"}
                 </button>
               </form>

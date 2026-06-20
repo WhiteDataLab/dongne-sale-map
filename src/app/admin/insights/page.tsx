@@ -27,7 +27,7 @@ export default async function AdminInsightsPage({
   return (
     <div>
       <h1 className="mb-1 text-lg font-bold">동네 물가 데이터 (B2B)</h1>
-      <p className="mb-3 text-xs text-gray-400">
+      <p className="mb-3 text-xs text-ink-3">
         세일 데이터의 비식별 집계예요. 가게 {MIN_STORES}곳 미만 버킷은 익명성 보장을 위해 숨겨져요. 지자체·리서치·FMCG 리포트 원천.
       </p>
 
@@ -37,31 +37,31 @@ export default async function AdminInsightsPage({
           <Link
             key={d}
             href={`/admin/insights?days=${d}`}
-            className={`rounded-full px-3 py-1 ${days === d ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-600"}`}
+            className={`rounded-full px-3 py-1 ${days === d ? "bg-gray-900 text-white" : "bg-surface-2 text-ink-2"}`}
           >
             {d}일
           </Link>
         ))}
-        <a href={`/api/admin/insights/export?days=${days}&type=region`} className="ml-auto text-xs text-blue-600 underline">동네×업종 CSV</a>
-        <a href={`/api/admin/insights/export?days=${days}&type=item`} className="text-xs text-blue-600 underline">품목 CSV</a>
+        <a href={`/api/admin/insights/export?days=${days}&type=region`} className="ml-auto text-xs text-brand underline">동네×업종 CSV</a>
+        <a href={`/api/admin/insights/export?days=${days}&type=item`} className="text-xs text-brand underline">품목 CSV</a>
       </div>
 
       {/* 요약 */}
       <div className="mb-4 grid grid-cols-4 gap-2 text-center">
-        <div className="rounded-xl bg-gray-50 p-3">
-          <p className="text-[11px] text-gray-400">세일 수</p>
+        <div className="rounded-xl bg-surface-2 p-3">
+          <p className="text-[11px] text-ink-3">세일 수</p>
           <p className="text-lg font-bold">{summary.totalSales.toLocaleString("ko-KR")}</p>
         </div>
-        <div className="rounded-xl bg-gray-50 p-3">
-          <p className="text-[11px] text-gray-400">활성 가게</p>
+        <div className="rounded-xl bg-surface-2 p-3">
+          <p className="text-[11px] text-ink-3">활성 가게</p>
           <p className="text-lg font-bold">{summary.activeStores.toLocaleString("ko-KR")}</p>
         </div>
-        <div className="rounded-xl bg-gray-50 p-3">
-          <p className="text-[11px] text-gray-400">커버 동네</p>
+        <div className="rounded-xl bg-surface-2 p-3">
+          <p className="text-[11px] text-ink-3">커버 동네</p>
           <p className="text-lg font-bold">{summary.regionsCovered}</p>
         </div>
-        <div className="rounded-xl bg-gray-50 p-3">
-          <p className="text-[11px] text-gray-400">공개 버킷</p>
+        <div className="rounded-xl bg-surface-2 p-3">
+          <p className="text-[11px] text-ink-3">공개 버킷</p>
           <p className="text-lg font-bold">{summary.publishedBuckets}</p>
         </div>
       </div>
@@ -69,13 +69,13 @@ export default async function AdminInsightsPage({
       {/* 동네×업종 */}
       <h2 className="mb-1 text-sm font-bold">동네 × 업종 평균 세일가</h2>
       {regionStats.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-gray-200 p-6 text-center text-sm text-gray-400">
+        <p className="rounded-xl border border-dashed border-line p-6 text-center text-sm text-ink-3">
           아직 공개할 집계가 부족해요. (가게 {MIN_STORES}곳 이상 동네·업종 필요)
         </p>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-gray-100">
+        <div className="overflow-x-auto rounded-xl border border-line-2">
           <table className="w-full text-xs">
-            <thead className="bg-gray-50 text-gray-500">
+            <thead className="bg-surface-2 text-ink-3">
               <tr>
                 <th className="p-2 text-left">동네</th>
                 <th className="p-2 text-left">업종</th>
@@ -93,7 +93,7 @@ export default async function AdminInsightsPage({
                   <td className="p-2 text-right">{r.storeCount}</td>
                   <td className="p-2 text-right">{r.saleCount}</td>
                   <td className="p-2 text-right font-bold">{won(r.avgPrice)}</td>
-                  <td className="p-2 text-right text-gray-400">{won(r.minPrice)}~{won(r.maxPrice)}</td>
+                  <td className="p-2 text-right text-ink-3">{won(r.minPrice)}~{won(r.maxPrice)}</td>
                 </tr>
               ))}
             </tbody>
@@ -104,13 +104,13 @@ export default async function AdminInsightsPage({
       {/* 품목별 */}
       <h2 className="mb-1 mt-5 text-sm font-bold">품목별 가격 분포 (상위 {itemStats.length})</h2>
       {itemStats.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-gray-200 p-6 text-center text-sm text-gray-400">
+        <p className="rounded-xl border border-dashed border-line p-6 text-center text-sm text-ink-3">
           공개할 품목 집계가 부족해요.
         </p>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-gray-100">
+        <div className="overflow-x-auto rounded-xl border border-line-2">
           <table className="w-full text-xs">
-            <thead className="bg-gray-50 text-gray-500">
+            <thead className="bg-surface-2 text-ink-3">
               <tr>
                 <th className="p-2 text-left">품목</th>
                 <th className="p-2 text-right">가게</th>
@@ -126,7 +126,7 @@ export default async function AdminInsightsPage({
                   <td className="p-2 text-right">{it.storeCount}</td>
                   <td className="p-2 text-right">{it.saleCount}</td>
                   <td className="p-2 text-right font-bold">{won(it.avgPrice)}</td>
-                  <td className="p-2 text-right text-gray-400">{won(it.minPrice)}~{won(it.maxPrice)}</td>
+                  <td className="p-2 text-right text-ink-3">{won(it.minPrice)}~{won(it.maxPrice)}</td>
                 </tr>
               ))}
             </tbody>
