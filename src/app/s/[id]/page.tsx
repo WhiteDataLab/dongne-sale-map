@@ -79,35 +79,35 @@ export default async function StoreSharePage({ params }: { params: Promise<{ id:
         style={{ background: `linear-gradient(160deg, ${meta.color}22, ${meta.color}55)` }}
       >
         <span className="text-5xl">{meta.icon}</span>
-        <h1 className="mt-2 text-2xl font-bold">{store.name}</h1>
-        <p className="mt-1 text-sm text-gray-600">{store.address}</p>
+        <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-ink">{store.name}</h1>
+        <p className="mt-1 text-sm font-medium text-ink-2">{store.address}</p>
         <div className="mt-2 flex flex-wrap items-center justify-center gap-2 text-xs">
           {openStatus === "open" && (
-            <span className="rounded-full bg-green-100 px-2 py-0.5 font-medium text-green-700">영업중</span>
+            <span className="rounded-full bg-verify-wash px-2 py-0.5 font-bold text-verify-ink">영업중</span>
           )}
           {openStatus === "preparing" && (
-            <span className="rounded-full bg-amber-100 px-2 py-0.5 font-medium text-amber-700">영업준비중</span>
+            <span className="rounded-full bg-deal-wash px-2 py-0.5 font-bold text-deal-ink">영업준비중</span>
           )}
           {openStatus === "closed" && (
-            <span className="rounded-full bg-gray-200 px-2 py-0.5 font-medium text-gray-600">영업종료</span>
+            <span className="rounded-full bg-surface-2 px-2 py-0.5 font-bold text-ink-3">영업종료</span>
           )}
           {avg !== null && (
-            <span className="text-amber-500">
-              {starString(avg)} <span className="text-gray-400">({ratings.length})</span>
+            <span className="num font-bold text-amber-500">
+              {starString(avg)} <span className="text-ink-4">({ratings.length})</span>
             </span>
           )}
-          <span className="rounded-full bg-white/70 px-2 py-0.5 text-gray-600">{meta.label}</span>
+          <span className="rounded-full bg-white/70 px-2 py-0.5 font-semibold text-ink-2">{meta.label}</span>
         </div>
       </header>
 
       {/* 세일 */}
       <section className="px-4 py-5">
-        <h2 className="mb-3 text-lg font-bold">
-          🔥 진행중인 세일 {store.sales.length > 0 && <span className="text-red-600">{store.sales.length}</span>}
+        <h2 className="mb-3 text-lg font-extrabold tracking-tight text-ink">
+          🔥 진행중인 세일 {store.sales.length > 0 && <span className="num text-deal-ink">{store.sales.length}</span>}
         </h2>
 
         {store.sales.length === 0 ? (
-          <p className="rounded-xl border border-gray-100 bg-gray-50 py-10 text-center text-sm text-gray-400">
+          <p className="rounded-xl border border-line bg-surface-2 py-10 text-center text-sm font-medium text-ink-3">
             지금은 진행중인 세일이 없어요.
           </p>
         ) : (
@@ -115,7 +115,7 @@ export default async function StoreSharePage({ params }: { params: Promise<{ id:
             {store.sales.map((s) => {
               const photos = s.photoUrls?.length ? s.photoUrls : s.photoUrl ? [s.photoUrl] : [];
               return (
-                <li key={s.id} className="overflow-hidden rounded-2xl border border-gray-100 shadow-sm">
+                <li key={s.id} className="overflow-hidden rounded-2xl border border-line shadow-[var(--sh-1)]">
                   {photos.length > 0 && (
                     <div className="flex w-full snap-x snap-mandatory overflow-x-auto">
                       {photos.map((u, i) => (
@@ -131,15 +131,15 @@ export default async function StoreSharePage({ params }: { params: Promise<{ id:
                   )}
                   <div className="p-3">
                     <div className="flex items-baseline justify-between gap-2">
-                      <p className="truncate font-semibold">{s.title}</p>
-                      <p className="shrink-0 font-bold text-red-600">{won(s.salePrice)}</p>
+                      <p className="truncate font-bold text-ink">{s.title}</p>
+                      <p className="num shrink-0 text-lg font-extrabold text-deal-ink">{won(s.salePrice)}</p>
                     </div>
-                    {s.qty?.trim() && <p className="text-xs text-gray-500">{s.qty}</p>}
+                    {s.qty?.trim() && <p className="text-xs font-medium text-ink-3">{s.qty}</p>}
                     <div className="mt-1 flex items-center gap-2 text-xs">
-                      <span className="rounded bg-red-50 px-1.5 py-0.5 font-medium text-red-600">
+                      <span className="rounded-full bg-deal-wash px-2 py-0.5 font-bold text-deal-ink">
                         {untilLabel(s.expiresAt.toISOString())}
                       </span>
-                      <span className="text-gray-400">{freshnessLabel(s.createdAt.toISOString())}</span>
+                      <span className="font-medium text-ink-4">{freshnessLabel(s.createdAt.toISOString())}</span>
                     </div>
                   </div>
                 </li>
@@ -150,10 +150,10 @@ export default async function StoreSharePage({ params }: { params: Promise<{ id:
       </section>
 
       {/* CTA */}
-      <div className="sticky bottom-0 flex gap-2 border-t border-gray-100 bg-white/90 p-3 backdrop-blur">
+      <div className="sticky bottom-0 flex gap-2 border-t border-line-2 bg-white/90 p-3 backdrop-blur">
         <Link
           href={mapHref}
-          className="flex-1 rounded-xl bg-blue-600 py-3 text-center text-sm font-semibold text-white"
+          className="flex-1 rounded-xl bg-brand py-3 text-center text-sm font-bold text-white hover:bg-brand-ink"
         >
           지도에서 자세히 보기
         </Link>
@@ -161,13 +161,13 @@ export default async function StoreSharePage({ params }: { params: Promise<{ id:
           path={`/s/${store.id}`}
           title={`${store.name} 세일 정보`}
           text="동네 세일 지도에서 확인해보세요!"
-          className="rounded-xl border border-gray-300 px-4 py-3 text-sm font-semibold text-gray-700"
+          className="rounded-xl border border-line bg-surface-2 px-4 py-3 text-sm font-bold text-ink"
         >
           🔗 공유
         </ShareButton>
       </div>
 
-      <p className="px-4 pb-6 pt-2 text-center text-xs text-gray-400">
+      <p className="px-4 pb-6 pt-2 text-center text-xs font-medium text-ink-4">
         동네 세일 지도 · 우리 동네 실시간 세일을 지도에서
       </p>
     </div>

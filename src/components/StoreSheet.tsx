@@ -341,28 +341,22 @@ export function StoreSheet({
                   {/* '사장님 가게'는 인증된 소유자(ownerId) 유무로 판정 — source(등록 출처)만으로는
                       소유자 없는 상태와 어긋나므로(상품 탭 "사장님 미등록"과 모순) hasOwner 기준으로 통일 */}
                   {detail.hasOwner ? (
-                    <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
-                      👑 사장님 직접 관리
-                    </span>
+                    <span className="badge badge--store shrink-0">👑 사장님 직접 관리</span>
                   ) : (
-                    <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">
+                    <span className="shrink-0 rounded-full bg-surface-2 px-2.5 py-0.5 text-xs font-semibold text-ink-3">
                       주민들이 관리
                     </span>
                   )}
                   {!detail.verified && (
-                    <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">
+                    <span className="shrink-0 rounded-full bg-surface-2 px-2.5 py-0.5 text-xs font-semibold text-ink-3">
                       인증중
                     </span>
                   )}
-                  {/* M8: 공식 배지 — 라이트(기본)/프로(프리미엄) 구독 가게 */}
+                  {/* M8: 공식 배지 — 라이트(기본)/프로(프리미엄) 구독 가게 (공통 .badge 통일) */}
                   {detail.tier === "pro" ? (
-                    <span className="shrink-0 rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-semibold text-indigo-700">
-                      ✅ 공식 프로
-                    </span>
+                    <span className="badge badge--pro shrink-0">✅ 공식 프로</span>
                   ) : detail.tier === "lite" ? (
-                    <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">
-                      ✅ 공식
-                    </span>
+                    <span className="badge badge--official shrink-0">✅ 공식</span>
                   ) : null}
                 </div>
                 <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
@@ -772,45 +766,45 @@ export function ProStats({ stats }: { stats: StoreStats }) {
   const maxDaily = Math.max(1, ...daily.map((d) => d.impressions));
   const maxWd = Math.max(1, ...weekday.map((w) => w.impressions));
   return (
-    <div className="mt-2 border-t border-blue-100 pt-2">
-      <p className="text-[11px] font-semibold text-indigo-600">⭐ 프로 확장 분석</p>
+    <div className="mt-2 border-t border-line-2 pt-2">
+      <p className="text-[11px] font-bold text-brand-ink">⭐ 프로 확장 분석</p>
       <div className="mt-1 grid grid-cols-2 gap-1.5">
-        <div className="rounded-lg bg-white px-2 py-1.5">
-          <p className="text-[10px] text-gray-400">최근 30일</p>
-          <p className="text-xs font-bold text-gray-800">
+        <div className="rounded-lg bg-surface-2 px-2 py-1.5">
+          <p className="text-[10px] font-medium text-ink-3">최근 30일</p>
+          <p className="num text-xs font-bold text-ink">
             노출 {l30.impressions ?? 0} · 상세 {l30.detailOpens ?? 0}
           </p>
         </div>
-        <div className="rounded-lg bg-white px-2 py-1.5">
-          <p className="text-[10px] text-gray-400">최근 90일</p>
-          <p className="text-xs font-bold text-gray-800">
+        <div className="rounded-lg bg-surface-2 px-2 py-1.5">
+          <p className="text-[10px] font-medium text-ink-3">최근 90일</p>
+          <p className="num text-xs font-bold text-ink">
             노출 {l90.impressions ?? 0} · 상세 {l90.detailOpens ?? 0}
           </p>
         </div>
       </div>
 
-      <p className="mt-2 text-[10px] text-gray-400">최근 30일 노출 추이</p>
+      <p className="mt-2 text-[10px] font-medium text-ink-3">최근 30일 노출 추이</p>
       <div className="mt-1 flex h-12 items-end gap-px">
         {daily.map((d) => (
           <div
             key={d.day}
-            className="flex-1 rounded-sm bg-indigo-400"
+            className="flex-1 rounded-sm bg-brand"
             style={{ height: `${Math.max(2, (d.impressions / maxDaily) * 100)}%` }}
             title={`${d.day}: 노출 ${d.impressions}`}
           />
         ))}
       </div>
 
-      <p className="mt-2 text-[10px] text-gray-400">요일별 노출</p>
+      <p className="mt-2 text-[10px] font-medium text-ink-3">요일별 노출</p>
       <div className="mt-1 flex items-end gap-1">
         {weekday.map((w, i) => (
           <div key={i} className="flex flex-1 flex-col items-center gap-0.5">
             <div
-              className="w-full rounded-sm bg-indigo-300"
+              className="w-full rounded-sm bg-brand/55"
               style={{ height: `${Math.max(2, (w.impressions / maxWd) * 40)}px` }}
               title={`${WEEKDAY_LABELS[i]}: ${w.impressions}`}
             />
-            <span className="text-[9px] text-gray-400">{WEEKDAY_LABELS[i]}</span>
+            <span className="text-[9px] font-medium text-ink-3">{WEEKDAY_LABELS[i]}</span>
           </div>
         ))}
       </div>
@@ -823,11 +817,11 @@ export function ProStats({ stats }: { stats: StoreStats }) {
 /** M11: 동종업종 벤치마크 — 같은 동·업종 평균 대비 우리 가게(최근 30일). */
 function Benchmark({ b }: { b: NonNullable<StoreStats["benchmark"]> }) {
   const cmp = (mine: number, avg: number) => {
-    if (avg === 0) return { txt: mine > 0 ? "평균 0" : "—", cls: "text-gray-400" };
+    if (avg === 0) return { txt: mine > 0 ? "평균 0" : "—", cls: "text-ink-4" };
     const pct = Math.round((mine / avg) * 100);
     return pct >= 100
-      ? { txt: `평균의 ${pct}%`, cls: "text-green-600" }
-      : { txt: `평균의 ${pct}%`, cls: "text-amber-600" };
+      ? { txt: `평균의 ${pct}%`, cls: "text-verify-ink" }
+      : { txt: `평균의 ${pct}%`, cls: "text-deal-ink" };
   };
   const ROWS: [string, number, number][] = [
     ["노출", b.mine.impressions, b.avg.impressions],
@@ -835,22 +829,22 @@ function Benchmark({ b }: { b: NonNullable<StoreStats["benchmark"]> }) {
     ["방문의향", b.mine.intentVisits, b.avg.intentVisits],
   ];
   return (
-    <div className="mt-3 rounded-lg border border-indigo-100 bg-indigo-50/50 p-2.5">
+    <div className="mt-3 rounded-xl border border-line bg-brand-wash/60 p-2.5">
       <div className="flex items-center justify-between">
-        <p className="text-[11px] font-semibold text-indigo-700">📊 동종업종 벤치마크</p>
-        <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-indigo-700">
+        <p className="text-[11px] font-bold text-brand-ink">📊 동종업종 벤치마크</p>
+        <span className="num rounded-full bg-white px-2 py-0.5 text-[10px] font-extrabold text-brand-ink">
           {b.region} 동종 상위 {100 - b.percentile}%
         </span>
       </div>
-      <p className="mt-0.5 text-[10px] text-gray-400">{b.region} 같은 업종 {b.peerCount}곳 평균 대비(최근 30일)</p>
+      <p className="mt-0.5 text-[10px] font-medium text-ink-3">{b.region} 같은 업종 {b.peerCount}곳 평균 대비(최근 30일)</p>
       <div className="mt-1.5 grid grid-cols-3 gap-1.5">
         {ROWS.map(([label, mine, avg]) => {
           const c = cmp(mine, avg);
           return (
             <div key={label} className="rounded-lg bg-white px-2 py-1.5 text-center">
-              <p className="text-[10px] text-gray-400">{label}</p>
-              <p className="text-sm font-bold text-gray-800">{mine}</p>
-              <p className={`text-[10px] font-medium ${c.cls}`}>{c.txt}</p>
+              <p className="text-[10px] font-medium text-ink-3">{label}</p>
+              <p className="num text-sm font-extrabold text-ink">{mine}</p>
+              <p className={`text-[10px] font-bold ${c.cls}`}>{c.txt}</p>
             </div>
           );
         })}
@@ -881,7 +875,7 @@ function OpenBadge({ status }: { status: StoreDetailDTO["openStatus"] }) {
 }
 
 function EmptyState({ children }: { children: React.ReactNode }) {
-  return <p className="py-10 text-center text-sm text-gray-400">{children}</p>;
+  return <p className="py-10 text-center text-sm font-medium text-ink-3">{children}</p>;
 }
 
 export function ProductsTab({

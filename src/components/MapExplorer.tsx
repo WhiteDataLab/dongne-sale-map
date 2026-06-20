@@ -552,12 +552,17 @@ export function MapExplorer() {
         </div>
       )}
 
-      {/* 빈 상태 (스펙 6장) */}
+      {/* 빈 상태 (스펙 6장) — 빈 동네를 '첫 제보' 초대로 */}
       {!error && !loadingStores && stores.length === 0 && (
         <div className="pointer-events-none absolute inset-x-0 bottom-6 z-10 flex justify-center px-4">
-          <div className="rounded-2xl bg-black/75 px-4 py-3 text-center text-sm text-white shadow-lg">
-            이 동네는 아직 정보가 없어요.
-            <br />첫 제보를 남겨보세요!
+          <div className="max-w-[17rem] rounded-2xl border border-line bg-white/95 px-5 py-4 text-center shadow-[var(--sh-1)] backdrop-blur">
+            <p className="text-2xl">🗺️</p>
+            <p className="mt-1.5 text-sm font-bold text-ink">이 동네는 아직 비어 있어요</p>
+            <p className="mt-1 text-xs font-medium leading-relaxed text-ink-3">
+              첫 세일·가게를 제보하면
+              <br />
+              이웃들이 함께 봐요
+            </p>
           </div>
         </div>
       )}

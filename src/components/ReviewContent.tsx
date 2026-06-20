@@ -21,20 +21,18 @@ export function ReviewContent({
   return (
     <div className="mt-1 flex flex-col gap-1">
       {(products.length > 0 || verified || receiptVerified) && (
-        <p className="flex flex-wrap items-center gap-1.5 text-xs text-gray-500">
+        <p className="flex flex-wrap items-center gap-1.5 text-xs text-ink-3">
           {receiptVerified && (
-            <span className="rounded-full bg-blue-100 px-2 py-0.5 font-medium text-blue-700">
-              🧾 영수증 인증
-            </span>
+            <span className="badge badge--verify !text-[11px]">🧾 영수증 인증</span>
           )}
           {verified && (
-            <span className="rounded-full bg-green-100 px-2 py-0.5 font-medium text-green-700">
+            <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[11px] font-semibold text-ink-2">
               📷 사진 인증
             </span>
           )}
           {products.length > 0 && (
             <span>
-              🛒 구매 메뉴: <span className="text-gray-700">{products.map((p) => p.name).join(", ")}</span>
+              🛒 구매 메뉴: <span className="text-ink-2">{products.map((p) => p.name).join(", ")}</span>
             </span>
           )}
         </p>
@@ -44,12 +42,12 @@ export function ReviewContent({
           {tags.map((t) => (
             <span
               key={t}
-              className="rounded-full border border-gray-300 px-2.5 py-0.5 text-xs text-gray-600"
+              className="rounded-full border border-line px-2.5 py-0.5 text-xs font-medium text-ink-2"
             >
               {t}
             </span>
           ))}
-          {content.trim() && <span className="text-sm text-gray-700">{content}</span>}
+          {content.trim() && <span className="text-sm text-ink-2">{content}</span>}
         </div>
       )}
     </div>
