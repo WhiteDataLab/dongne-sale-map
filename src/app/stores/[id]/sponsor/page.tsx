@@ -161,7 +161,7 @@ export default async function SponsorSubscribePage({
         </p>
       )}
 
-      <p className="text-[11px] leading-relaxed text-ink-4">
+      <p className="text-xs leading-relaxed text-ink-3">
         · 카드 등록 후 {TRIAL_DAYS}일간 무료로 노출돼요. 무료체험 종료 전 해지하면 청구되지 않아요.
         <br />· 해지 시 다음 결제부터 중단되며, 이미 결제한 기간의 노출은 만료일까지 유지돼요(환불 없음).
         <br />· 카드 정보는 토스페이먼츠가 안전하게 보관하며, 본 서비스는 카드번호를 저장하지 않아요.

@@ -119,12 +119,12 @@ export function MerchantDashboard({ storeId, storeName }: { storeId: string; sto
             </span>
             <h1 className="truncate text-lg font-bold">{detail?.name ?? storeName}</h1>
             {planLabel && (
-              <span className="shrink-0 rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] font-bold text-indigo-700">
+              <span className="shrink-0 rounded-full bg-brand-wash px-2 py-0.5 text-xs font-bold text-brand-ink">
                 {planLabel}
               </span>
             )}
             {detail && !detail.verified && (
-              <span className="shrink-0 rounded-full bg-gray-200 px-2 py-0.5 text-[11px] text-ink-3">미인증</span>
+              <span className="shrink-0 rounded-full bg-surface-2 px-2 py-0.5 text-xs text-ink-3">미인증</span>
             )}
           </div>
         </header>
@@ -163,12 +163,13 @@ export function MerchantDashboard({ storeId, storeName }: { storeId: string; sto
                       📊 이번 주 우리 가게 반응
                     </p>
                     <div className="mt-2 flex items-baseline gap-2">
-                      <span className="num text-4xl font-extrabold text-ink">
+                      <span className="num text-[38px] font-extrabold leading-none text-ink">
                         {stats.last7.impressions ?? 0}
                       </span>
-                      <span className="text-sm font-bold text-ink-2">명이 봤어요</span>
+                      <span className="text-base font-bold text-ink-2">명이 봤어요</span>
                     </div>
-                    <p className="mt-0.5 text-xs font-semibold text-ink-3">
+                    {/* TODO(out-of-scope): 전주 대비 델타(+N%)는 이전 7일 집계가 필요(stats API 확장). 지금은 '오늘' 보조 노출만. */}
+                    <p className="mt-1 text-sm font-semibold text-ink-3">
                       오늘 {stats.today.impressions ?? 0}명이 봤어요
                     </p>
 
@@ -184,25 +185,25 @@ export function MerchantDashboard({ storeId, storeName }: { storeId: string; sto
                           >
                             {stats.last7[key] ?? 0}
                           </span>
-                          <span className="text-[11.5px] font-semibold text-ink-3">{label}</span>
+                          <span className="text-[13px] font-semibold text-ink-3">{label}</span>
                         </div>
                       ))}
                     </div>
-                    <p className="mt-1.5 text-[10px] text-ink-4">최근 7일 합계</p>
+                    <p className="mt-1.5 text-xs text-ink-3">최근 7일 합계</p>
 
                     {/* 잠금 업셀: 값을 보여준 뒤 자물쇠 (무료 티어 → 라이트 유도) */}
                     {detail.tier === "free" && (
                       <button
                         type="button"
                         onClick={() => setSection("subscription")}
-                        className="mt-3 flex w-full items-center gap-3 rounded-2xl border border-dashed border-brand bg-brand-wash px-3.5 py-3 text-left"
+                        className="mt-3 flex min-h-[56px] w-full items-center gap-3 rounded-2xl border border-dashed border-brand bg-brand-wash px-3.5 py-3 text-left"
                       >
-                        <span className="text-lg">🔔</span>
+                        <span className="text-xl">🔔</span>
                         <span className="flex-1">
-                          <b className="block text-[13.5px] font-extrabold text-brand-ink">
+                          <b className="block text-sm font-extrabold text-brand-ink">
                             단골에게 세일 알림 보내기
                           </b>
-                          <span className="text-[11.5px] font-semibold text-brand-ink/80">
+                          <span className="text-xs font-semibold text-brand-ink/80">
                             {(stats.last7.intentVisits ?? 0) > 0
                               ? `갈래요한 ${stats.last7.intentVisits}명부터 먼저 손 뻗어요`
                               : "먼저 손 뻗으면 더 와요"}{" "}
@@ -495,7 +496,7 @@ function SubscriptionPanel({
     return (
       <div>
         <h2 className="mb-2 text-sm font-bold">구독·플랜</h2>
-        <div className="rounded-xl border border-indigo-200 bg-indigo-50/50 p-4 text-center">
+        <div className="rounded-xl border border-brand/30 bg-brand-wash p-4 text-center">
           <p className="text-2xl">👑</p>
           <p className="mt-1 text-sm font-semibold">아직 구독 중이 아니에요</p>
           <p className="mt-1 text-xs text-ink-3">
@@ -503,7 +504,7 @@ function SubscriptionPanel({
           </p>
           <Link
             href={`/stores/${storeId}/sponsor`}
-            className="mt-3 inline-block rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white"
+            className="mt-3 inline-block min-h-[48px] rounded-xl bg-brand px-5 py-2.5 text-sm font-bold text-white"
           >
             플랜 보기 (14일 무료) →
           </Link>
@@ -542,7 +543,7 @@ function SubscriptionPanel({
           다음 결제 예정일 {new Date(sub.nextBillingAt).toLocaleDateString("ko-KR")} ·{" "}
           {currentPrice.toLocaleString("ko-KR")}원/월
         </p>
-        <p className="mt-0.5 text-[11px] text-ink-3">{PLAN_BENEFIT[current]}</p>
+        <p className="mt-0.5 text-xs text-ink-3">{PLAN_BENEFIT[current]}</p>
 
         {/* 3-way 플랜 변경 */}
         <div className="mt-3 flex flex-col gap-1.5">
@@ -555,17 +556,17 @@ function SubscriptionPanel({
                 disabled={busy}
                 onClick={() => onSwitch(target)}
                 className={[
-                  "rounded-lg border px-3 py-2 text-left text-xs disabled:opacity-50",
+                  "min-h-[48px] rounded-lg border px-3 py-2 text-left text-xs disabled:opacity-50",
                   up
-                    ? "border-indigo-200 bg-white hover:bg-indigo-50"
+                    ? "border-brand/40 bg-white hover:bg-brand-wash"
                     : "border-line bg-white hover:bg-surface-2",
                 ].join(" ")}
               >
-                <span className={`font-bold ${up ? "text-indigo-700" : "text-ink-2"}`}>
+                <span className={`font-bold ${up ? "text-brand-ink" : "text-ink-2"}`}>
                   {up ? "⬆ " : "⬇ "}
                   {PLAN_LABEL[target]}로 변경 ({PLAN_PRICE_KRW[target].toLocaleString("ko-KR")}원/월)
                 </span>
-                <span className="mt-0.5 block text-[10px] text-ink-3">{PLAN_BENEFIT[target]}</span>
+                <span className="mt-0.5 block text-xs text-ink-3">{PLAN_BENEFIT[target]}</span>
               </button>
             );
           })}
