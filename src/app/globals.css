@@ -251,6 +251,142 @@ summary:focus-visible {
   text-align: center;
 }
 
+/* ── 후보 B: 메뉴 리스트 (가게 상세 메뉴 탭) ──
+   세그먼트 토글(전체/세일만) + 단일 세로 리스트. 세일 행은 인라인 강조,
+   가격 800 주인공, 50~60대 큰 글씨·큰 터치·고대비. (디자인 핸드오프 Part1 §3·4) */
+.seg-toggle {
+  display: flex;
+  gap: 6px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-row);
+  padding: 5px;
+}
+.seg-toggle button {
+  flex: 1;
+  min-height: var(--tap-primary);
+  border: none;
+  background: transparent;
+  color: var(--ink-2);
+  font-size: 15.5px;
+  font-weight: 800;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  letter-spacing: -0.01em;
+}
+.seg-toggle button.is-on {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 2px 8px rgba(120, 90, 40, 0.14);
+}
+.seg-toggle button.is-on.is-sale {
+  color: var(--deal-ink);
+}
+.seg-toggle .seg-count {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--ink-3);
+}
+.seg-toggle button.is-on .seg-count {
+  color: inherit;
+}
+
+.menu-list {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  padding: 0 16px;
+  box-shadow: var(--sh-card);
+}
+.menu-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 62px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line-2);
+}
+.menu-row:last-child {
+  border-bottom: none;
+}
+/* 세일 행: 카드 패딩을 상쇄해 풀블리드 웜 강조 */
+.menu-row--sale {
+  margin: 0 -16px;
+  padding: 14px 16px;
+  background: linear-gradient(120deg, var(--deal-wash-2), var(--surface) 82%);
+}
+.menu-ic {
+  width: 42px;
+  height: 42px;
+  border-radius: 13px;
+  background: var(--surface-2);
+  display: grid;
+  place-items: center;
+  font-size: 23px;
+  flex: 0 0 auto;
+  overflow: hidden;
+}
+.menu-row--sale .menu-ic {
+  background: var(--deal-wash);
+}
+.menu-ic img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.menu-main {
+  min-width: 0;
+  flex: 1;
+}
+.menu-name {
+  font-size: var(--fs-name);
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+.menu-sub {
+  margin-top: 3px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+.menu-sub s {
+  color: #a79a8d;
+}
+.menu-price {
+  margin-left: auto;
+  flex: 0 0 auto;
+  text-align: right;
+  font-size: var(--fs-price);
+  font-weight: 800;
+  color: var(--ink);
+  line-height: 1.1;
+  white-space: nowrap;
+}
+.menu-price small {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-3);
+  margin-left: 1px;
+}
+.menu-row--sale .menu-price {
+  color: var(--deal-ink);
+}
+.badge-off {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #fff;
+  background: var(--deal-grad);
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+}
+
 /* ── 현재 위치 파란 점 (CustomOverlay 주입 DOM) ── */
 .geo-dot {
   position: relative;

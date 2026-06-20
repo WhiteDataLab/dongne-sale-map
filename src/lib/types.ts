@@ -78,6 +78,7 @@ export type ProductDTO = {
 
 export type SaleDTO = {
   id: string;
+  productId: string | null; // 연결된 메뉴(상품) — 없으면 단독 세일. 메뉴 리스트 세일 행 매칭용
   title: string;
   photoUrl: string;
   photoUrls: string[];

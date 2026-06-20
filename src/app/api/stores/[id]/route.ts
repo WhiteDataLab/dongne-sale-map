@@ -217,6 +217,7 @@ export async function GET(
       })),
       sales: store.sales.map((s) => ({
         id: s.id,
+        productId: s.productId,
         title: s.title,
         photoUrl: s.photoUrl,
         photoUrls: s.photoUrls.length > 0 ? s.photoUrls : s.photoUrl ? [s.photoUrl] : [],

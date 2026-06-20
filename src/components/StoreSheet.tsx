@@ -19,6 +19,7 @@ import { freshnessLabel, reviewDateLabel, starString, untilLabel, won } from "@/
 import { haversineMeters, formatDistance } from "@/lib/geo";
 import Link from "next/link";
 import { GpsIcon } from "./GpsIcon";
+import { Countdown } from "./Countdown";
 import { track } from "@/lib/track";
 import type { StoreDetailDTO } from "@/lib/types";
 
@@ -54,7 +55,7 @@ import { ShareButton } from "./ShareButton";
 import { CouponSection } from "./CouponSection";
 import { SaleReserveBox } from "./SaleReserveBox";
 import { SaleReserveSettings } from "./SaleReserveSettings";
-import type { ProductDTO, ReviewDTO } from "@/lib/types";
+import type { ProductDTO, ReviewDTO, SaleDTO } from "@/lib/types";
 
 type Composing = "sale" | "review" | null;
 
@@ -904,6 +905,8 @@ export function ProductsTab({
     }
   }, [requestAdd, detail.canManageMenu, onAddHandled, onToast]);
 
+  const [filter, setFilter] = useState<"all" | "sale">("all");
+
   const remove = async (id: string) => {
     const res = await fetch(`/api/products/${id}`, { method: "DELETE" });
     if (res.ok) {
@@ -913,6 +916,22 @@ export function ProductsTab({
       onToast(res.status === 403 ? "권한이 없어요." : "삭제에 실패했어요.");
     }
   };
+
+  // 활성 세일을 상품(메뉴)별로 묶어 '가장 싼' 세일 1개를 대표로 매칭(productId 연결분만).
+  // 상품과 연결되지 않은 단독 세일은 메뉴 리스트가 아닌 세일/행사 탭에 남는다(구조 불변).
+  const saleByProduct = new Map<string, SaleDTO>();
+  for (const s of detail.sales) {
+    if (!s.productId) continue;
+    const cur = saleByProduct.get(s.productId);
+    if (!cur || s.salePrice < cur.salePrice) saleByProduct.set(s.productId, s);
+  }
+  const emoji = CATEGORY_META[detail.category].icon;
+  // 세일 행을 항상 리스트 최상단에 고정(전체 모드에서도 세일이 먼저).
+  const rows = detail.products
+    .map((p) => ({ product: p, sale: saleByProduct.get(p.id) ?? null }))
+    .sort((a, b) => (a.sale ? 0 : 1) - (b.sale ? 0 : 1));
+  const saleCount = rows.filter((r) => r.sale).length;
+  const visible = filter === "sale" ? rows.filter((r) => r.sale) : rows;
 
   return (
     <div className="flex flex-col gap-3">
@@ -933,14 +952,14 @@ export function ProductsTab({
           <button
             type="button"
             onClick={() => setComposing({ mode: "add" })}
-            className="rounded-lg border border-brand py-2 text-sm font-medium text-brand"
+            className="min-h-[48px] rounded-lg border border-brand text-sm font-bold text-brand"
           >
             ＋ 메뉴 추가
           </button>
         ))}
 
       {!detail.hasOwner && (
-        <p className="text-xs text-ink-3">
+        <p className="text-sm text-ink-3">
           사장님 미등록 가게예요. 이웃 누구나 메뉴를 등록·수정할 수 있어요.
         </p>
       )}
@@ -948,61 +967,131 @@ export function ProductsTab({
       {detail.products.length === 0 ? (
         <EmptyState>아직 등록된 메뉴가 없어요.</EmptyState>
       ) : (
-        <ul className="flex flex-col gap-3">
-          {detail.products.map((p) => (
-            <li key={p.id} className="flex gap-3">
-              <Thumb url={p.photoUrl} />
-              <div className="min-w-0 flex-1">
-                <div className="flex items-baseline justify-between gap-2">
-                  <p className="truncate font-medium">{p.name}</p>
-                  <p className="shrink-0 font-bold">{won(p.price)}</p>
-                </div>
-                {(() => {
-                  const meta = [
-                    p.qtyUnit,
-                    p.origin,
-                    p.stock !== null ? `재고 ${p.stock}` : null,
-                  ]
-                    .filter((x) => x && String(x).trim())
-                    .join(" · ");
-                  return meta ? <p className="text-xs text-ink-3">{meta}</p> : null;
-                })()}
-                <div className="mt-1 flex items-center gap-1.5">
-                  <Avatar img={p.contributorImg} />
-                  <span className="text-xs text-ink-3">{p.contributorNickname}</span>
-                  <span className="text-xs text-ink-4">·</span>
-                  <span className="text-xs text-ink-3">{freshnessLabel(p.updatedAt)}</span>
-                </div>
-                <div className="mt-1 flex items-center gap-3">
-                  {detail.canManageMenu && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => setComposing({ mode: "edit", product: p })}
-                        className="text-xs text-brand"
-                      >
-                        수정
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => remove(p.id)}
-                        className="text-xs text-red-500"
-                      >
-                        삭제
-                      </button>
-                    </>
-                  )}
-                  <ReportButton
-                    targetType="product"
-                    targetId={p.id}
-                    onToast={onToast}
-                    onChanged={onDone}
-                  />
-                </div>
-              </div>
-            </li>
-          ))}
-        </ul>
+        <>
+          {/* 세그먼트 토글: 전체 / 🔥 세일만 (50~60대 큰 터치 ≥56px) */}
+          <div className="seg-toggle" role="tablist" aria-label="메뉴 필터">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={filter === "all"}
+              className={filter === "all" ? "is-on" : ""}
+              onClick={() => setFilter("all")}
+            >
+              전체 <span className="seg-count num">{rows.length}</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={filter === "sale"}
+              className={filter === "sale" ? "is-on is-sale" : ""}
+              onClick={() => setFilter("sale")}
+            >
+              🔥 세일만 <span className="seg-count num">{saleCount}</span>
+            </button>
+          </div>
+
+          {filter === "sale" && saleCount === 0 ? (
+            <div className="rounded-card border border-line bg-surface p-6 text-center">
+              <p className="text-base font-bold text-ink">오늘은 세일이 없어요</p>
+              <p className="mt-1 text-sm text-ink-3">전체 메뉴를 둘러보세요.</p>
+              <button
+                type="button"
+                onClick={() => setFilter("all")}
+                className="mt-3 min-h-[48px] rounded-btn bg-brand px-5 text-sm font-bold text-white"
+              >
+                전체 보기
+              </button>
+            </div>
+          ) : (
+            <div className="menu-list">
+              {visible.map(({ product: p, sale }) => {
+                const off =
+                  sale && p.price > sale.salePrice && p.price > 0
+                    ? Math.round((1 - sale.salePrice / p.price) * 100)
+                    : 0;
+                const meta = [
+                  p.qtyUnit,
+                  p.origin,
+                  p.stock !== null ? `재고 ${p.stock}` : null,
+                ]
+                  .filter((x) => x && String(x).trim())
+                  .join(" · ");
+                const price = sale ? sale.salePrice : p.price;
+                return (
+                  <div
+                    key={p.id}
+                    className={`menu-row${sale ? " menu-row--sale" : ""}`}
+                    data-sale={sale ? 1 : 0}
+                  >
+                    <span className="menu-ic">
+                      {p.photoUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={p.photoUrl} alt="" />
+                      ) : (
+                        emoji
+                      )}
+                    </span>
+                    <div className="menu-main">
+                      <div className="flex items-center gap-1.5">
+                        <span className="menu-name truncate">{p.name}</span>
+                        {off > 0 && <span className="badge-off num">{off}%↓</span>}
+                      </div>
+                      {sale ? (
+                        <p className="menu-sub">
+                          {p.price > sale.salePrice && (
+                            <>
+                              <s className="num">{won(p.price)}</s>
+                              {" · "}
+                            </>
+                          )}
+                          <Countdown to={sale.expiresAt} />
+                        </p>
+                      ) : (
+                        meta && <p className="menu-sub">{meta}</p>
+                      )}
+                      <div className="mt-1 flex items-center gap-1.5">
+                        <Avatar img={p.contributorImg} />
+                        <span className="text-xs text-ink-3">{p.contributorNickname}</span>
+                        <span className="text-xs text-ink-4">·</span>
+                        <span className="text-xs text-ink-3">{freshnessLabel(p.updatedAt)}</span>
+                      </div>
+                      <div className="mt-1.5 flex items-center gap-2">
+                        {detail.canManageMenu && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => setComposing({ mode: "edit", product: p })}
+                                className="min-h-[40px] rounded-lg border border-line px-3 text-xs font-bold text-brand"
+                              >
+                                수정
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => remove(p.id)}
+                                className="min-h-[40px] rounded-lg border border-line px-3 text-xs font-bold text-red-500"
+                              >
+                                삭제
+                              </button>
+                            </>
+                          )}
+                        <ReportButton
+                          targetType="product"
+                          targetId={p.id}
+                          onToast={onToast}
+                          onChanged={onDone}
+                        />
+                      </div>
+                    </div>
+                    <div className="menu-price num">
+                      {price.toLocaleString("ko-KR")}
+                      <small>원</small>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
@@ -1802,19 +1891,6 @@ function PhotoCarousel({ urls }: { urls: string[] }) {
         <div className="pointer-events-none absolute bottom-2 right-2 rounded-full bg-black/60 px-2 py-0.5 text-xs font-medium text-white">
           {idx + 1}/{urls.length}
         </div>
-      )}
-    </div>
-  );
-}
-
-function Thumb({ url }: { url: string | null }) {
-  return (
-    <div className="zoomable size-16 shrink-0 rounded-lg bg-surface-2">
-      {url ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={url} alt="" className="size-full object-cover" />
-      ) : (
-        <div className="flex size-full items-center justify-center text-ink-4">🧺</div>
       )}
     </div>
   );

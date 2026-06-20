@@ -168,3 +168,16 @@
   - `body` 배경 = `var(--bg)`, `--background → var(--bg)`. `@theme inline`에 `--color-deal-wash-2`/`--color-bg`/`--color-surface`/`--radius-row` 노출.
 - **변화 형태**: 토큰 한 벌만 바꿔 **전 화면이 따뜻한 톤으로 자동 정렬**(P2.8에서 전역 토큰화 완료 덕분). 의미색(blue/green/amber)·세일 시그니처는 보존.
 - 검증: dev 프리뷰 computed style 확인(`--bg #fbf6ef`·body bg `rgb(251,246,239)`·`--deal-ink #d62d14`·`--ink-3 #6f7884`·`--line #ece3d5`), `/`·`/faq` 실렌더 스크린샷(웜 베이스+흰 카드+웜 보더, 대비 회귀 없음), 콘솔 에러 0.
+
+### B-2. 메뉴 리스트 — 세그먼트 토글 + 세일 행 강조 (전환 핵심)
+파일: [`StoreSheet.tsx`](../src/components/StoreSheet.tsx) `ProductsTab` · [`globals.css`](../src/app/globals.css)(`.seg-toggle`/`.menu-list`/`.menu-row`/`.badge-off`) · [`types.ts`](../src/lib/types.ts)(`SaleDTO.productId` 추가) · [`api/stores/[id]/route.ts`](../src/app/api/stores/[id]/route.ts)
+- **AS-IS**: 메뉴 탭이 `<ul>` 단순 행(64px 썸네일 + 14px 이름 + 14px 가격). 세일은 별도 탭에만. 세일/일반 구분·필터 없음, 가격이 작아 주목도 약함.
+- **TO-BE**: 후보 B **단일 세로 리스트 + "전체 N / 🔥 세일만 N" 세그먼트 토글**(`role="tablist"`). 상품(메뉴) 행을 활성 세일(`Sale.productId` 연결분, 이미 존재)과 클라이언트에서 매칭 —
+  - **세일 행**(`.menu-row--sale`): 웜 그라데이션 풀블리드 배경 + **할인% 배지**(`--deal-grad`, off=round(1−sale/price)) + **원가 취소선**(`<s>`) + **실시간 카운트다운**(`Countdown` 재사용) + 세일가 `--deal-ink` 21px/800. **항상 리스트 최상단 고정**(전체 모드에서도 세일 먼저 정렬).
+  - **일반 행**: 이름 16.5px/700 + 가격 21px/800 `.num` + 메타(단위·원산지·재고).
+  - **이모지/썸네일 칩 42px**: 사진 있으면 썸네일, 없으면 카테고리 이모지(`CATEGORY_META.icon`).
+  - **세일만 0건**: 안내 카드 "오늘은 세일이 없어요" + [전체 보기] 버튼.
+  - **50~60대 접근성**: 토글 ≥56px·메뉴추가/전체보기 버튼 ≥48px·관리 칩 ≥40px, 본문 ≥16px, 가격 `.num` 정렬.
+  - **구조 불변**: 상품과 연결되지 않은 단독 세일은 기존 세일/행사 탭에 그대로(메뉴 리스트는 메뉴=상품 기준). API는 `SaleDTO.productId` **추가(additive)** 만, 엔드포인트·결제·IA 불변.
+- **변화 형태**: "전체/세일만" 토글로 세일을 한 번에 골라보게 만들어 **세일 주목→갈래요·길찾기 전환**을 설계(Part1 §10 효과측정의 '세일 토글 사용률').
+- 검증: dev 프리뷰 **computed style 정밀 확인**(세그먼트 토글 min-height 56·선택 흰 배경, 세일 행 min-height 62·웜 그라데이션, 세일가 `rgb(214,45,20)`=`#d62d14`, 일반가 21px/800, 할인 배지 deal 그라데이션+흰 800, 이모지 칩 42×42 r13, 메뉴명 16.5/700, 375px 뷰포트 레이아웃 정상 분배), `tsc`·`lint`·**프로덕션 빌드 통과**, dev Fast Refresh 무에러. (스크린샷 도구는 환경 이슈로 타임아웃 → 색·크기는 권장 방식인 computed style로 검증.)
