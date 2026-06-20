@@ -47,13 +47,14 @@ export function SponsorSubscribeButton({
   clientKey,
   plan = "sponsor",
   label = "카드 등록하고 14일 무료로 시작",
-  accent = false,
+  tone = "neutral",
 }: {
   storeId: string;
   clientKey: string;
   plan?: "sponsor" | "lite" | "pro";
   label?: string;
-  accent?: boolean;
+  /** primary=블루(추천) · neutral=보조면 · dark=다크 카드 위 흰 버튼 */
+  tone?: "primary" | "neutral" | "dark";
 }) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -98,13 +99,17 @@ export function SponsorSubscribeButton({
         onClick={start}
         disabled={pending}
         className={[
-          "w-full rounded-xl px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-colors disabled:opacity-60",
-          accent ? "bg-indigo-600 hover:bg-indigo-700" : "bg-amber-500 hover:bg-amber-600",
+          "w-full rounded-xl px-4 py-2.5 text-sm font-bold shadow-sm transition-colors disabled:opacity-60",
+          tone === "primary"
+            ? "bg-brand text-white hover:bg-brand-ink"
+            : tone === "dark"
+              ? "bg-white text-ink hover:bg-surface-2"
+              : "border border-line bg-surface-2 text-ink hover:bg-white",
         ].join(" ")}
       >
         {pending ? "진행 중…" : label}
       </button>
-      {error && <p className="mt-2 text-center text-xs text-red-500">{error}</p>}
+      {error && <p className="mt-2 text-center text-xs text-deal-ink">{error}</p>}
     </div>
   );
 }

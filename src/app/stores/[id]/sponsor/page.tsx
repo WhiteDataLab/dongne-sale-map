@@ -32,7 +32,7 @@ export default async function SponsorSubscribePage({
   const shell = (children: React.ReactNode) => (
     <div className="h-full overflow-y-auto">
       <div className="mx-auto max-w-md p-5">
-        <Link href="/" className="text-xs text-gray-400">← 지도로</Link>
+        <Link href="/" className="text-xs font-medium text-ink-3">← 지도로</Link>
         {children}
       </div>
     </div>
@@ -58,7 +58,7 @@ export default async function SponsorSubscribePage({
         <p className="mt-1 text-sm text-gray-500">
           다음 결제 예정일: {new Date(active.nextBillingAt).toLocaleDateString("ko-KR")}
         </p>
-        <Link href="/" className="mt-4 inline-block text-blue-600">← 지도로 돌아가기</Link>
+        <Link href="/" className="mt-4 inline-block font-bold text-brand">← 지도로 돌아가기</Link>
       </div>,
     );
   }
@@ -67,83 +67,101 @@ export default async function SponsorSubscribePage({
   const clientKey = tossClientKey();
 
   return shell(
-    <div className="mt-4 flex flex-col gap-4">
+    <div className="mt-4 flex flex-col gap-3.5">
       <div>
-        <h1 className="text-lg font-bold">👑 우리 가게 홍보 구독</h1>
-        <p className="mt-1 text-sm text-gray-500">{store.name}</p>
-        <p className="mt-1 text-xs text-amber-700">🎁 두 플랜 모두 <b>{TRIAL_DAYS}일 무료체험</b> · 체험 중 해지하면 청구되지 않아요.</p>
+        <h1 className="text-xl font-extrabold tracking-tight text-ink">우리 가게 홍보 구독</h1>
+        <p className="mt-1 text-sm font-medium text-ink-2">{store.name}</p>
+        <p className="mt-2 inline-block rounded-full bg-deal-wash px-2.5 py-1 text-xs font-bold text-deal-ink">
+          🎁 유료 플랜 모두 {TRIAL_DAYS}일 무료체험 · 체험 중 해지하면 청구 없어요
+        </p>
       </div>
 
-      {/* 라이트 플랜 — 관계(알림·단골·답글) 진입 티어 */}
-      <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-4">
+      {/* FREE 기준선 — 가격 앵커링(지금도 무료로 올라간다) */}
+      <div className="rounded-2xl border border-line bg-surface-2 p-4">
         <div className="flex items-baseline justify-between">
-          <p className="text-sm font-bold text-emerald-800">라이트</p>
-          <p className="text-sm">
-            <b className="text-base">{LITE_PRICE_KRW.toLocaleString("ko-KR")}원</b>
-            <span className="text-gray-400"> / 월</span>
-          </p>
+          <p className="text-[13px] font-extrabold tracking-wide text-ink-3">FREE</p>
+          <p className="num text-sm font-extrabold text-ink-3">0원</p>
         </div>
-        <ul className="mt-2 space-y-1 text-sm text-gray-700">
-          <li>· 🔔 <b>세일 알림 발송</b> (즐겨찾기 단골에게)</li>
-          <li>· 🧑‍🤝‍🧑 <b>단골 식별</b> + ⭐ <b>리뷰 답글</b></li>
-          <li>· ✅ <b>공식 배지</b> (소비자 신뢰)</li>
-          <li>· 🎟️ 쿠폰 활성 50개</li>
-        </ul>
-        <p className="mt-1 text-[11px] text-gray-400">※ 지도 노출 부스트(마퀴·금색핀)는 스폰서/프로에 포함돼요.</p>
-        {configured && clientKey ? (
-          <SponsorSubscribeButton storeId={id} clientKey={clientKey} plan="lite" label="라이트로 시작" />
-        ) : null}
+        <p className="mt-1 text-[15px] font-bold tracking-tight text-ink-2">게시판에 올라가요</p>
+        <p className="mt-1 text-xs font-medium text-ink-3">인증·메뉴·세일·쿠폰 기본 — 지금도 무료예요</p>
       </div>
 
-      {/* 스폰서 플랜 */}
-      <div className="rounded-2xl border border-amber-200 bg-amber-50/50 p-4">
-        <div className="flex items-baseline justify-between">
-          <p className="text-sm font-bold text-amber-800">스폰서</p>
-          <p className="text-sm">
-            <b className="text-base">{SPONSOR_PRICE_KRW.toLocaleString("ko-KR")}원</b>
-            <span className="text-gray-400"> / 월</span>
-          </p>
-        </div>
-        <ul className="mt-2 space-y-1 text-sm text-gray-700">
-          <li>· 지도 상단 광고판(마퀴) <b>상단 고정</b></li>
-          <li>· 지도에서 눈에 띄는 <b>금색 핀(👑)</b></li>
-        </ul>
-        {configured && clientKey ? (
-          <SponsorSubscribeButton storeId={id} clientKey={clientKey} plan="sponsor" label="스폰서로 시작" />
-        ) : null}
-      </div>
-
-      {/* 프로 플랜 (추천) */}
-      <div className="relative rounded-2xl border-2 border-indigo-300 bg-indigo-50/50 p-4">
-        <span className="absolute -top-2.5 right-4 rounded-full bg-indigo-600 px-2 py-0.5 text-[11px] font-bold text-white">
-          추천
+      {/* 라이트 — 가장 인기(블루 강조, 추천 띠) */}
+      <div className="relative rounded-2xl border-2 border-brand bg-white p-4 shadow-[0_8px_24px_rgba(49,130,246,0.12)]">
+        <span className="absolute -top-2.5 right-4 rounded-full bg-brand px-2.5 py-0.5 text-[11px] font-extrabold text-white">
+          가장 인기
         </span>
         <div className="flex items-baseline justify-between">
-          <p className="text-sm font-bold text-indigo-700">프로</p>
-          <p className="text-sm">
-            <b className="text-base">{PRO_PRICE_KRW.toLocaleString("ko-KR")}원</b>
-            <span className="text-gray-400"> / 월</span>
+          <p className="text-[13px] font-extrabold tracking-wide text-brand-ink">LITE</p>
+          <p>
+            <b className="num text-2xl font-extrabold text-ink">{LITE_PRICE_KRW.toLocaleString("ko-KR")}</b>
+            <span className="text-xs font-bold text-ink-3"> 원/월</span>
           </p>
         </div>
-        <ul className="mt-2 space-y-1 text-sm text-gray-700">
-          <li>· <b>스폰서 혜택 전부</b> (마퀴 고정 + 금색 핀)</li>
-          <li>· 📊 <b>확장 통계</b> (30·90일 추이 + 요일별 분석)</li>
-          <li>· 🎟️ <b>쿠폰 무제한</b> 발행 + 지도 쿠폰 배지</li>
-          <li>· 🖼️ 가게 <b>사진 갤러리</b> (여러 장)</li>
-          <li>· 🔝 검색·목록 <b>상위 노출</b></li>
+        <p className="mt-1 text-[15px] font-bold tracking-tight text-ink">손님에게 먼저 연락해요</p>
+        <ul className="mt-2.5 space-y-1.5 text-sm text-ink-2">
+          <li>🔔 <b className="font-bold text-ink">세일 알림 발송</b> (즐겨찾기 단골에게)</li>
+          <li>🧑‍🤝‍🧑 <b className="font-bold text-ink">단골 식별</b> + ⭐ <b className="font-bold text-ink">리뷰 답글</b></li>
+          <li>✅ <b className="font-bold text-ink">공식 배지</b> (소비자 신뢰)</li>
+          <li>🎟️ 쿠폰 활성 50개</li>
+        </ul>
+        <p className="mt-2 text-[11px] font-medium text-ink-3">※ 지도 노출 부스트(마퀴·금색핀)는 스폰서/프로에 포함돼요.</p>
+        {configured && clientKey ? (
+          <SponsorSubscribeButton storeId={id} clientKey={clientKey} plan="lite" label="라이트로 시작" tone="primary" />
+        ) : null}
+      </div>
+
+      {/* 스폰서 — 노출 부스트(중립) */}
+      <div className="rounded-2xl border border-line bg-white p-4">
+        <div className="flex items-baseline justify-between">
+          <p className="text-[13px] font-extrabold tracking-wide text-ink-3">SPONSOR</p>
+          <p>
+            <b className="num text-2xl font-extrabold text-ink">{SPONSOR_PRICE_KRW.toLocaleString("ko-KR")}</b>
+            <span className="text-xs font-bold text-ink-3"> 원/월</span>
+          </p>
+        </div>
+        <p className="mt-1 text-[15px] font-bold tracking-tight text-ink">지도에서 눈에 띄어요</p>
+        <ul className="mt-2.5 space-y-1.5 text-sm text-ink-2">
+          <li>📣 지도 상단 광고판(마퀴) <b className="font-bold text-ink">상단 고정</b></li>
+          <li>👑 지도에서 눈에 띄는 <b className="font-bold text-ink">금색 핀</b></li>
         </ul>
         {configured && clientKey ? (
-          <SponsorSubscribeButton storeId={id} clientKey={clientKey} plan="pro" label="프로로 시작" accent />
+          <SponsorSubscribeButton storeId={id} clientKey={clientKey} plan="sponsor" label="스폰서로 시작" tone="neutral" />
+        ) : null}
+      </div>
+
+      {/* 프로 — 최상위 앵커(다크 카드) */}
+      <div
+        className="relative rounded-2xl border border-transparent p-4 text-white"
+        style={{ background: "linear-gradient(180deg,#10243F,#0B1A2E)" }}
+      >
+        <div className="flex items-baseline justify-between">
+          <p className="text-[13px] font-extrabold tracking-wide text-[#9DC2FF]">PRO</p>
+          <p>
+            <b className="num text-2xl font-extrabold text-white">{PRO_PRICE_KRW.toLocaleString("ko-KR")}</b>
+            <span className="text-xs font-bold text-[#7E9ECB]"> 원/월</span>
+          </p>
+        </div>
+        <p className="mt-1 text-[15px] font-bold tracking-tight text-white">단골을 데이터로 관리해요</p>
+        <ul className="mt-2.5 space-y-1.5 text-sm text-[#B8C7DD]">
+          <li>👑 <b className="font-bold text-white">스폰서 혜택 전부</b> (마퀴 고정 + 금색 핀)</li>
+          <li>📊 <b className="font-bold text-white">확장 통계</b> (30·90일 추이 + 요일별)</li>
+          <li>🎟️ <b className="font-bold text-white">쿠폰 무제한</b> + 지도 쿠폰 배지</li>
+          <li>🖼️ 가게 <b className="font-bold text-white">사진 갤러리</b> (여러 장)</li>
+          <li>🔝 검색·목록 <b className="font-bold text-white">상위 노출</b></li>
+        </ul>
+        {configured && clientKey ? (
+          <SponsorSubscribeButton storeId={id} clientKey={clientKey} plan="pro" label="프로로 시작" tone="dark" />
         ) : null}
       </div>
 
       {!(configured && clientKey) && (
-        <p className="rounded-xl bg-gray-100 p-3 text-center text-sm text-gray-500">
+        <p className="rounded-xl bg-surface-2 p-3 text-center text-sm font-medium text-ink-3">
           결제 기능 준비중이에요. 잠시만 기다려 주세요. 🙏
         </p>
       )}
 
-      <p className="text-[11px] leading-relaxed text-gray-400">
+      <p className="text-[11px] leading-relaxed text-ink-4">
         · 카드 등록 후 {TRIAL_DAYS}일간 무료로 노출돼요. 무료체험 종료 전 해지하면 청구되지 않아요.
         <br />· 해지 시 다음 결제부터 중단되며, 이미 결제한 기간의 노출은 만료일까지 유지돼요(환불 없음).
         <br />· 카드 정보는 토스페이먼츠가 안전하게 보관하며, 본 서비스는 카드번호를 저장하지 않아요.

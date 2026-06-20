@@ -70,8 +70,13 @@
 - **매출 레버**: 무료→라이트→프로 전환율(L1, 가장 빠른 매출 + ARPU).
 - 검증: tsc·dev 프리뷰 computed style 확인(히어로 36px/800/`--ink`, 갈래요 `--deal-ink`, 잠금카드 `--blue-wash`/`--blue` 정확).
 
-### P1-c. 요금제 카드 (Free/Lite/Pro)
-_(작성 예정)_
+### P1-c. 요금제 카드 (Free/Lite/Pro)  ✅
+파일: [`sponsor/page.tsx`](../src/app/stores/[id]/sponsor/page.tsx) + [`SponsorSubscribeButton.tsx`](../src/components/SponsorSubscribeButton.tsx)
+- **AS-IS**: 라이트(에메랄드)·스폰서(앰버)·프로(인디고 '추천') 3카드가 **기능 나열** 중심, 색이 제각각(emerald/amber/indigo). 가격은 본문 크기. Free 기준선 없음 → 가치 사다리·앵커링 부재. 버튼은 amber/indigo.
+- **TO-BE**: **결과로 프레이밍 + 앵커링**. ① **FREE 기준선** 카드 추가(「게시판에 올라가요 · 0원」, `bg-surface-2`) — "지금도 무료"로 유료 가치 대비. ② **라이트 = '가장 인기'** 추천 띠 + `border-2 border-brand` + 블루 글로우, role 「손님에게 먼저 연락해요」, 가격 `text-2xl/800/.num`, 버튼 `tone=primary`(블루). ③ **스폰서** 중립 카드(「지도에서 눈에 띄어요」, 버튼 `tone=neutral`). ④ **프로 = 다크 앵커**(`#10243F→#0B1A2E` 그라데이션, 최상위 가격, role 「단골을 데이터로 관리해요」, 버튼 `tone=dark` 흰 버튼). 트라이얼 안내는 `deal-wash` 필. `SponsorSubscribeButton`: `accent:boolean` → **`tone: primary|neutral|dark`** 로 확장.
+- **변화 형태**: 기능 나열 → **결과 프레이밍 + 라이트 추천 + 프로 다크 앵커링**(임펄스 전환 유도).
+- **매출 레버**: 가격 화면 자체가 전환 표면(L1 직접).
+- 검증: tsc·dev 프리뷰 computed style(FREE `--surface-2`, LITE 보더/리본 `--blue`, PRO 다크 그라데이션·`#9DC2FF`, 트라이얼 `--deal-wash`/`--deal-ink`).
 
 ### P1-d. 세일 카드 · 예약/갈래요 CTA
 _(작성 예정)_
