@@ -4,6 +4,7 @@
 > 컴포넌트별로 **AS-IS(기존) → TO-BE(개선) → 변화 형태 → 매출 레버**를 남긴다.
 > 원칙: 구조·IA·API·결제 흐름 불변, **시각만**. 토큰 단일 출처 = [`../src/app/globals.css`](../src/app/globals.css) `:root`.
 > 시안은 **코드/마크업 AS-IS↔TO-BE 비교**로 남긴다(레포 내 영속 기록). 실제 렌더 확인은 dev 프리뷰.
+> 기획자용 요약 보고서: [`DESIGN_REPORT.md`](DESIGN_REPORT.md) (이 파일은 그 상세 부록).
 
 ## 디자인 토큰 한 벌 (단일 출처)
 | 역할 | 토큰 | 값 |
