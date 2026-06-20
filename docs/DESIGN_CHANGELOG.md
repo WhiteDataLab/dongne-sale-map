@@ -126,3 +126,10 @@
 - **TO-BE**: `next/og ImageResponse`로 **브랜드 OG 카드(1200×630) 동적 생성** — deal 그라데이션 브랜드 마크 + "동네 세일 지도" + 가게명(800/ink) + 업종·주소 + **세일 시 deal-wash 펄 카드(「진행중인 세일 N건」 + 대표 세일 + 대형 가격 ExtraBold deal-ink)**, 세일 없으면 「메뉴·리뷰를 확인해보세요」 폴백. **Pretendard woff**(satori는 woff2/이모지 미지원 → woff + 도형/텍스트). `generateMetadata`의 수동 images 제거(동적 카드가 자동 연결). `outputFileTracingIncludes`로 Vercel 람다에 폰트 포함.
 - **변화 형태**: 사진 의존 → **항상 브랜드 일관된 가격 중심 미리보기**. 매출 레버: 카톡/SNS 공유 클릭률 → 바이럴 유입.
 - 검증: dev에서 `/s/[id]/opengraph-image` 200·image/png, 세일/폴백 두 변형 실제 렌더 스크린샷 확인(한글 Pretendard·대형 가격 정상), 프로덕션 빌드 통과.
+
+### P2-6. 관리자 공통 크롬 + 허브 토큰화
+파일: [`admin/layout.tsx`](../src/app/admin/layout.tsx) · [`admin/page.tsx`](../src/app/admin/page.tsx)
+- **AS-IS**: 네비/헤더·허브 카드가 `gray-*`/`blue-600`/`red-100`/`blue-100` 등 기본색.
+- **TO-BE**: 네비 라벨 `--ink-3`·링크 `--ink-2`(hover `--ink`), 헤더 `border-line-2`·"관리 콘솔" 800/`--ink`, 권한 안내 링크 `--brand`. 허브 카드 `border-line`·제목 `font-bold/--ink`·설명 `--ink-3`, 대기 배지 = 신고 `deal-wash/deal-ink`·사장님 `brand-wash/brand-ink`·기타 대기 amber(경고 유지) + `.num`.
+- **변화 형태**: 전 admin 페이지가 공유하는 크롬을 토큰으로 통일(내부 화면 일관성).
+- **남은 후속(선택)**: 개별 admin 하위 페이지(dashboard/members/리포트 등) 본문 토큰 확산 — 내부 운영 화면이라 한계효용 낮아 보류.

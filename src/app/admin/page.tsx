@@ -32,81 +32,81 @@ export default async function AdminHome() {
     <div className="flex flex-col gap-3">
       <Link
         href="/admin/dashboard"
-        className="flex items-center justify-between rounded-xl border border-gray-200 p-4"
+        className="flex items-center justify-between rounded-xl border border-line p-4"
       >
-        <span className="font-medium">📊 대시보드</span>
-        <span className="text-sm text-gray-400">오늘 가입·등록·리뷰 현황 →</span>
+        <span className="font-bold text-ink">📊 대시보드</span>
+        <span className="text-sm font-medium text-ink-3">오늘 가입·등록·리뷰 현황 →</span>
       </Link>
       <Link
         href="/admin/members"
-        className="flex items-center justify-between rounded-xl border border-gray-200 p-4"
+        className="flex items-center justify-between rounded-xl border border-line p-4"
       >
-        <span className="font-medium">👥 회원 정보</span>
-        <span className="text-sm text-gray-400">가입·포인트·계정잠금/탈퇴 →</span>
+        <span className="font-bold text-ink">👥 회원 정보</span>
+        <span className="text-sm font-medium text-ink-3">가입·포인트·계정잠금/탈퇴 →</span>
       </Link>
       <Link
         href="/admin/activity"
-        className="flex items-center justify-between rounded-xl border border-gray-200 p-4"
+        className="flex items-center justify-between rounded-xl border border-line p-4"
       >
-        <span className="font-medium">🔥 활동 분석</span>
-        <span className="text-sm text-gray-400">활발한 회원·가게등록·리뷰 랭킹 →</span>
+        <span className="font-bold text-ink">🔥 활동 분석</span>
+        <span className="text-sm font-medium text-ink-3">활발한 회원·가게등록·리뷰 랭킹 →</span>
       </Link>
       <Link
         href="/admin/redemptions"
-        className="flex items-center justify-between rounded-xl border border-gray-200 p-4"
+        className="flex items-center justify-between rounded-xl border border-line p-4"
       >
-        <span className="font-medium">🎁 기프티콘 교환</span>
-        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-sm text-amber-700">
+        <span className="font-bold text-ink">🎁 기프티콘 교환</span>
+        <span className="num rounded-full bg-amber-100 px-2 py-0.5 text-sm font-bold text-amber-700">
           발송 대기 {pendingRedemptions}
         </span>
       </Link>
       <Link
         href="/admin/gifts"
-        className="flex items-center justify-between rounded-xl border border-gray-200 p-4"
+        className="flex items-center justify-between rounded-xl border border-line p-4"
       >
-        <span className="font-medium">🏷️ 기프티콘 상품</span>
-        <span className="text-sm text-gray-400">추가·수정·삭제·이미지 →</span>
+        <span className="font-bold text-ink">🏷️ 기프티콘 상품</span>
+        <span className="text-sm font-medium text-ink-3">추가·수정·삭제·이미지 →</span>
       </Link>
       <Link
         href="/admin/inquiries"
-        className="flex items-center justify-between rounded-xl border border-gray-200 p-4"
+        className="flex items-center justify-between rounded-xl border border-line p-4"
       >
-        <span className="font-medium">🎧 고객센터</span>
-        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-sm text-amber-700">
+        <span className="font-bold text-ink">🎧 고객센터</span>
+        <span className="num rounded-full bg-amber-100 px-2 py-0.5 text-sm font-bold text-amber-700">
           미답변 {openInquiries}
         </span>
       </Link>
       <Link
         href="/admin/notices"
-        className="flex items-center justify-between rounded-xl border border-gray-200 p-4"
+        className="flex items-center justify-between rounded-xl border border-line p-4"
       >
-        <span className="font-medium">📢 공지 · 이벤트</span>
-        <span className="text-sm text-gray-400">작성·수정·노출 →</span>
+        <span className="font-bold text-ink">📢 공지 · 이벤트</span>
+        <span className="text-sm font-medium text-ink-3">작성·수정·노출 →</span>
       </Link>
       <Link
         href="/admin/reports"
-        className="flex items-center justify-between rounded-xl border border-gray-200 p-4"
+        className="flex items-center justify-between rounded-xl border border-line p-4"
       >
-        <span className="font-medium">신고 큐</span>
-        <span className="rounded-full bg-red-100 px-2 py-0.5 text-sm text-red-600">
+        <span className="font-bold text-ink">신고 큐</span>
+        <span className="num rounded-full bg-deal-wash px-2 py-0.5 text-sm font-bold text-deal-ink">
           처리 대기 {openReports}
         </span>
       </Link>
       <Link
         href="/admin/stores"
-        className="flex items-center justify-between rounded-xl border border-gray-200 p-4"
+        className="flex items-center justify-between rounded-xl border border-line p-4"
       >
-        <span className="font-medium">가게 인증</span>
-        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-sm text-amber-700">
+        <span className="font-bold text-ink">가게 인증</span>
+        <span className="num rounded-full bg-amber-100 px-2 py-0.5 text-sm font-bold text-amber-700">
           승인 대기 {pendingStores}
         </span>
       </Link>
       <Link
         href="/admin/merchants"
-        className="flex items-center justify-between rounded-xl border border-gray-200 p-4"
+        className="flex items-center justify-between rounded-xl border border-line p-4"
       >
-        <span className="font-medium">사장님 인증</span>
-        <span className="rounded-full bg-blue-100 px-2 py-0.5 text-sm text-blue-700">
+        <span className="font-bold text-ink">사장님 인증</span>
+        <span className="num rounded-full bg-brand-wash px-2 py-0.5 text-sm font-bold text-brand-ink">
           승인 대기 {pendingMerchants}
         </span>
       </Link>
