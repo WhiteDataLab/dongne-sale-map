@@ -37,12 +37,12 @@ function Chip({
       disabled={disabled}
       title={title}
       className={[
-        "pointer-events-auto shrink-0 rounded-full border px-3 py-1.5 text-sm font-medium whitespace-nowrap transition",
+        "pointer-events-auto shrink-0 rounded-full border px-3.5 py-1.5 text-sm font-semibold whitespace-nowrap transition",
         disabled
-          ? "cursor-not-allowed border-gray-200 bg-white/70 text-gray-300"
+          ? "border-line bg-white/70 text-ink-4 cursor-not-allowed"
           : active
-            ? "border-blue-600 bg-blue-600 text-white shadow"
-            : "border-gray-200 bg-white text-gray-700 shadow-sm",
+            ? "border-brand bg-brand text-white shadow"
+            : "border-line bg-white text-ink-2 shadow-sm",
       ].join(" ")}
     >
       {children}
@@ -75,7 +75,7 @@ export function FilterBar({
         </Chip>
       ))}
 
-      <span className="mx-1 w-px shrink-0 self-stretch bg-gray-200" aria-hidden />
+      <span className="mx-1 w-px shrink-0 self-stretch bg-line" aria-hidden />
 
       <Chip
         active={filters.onlySale}

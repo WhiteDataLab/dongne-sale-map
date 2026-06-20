@@ -1,13 +1,80 @@
 @import "tailwindcss";
 
+/* ── Pretendard (셀프 호스팅: CSP font-src 'self' 준수, CDN 의존 없음) ──
+   가변 폰트 1종으로 100~900 전 weight 커버. /public/fonts 에서 서빙. */
+@font-face {
+  font-family: "Pretendard";
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/PretendardVariable.woff2") format("woff2-variations");
+}
+
+/* ── 디자인 토큰 (비주얼 디자인 브리프 단일 출처) ──
+   색·타이포·반경·그림자·모션을 CSS 변수로 고정. 전 화면이 이 한 벌로 결정된다.
+   raw-DOM(지도 핀/클러스터)·전역 CSS·공통 컴포넌트 클래스가 이 변수를 참조한다. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* 잉크 / 중성 (토스 그레이 계열) */
+  --ink: #191f28;
+  --ink-2: #4e5968;
+  --ink-3: #8b95a1;
+  --ink-4: #b0b8c1;
+  --line: #e5e8eb;
+  --line-2: #edf0f3;
+  --surface: #ffffff;
+  --surface-2: #f7f8fa;
+  /* 신뢰 / 결제 (토스 블루) */
+  --blue: #3182f6;
+  --blue-ink: #1b64da;
+  --blue-wash: #eaf2fe;
+  /* 시그니처: 세일 / 마감임박 (따뜻함 — 딱 한 곳에만) */
+  --deal-1: #ff6b35;
+  --deal-2: #ff3b30;
+  --deal-wash: #fff1ed;
+  --deal-ink: #e0331f;
+  --deal-grad: linear-gradient(135deg, var(--deal-1), var(--deal-2));
+  /* 인증 (절제된 그린) */
+  --verify: #12b886;
+  --verify-ink: #0e906a;
+  --verify-wash: #e6f8f1;
+  /* 형태 */
+  --r-card: 20px;
+  --r-chip: 14px;
+  --r-pill: 999px;
+  --r-btn: 14px;
+  --sh-1: 0 1px 2px rgba(25, 31, 40, 0.04), 0 4px 14px rgba(25, 31, 40, 0.05);
+  --sh-2: 0 10px 34px rgba(25, 31, 40, 0.12);
+  --sh-pin: 0 6px 20px rgba(25, 31, 40, 0.16);
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  /* 하위호환: Tailwind 기본 매핑 */
+  --background: var(--surface);
+  --foreground: var(--ink);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  /* 브랜드 토큰을 Tailwind 유틸로 노출 (bg-ink, text-deal-ink, border-line …).
+     기본 색상 스케일(blue-600 등)은 그대로 두어 기존 컴포넌트와 충돌하지 않음. */
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-ink-4: var(--ink-4);
+  --color-line: var(--line);
+  --color-line-2: var(--line-2);
+  --color-surface-2: var(--surface-2);
+  --color-brand: var(--blue);
+  --color-brand-ink: var(--blue-ink);
+  --color-brand-wash: var(--blue-wash);
+  --color-deal: var(--deal-1);
+  --color-deal-ink: var(--deal-ink);
+  --color-deal-wash: var(--deal-wash);
+  --color-verify: var(--verify);
+  --color-verify-ink: var(--verify-ink);
+  --color-verify-wash: var(--verify-wash);
+  --radius-card: var(--r-card);
+  --radius-chip: var(--r-chip);
+  --radius-btn: var(--r-btn);
 }
 
 html,
@@ -16,11 +83,21 @@ body {
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: ui-sans-serif, system-ui, -apple-system, "Apple SD Gothic Neo",
-    "Malgun Gothic", sans-serif;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: "Pretendard", -apple-system, BlinkMacSystemFont,
+    "Apple SD Gothic Neo", "Malgun Gothic", "Segoe UI", system-ui, sans-serif;
+  line-height: 1.6;
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* 가격·숫자: 자릿수 정렬(tabular) + 살짝 타이트하게. 브리프 시그니처. */
+.num {
+  font-variant-numeric: tabular-nums lining-nums;
+  letter-spacing: -0.02em;
 }
 
 /* ── 버튼/링크 마이크로 인터랙션 (전역) ──
@@ -73,9 +150,9 @@ button:focus-visible,
 a:focus-visible,
 [role="button"]:focus-visible,
 summary:focus-visible {
-  outline: 2px solid #2563eb;
+  outline: 3px solid rgba(49, 130, 246, 0.55);
   outline-offset: 2px;
-  border-radius: 6px;
+  border-radius: 8px;
 }
 
 /* 누름 상태를 조금 더 또렷하게(배경 어둡게) — bg 있는 버튼에 자연스러운 피드백 */
@@ -89,12 +166,71 @@ summary:focus-visible {
 /* 글자만 있는 버튼(테두리/배경 클래스 없음)에 기본 테두리로 '버튼'임을 표시.
    .btn-bare 를 붙이면 적용 — 공용 텍스트 버튼에 사용. */
 .btn-bare {
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
   padding: 0.25rem 0.625rem;
 }
 .btn-bare:hover {
-  background: #f9fafb;
+  background: var(--surface-2);
+}
+
+/* ── 공통 컴포넌트: 신뢰 배지(필 pill, 의미별 색 하나씩) ──
+   공식=블루, 프로=블루 그라데이션, 인증=그린, 스폰서=잉크. 브리프 §배지. */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 5px 11px;
+  border-radius: var(--r-pill);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+.badge--official {
+  background: var(--blue-wash);
+  color: var(--blue-ink);
+}
+.badge--pro {
+  background: linear-gradient(135deg, var(--blue-ink), var(--blue));
+  color: #fff;
+}
+.badge--verify {
+  background: var(--verify-wash);
+  color: var(--verify-ink);
+}
+.badge--store {
+  background: var(--ink);
+  color: #fff;
+}
+
+/* ── 공통 컴포넌트: 행동 버튼 ──
+   primary=블루(결제·구독·1차 CTA), deal=따뜻한 그라데이션(세일·예약·갈래요). */
+.btn-cta {
+  border: none;
+  border-radius: var(--r-btn);
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 12px 14px;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  color: #fff;
+}
+.btn-cta--primary {
+  background: var(--blue);
+}
+.btn-cta--primary:hover {
+  background: var(--blue-ink);
+}
+.btn-cta--deal {
+  background: var(--deal-grad);
+  box-shadow: 0 6px 16px rgba(255, 59, 48, 0.26);
+}
+.btn-cta--block {
+  width: 100%;
+  display: block;
+  text-align: center;
 }
 
 /* ── 현재 위치 파란 점 (CustomOverlay 주입 DOM) ── */
@@ -103,7 +239,7 @@ summary:focus-visible {
   width: 16px;
   height: 16px;
   border-radius: 9999px;
-  background: #3b82f6;
+  background: var(--blue);
   border: 2px solid #fff;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12), 0 1px 5px rgba(0, 0, 0, 0.35);
 }
@@ -112,7 +248,7 @@ summary:focus-visible {
   position: absolute;
   inset: -7px;
   border-radius: 9999px;
-  background: rgba(59, 130, 246, 0.3);
+  background: rgba(49, 130, 246, 0.3);
 }
 @media (prefers-reduced-motion: no-preference) {
   .geo-dot::after {
@@ -277,26 +413,26 @@ summary:focus-visible {
   margin-left: 2px;
   padding: 1px 6px;
   border-radius: 9999px;
-  background: #ef4444;
+  background: var(--deal-grad);
   color: #fff;
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 800;
 }
-/* 마감임박 세일: 빨강→주황 + 부드러운 펄스로 긴급성 표현 */
+/* 마감임박 세일: 따뜻한 그라데이션 + 부드러운 펄스로 긴급성 표현 */
 .store-pin__sale--soon {
-  background: #f97316;
+  background: var(--deal-grad);
 }
 .store-pin--soon {
-  border-color: #f97316 !important;
+  border-color: var(--deal-2) !important;
   animation: pin-soon-pulse 1.4s ease-in-out infinite;
 }
 @keyframes pin-soon-pulse {
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.45), 0 2px 6px rgba(0, 0, 0, 0.18);
+    box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.45), 0 2px 6px rgba(0, 0, 0, 0.18);
   }
   50% {
-    box-shadow: 0 0 0 5px rgba(249, 115, 22, 0), 0 2px 6px rgba(0, 0, 0, 0.18);
+    box-shadow: 0 0 0 5px rgba(255, 59, 48, 0), 0 2px 6px rgba(0, 0, 0, 0.18);
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -337,10 +473,10 @@ summary:focus-visible {
   min-height: 42px;
   padding: 6px 8px;
   border-radius: 9999px;
-  background: rgba(37, 99, 235, 0.92);
+  background: var(--blue);
   border: 2px solid #fff;
   color: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  box-shadow: var(--sh-pin);
   cursor: pointer;
   white-space: nowrap;
   transition: transform 0.1s ease;
@@ -357,9 +493,9 @@ summary:focus-visible {
   margin-top: 2px;
   padding: 0 5px;
   border-radius: 9999px;
-  background: #ef4444;
+  background: var(--deal-grad);
   font-size: 9px;
-  font-weight: 700;
+  font-weight: 800;
   line-height: 1.4;
 }
 
@@ -380,7 +516,7 @@ summary:focus-visible {
   color: #fff;
 }
 .store-pin__status--shutdown {
-  background: #111827;
+  background: var(--ink);
   color: #fff;
 }
 /* 영업종료: 흐리게 */
@@ -390,11 +526,11 @@ summary:focus-visible {
 /* 폐업 제보: 흐리게 + 가게명 취소선 */
 .store-pin--shutdown {
   opacity: 0.7;
-  border-color: #111827 !important;
+  border-color: var(--ink) !important;
 }
 .store-pin--shutdown .store-pin__name {
   text-decoration: line-through;
-  color: #6b7280;
+  color: var(--ink-3);
 }
 /* 오늘 휴업 제보: 주황 강조 테두리(주의 환기) */
 .store-pin--alert {
