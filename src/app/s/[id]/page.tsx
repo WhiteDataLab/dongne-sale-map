@@ -38,18 +38,13 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const description = top
     ? `🔥 ${top.title} ${won(top.salePrice)} · 지금 진행중인 세일 ${store.sales.length}건`
     : `${store.name}의 메뉴·세일·리뷰를 확인해보세요.`;
-  const image = top?.photoUrl || top?.photoUrls?.[0] || store.bannerUrl || undefined;
 
+  // OG/트위터 이미지는 동적 카드(opengraph-image.tsx)가 자동 생성·연결한다.
   return {
     title,
     description,
-    openGraph: {
-      title,
-      description,
-      images: image ? [{ url: image }] : [],
-      type: "website",
-    },
-    twitter: { card: image ? "summary_large_image" : "summary", title, description },
+    openGraph: { title, description, type: "website" },
+    twitter: { card: "summary_large_image", title, description },
   };
 }
 

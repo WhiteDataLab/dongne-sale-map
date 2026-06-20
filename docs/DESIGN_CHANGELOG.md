@@ -119,3 +119,10 @@
 - **TO-BE**: 제목 800/`--ink`, 세일가 `text-lg/800/.num/--deal-ink`, 만료 `--deal-wash` 필, 세일 수 `--deal-ink`, CTA `--blue`(hover `--blue-ink`)·공유 버튼 중성, 영업상태 verify/deal/중성 배지, 카드 `--sh-1`/`--line`.
 - **변화 형태**: 외부 공유 첫인상을 본 앱과 동일한 토스급 톤으로 — 가격이 주인공. 매출 레버: 공유 유입 전환(바이럴 표면).
 - 검증: `/s/[id]` 실제 렌더 스크린샷 확인(영업중 verify 배지·brand CTA·surface-2 엠프티 카드·ink 타이포).
+
+### P2-5. 공유 OG 동적 이미지 (링크 미리보기 카드)
+파일: [`s/[id]/opengraph-image.tsx`](../src/app/s/[id]/opengraph-image.tsx) (신규) · `assets/og/*.woff` · `next.config.mjs`
+- **AS-IS**: OG/트위터 이미지 = 가게 대표사진 또는 없음(`generateMetadata` 수동 images). 사진 없으면 미리보기 밋밋, 브랜드 일관성 X.
+- **TO-BE**: `next/og ImageResponse`로 **브랜드 OG 카드(1200×630) 동적 생성** — deal 그라데이션 브랜드 마크 + "동네 세일 지도" + 가게명(800/ink) + 업종·주소 + **세일 시 deal-wash 펄 카드(「진행중인 세일 N건」 + 대표 세일 + 대형 가격 ExtraBold deal-ink)**, 세일 없으면 「메뉴·리뷰를 확인해보세요」 폴백. **Pretendard woff**(satori는 woff2/이모지 미지원 → woff + 도형/텍스트). `generateMetadata`의 수동 images 제거(동적 카드가 자동 연결). `outputFileTracingIncludes`로 Vercel 람다에 폰트 포함.
+- **변화 형태**: 사진 의존 → **항상 브랜드 일관된 가격 중심 미리보기**. 매출 레버: 카톡/SNS 공유 클릭률 → 바이럴 유입.
+- 검증: dev에서 `/s/[id]/opengraph-image` 200·image/png, 세일/폴백 두 변형 실제 렌더 스크린샷 확인(한글 Pretendard·대형 가격 정상), 프로덕션 빌드 통과.

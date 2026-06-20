@@ -38,6 +38,10 @@ const securityHeaders = [
 
 const nextConfig = {
   reactStrictMode: true,
+  // OG 동적 이미지(/s/[id]/opengraph-image)가 fs 로 읽는 woff 폰트를 Vercel 번들에 포함.
+  outputFileTracingIncludes: {
+    "/s/[id]/opengraph-image": ["./assets/og/**"],
+  },
   // 제보 사진은 Supabase Storage 등 외부 호스트에서 옴 → 허용 호스트는 Phase 3에서 추가.
   // TODO(phase-3): images.remotePatterns 에 Supabase Storage 도메인 등록
   images: {
