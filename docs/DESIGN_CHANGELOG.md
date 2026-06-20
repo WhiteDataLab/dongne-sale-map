@@ -148,3 +148,23 @@
 - 검증: tsc·lint·프로덕션 빌드 통과, 홈·SideNav 드로어 실렌더 스크린샷 확인(그룹 라벨/링크/CTA 토큰 일관). 잔여 비매핑 클래스(다크 배경·`bg-gray-200` 활성·PhotoEditor 캔버스 UI 등)는 적절한 컨텍스트라 보존.
 
 **남은 후속(선택, 매우 낮음)**: 잔여 비매핑 색 미세정리, 정적 안내 페이지 모션. 디자인 시스템 채택은 사실상 완결.
+
+---
+
+## 후보 B (벤토 웜 톤) 리뉴얼 — 디자이너 핸드오프 Part 1/2 반영
+
+> 출처: `MENU_DESIGN_HANDOFF.md`(Part 1, 메뉴 리스트) + `DESIGN_HANDOFF_PART2.md`(Part 2, 전 화면 확산).
+> 컨셉: **벤토 따뜻한 아이보리 베이스 + 가격 800 주인공 + 세일=따뜻함(딱 한 곳) + 50~60대 큰 글씨·큰 터치·고대비.**
+> 실행 순서(Part2 부록): ①토큰 → ②메뉴 리스트 → ③대시보드 → ④지도 핀·마퀴 → ⑤공용 → ⑥공유+reduced-motion.
+
+### B-1. 토큰 갱신 (벤토 웜 베이스 + 대비 강화)
+파일: [`globals.css`](../src/app/globals.css) `:root` · `@theme inline` · `body`
+- **AS-IS**: 베이스가 쿨/화이트 — `--surface-2 #F7F8FA`, `--line #E5E8EB`, `--line-2 #EDF0F3`, `--ink-3 #8B95A1`, `--deal-ink #E0331F`, `--deal-wash #FFF1ED`. 페이지 배경 = `--surface`(흰색).
+- **TO-BE**: **벤토 웜 톤** + 점검 지적 저대비 회색 상향 —
+  - 베이스: **`--bg #FBF6EF`(아이보리, 페이지 배경 신설)**, `--surface #FFFFFF`(카드 유지), `--surface-2 #F7F2EA`(웜), `--line #ECE3D5`/`--line-2 #F2ECE1`(웜 보더).
+  - 잉크 대비: `--ink-3 #8B95A1 → #6F7884`(명암비 ↑). `--ink-4 #B0B8C1`는 값 유지하되 **장식 한정**(의미 텍스트 금지) 정책.
+  - 세일: `--deal-ink #E0331F → #D62D14`(웜 배경 위 ≥4.5:1), `--deal-wash #FFEAE0` + **`--deal-wash-2 #FFF2EC` 신설**. `--deal-1/-2`·`--deal-grad`는 유지(주황→빨강).
+  - 신규: `--r-row 16px`, `--sh-card`(웜 그림자), `--sh-sale`(세일 글로우), **접근성 하한**(`--fs-base/-name/-price/-sale-price`, `--tap-min 48px`/`--tap-primary 56px`).
+  - `body` 배경 = `var(--bg)`, `--background → var(--bg)`. `@theme inline`에 `--color-deal-wash-2`/`--color-bg`/`--color-surface`/`--radius-row` 노출.
+- **변화 형태**: 토큰 한 벌만 바꿔 **전 화면이 따뜻한 톤으로 자동 정렬**(P2.8에서 전역 토큰화 완료 덕분). 의미색(blue/green/amber)·세일 시그니처는 보존.
+- 검증: dev 프리뷰 computed style 확인(`--bg #fbf6ef`·body bg `rgb(251,246,239)`·`--deal-ink #d62d14`·`--ink-3 #6f7884`·`--line #ece3d5`), `/`·`/faq` 실렌더 스크린샷(웜 베이스+흰 카드+웜 보더, 대비 회귀 없음), 콘솔 에러 0.
