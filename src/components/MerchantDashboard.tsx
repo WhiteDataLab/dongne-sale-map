@@ -52,14 +52,13 @@ const SECTIONS: { key: Section; label: string }[] = [
   { key: "subscription", label: "👑 구독·플랜" },
 ];
 
-const METRICS = [
-  ["노출", "impressions"],
-  ["상세열람", "detailOpens"],
-  ["길찾기", "directionsClicks"],
-  ["즐겨찾기", "favorites"],
-  ["공유", "shares"],
-  ["방문의향", "intentVisits"],
-] as const;
+// P1-b: '우리 가게 반응' 미니 스탯(최근 7일). 갈래요는 hot=따뜻한 색으로 강조.
+const MINI_STATS: [label: string, key: string, hot: boolean][] = [
+  ["상세 열람", "detailOpens", false],
+  ["길찾기", "directionsClicks", false],
+  ["🏃 갈래요", "intentVisits", true],
+  ["즐겨찾기", "favorites", false],
+];
 
 export function MerchantDashboard({ storeId, storeName }: { storeId: string; storeName: string }) {
   const [detail, setDetail] = useState<StoreDetailDTO | null>(null);
@@ -155,31 +154,82 @@ export function MerchantDashboard({ storeId, storeName }: { storeId: string; sto
           <main className="rounded-2xl border border-gray-200 bg-white p-4">
             {section === "stats" && (
               <div>
-                <h2 className="mb-2 text-sm font-bold">우리 가게 반응</h2>
                 {!stats ? (
-                  <p className="py-8 text-center text-sm text-gray-400">집계를 불러오는 중…</p>
+                  <p className="py-8 text-center text-sm text-ink-3">집계를 불러오는 중…</p>
                 ) : (
                   <>
-                    <div className="grid grid-cols-3 gap-1.5">
-                      {METRICS.map(([label, key]) => (
-                        <div key={key} className="rounded-lg bg-blue-50/60 px-2 py-2 text-center">
-                          <p className="text-[11px] text-gray-400">{label}</p>
-                          <p className="text-lg font-bold text-gray-800">{stats.today[key] ?? 0}</p>
-                          <p className="text-[10px] text-gray-400">7일 {stats.last7[key] ?? 0}</p>
+                    {/* 큰 숫자 히어로 — "느낄 수 있는" 반응 */}
+                    <p className="text-xs font-bold tracking-tight text-ink-3">
+                      📊 이번 주 우리 가게 반응
+                    </p>
+                    <div className="mt-2 flex items-baseline gap-2">
+                      <span className="num text-4xl font-extrabold text-ink">
+                        {stats.last7.impressions ?? 0}
+                      </span>
+                      <span className="text-sm font-bold text-ink-2">명이 봤어요</span>
+                    </div>
+                    <p className="mt-0.5 text-xs font-semibold text-ink-3">
+                      오늘 {stats.today.impressions ?? 0}명이 봤어요
+                    </p>
+
+                    {/* 미니 스탯 (최근 7일) */}
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      {MINI_STATS.map(([label, key, hot]) => (
+                        <div key={key} className="rounded-[13px] bg-surface-2 px-3 py-2.5">
+                          <span
+                            className={[
+                              "num block text-xl font-extrabold",
+                              hot ? "text-deal-ink" : "text-ink",
+                            ].join(" ")}
+                          >
+                            {stats.last7[key] ?? 0}
+                          </span>
+                          <span className="text-[11.5px] font-semibold text-ink-3">{label}</span>
                         </div>
                       ))}
                     </div>
-                    <p className="mt-1.5 text-[10px] text-gray-400">오늘(큰 숫자) · 최근 7일 합계</p>
+                    <p className="mt-1.5 text-[10px] text-ink-4">최근 7일 합계</p>
+
+                    {/* 잠금 업셀: 값을 보여준 뒤 자물쇠 (무료 티어 → 라이트 유도) */}
+                    {detail.tier === "free" && (
+                      <button
+                        type="button"
+                        onClick={() => setSection("subscription")}
+                        className="mt-3 flex w-full items-center gap-3 rounded-2xl border border-dashed border-brand bg-brand-wash px-3.5 py-3 text-left"
+                      >
+                        <span className="text-lg">🔔</span>
+                        <span className="flex-1">
+                          <b className="block text-[13.5px] font-extrabold text-brand-ink">
+                            단골에게 세일 알림 보내기
+                          </b>
+                          <span className="text-[11.5px] font-semibold text-brand-ink/80">
+                            {(stats.last7.intentVisits ?? 0) > 0
+                              ? `갈래요한 ${stats.last7.intentVisits}명부터 먼저 손 뻗어요`
+                              : "먼저 손 뻗으면 더 와요"}{" "}
+                            · 전단지 한 장 값
+                          </span>
+                        </span>
+                        <span className="shrink-0 rounded-full bg-brand px-2.5 py-1.5 text-[11px] font-extrabold text-white">
+                          라이트부터
+                        </span>
+                      </button>
+                    )}
+
+                    {/* 프로: 확장 통계 / (라이트) 프로 업셀 */}
                     {stats.pro ? (
                       <ProStats stats={stats} />
-                    ) : (
-                      <p className="mt-3 rounded-lg bg-indigo-50 p-2.5 text-center text-xs text-indigo-600">
+                    ) : detail.tier !== "free" ? (
+                      <p className="mt-3 rounded-xl bg-brand-wash p-2.5 text-center text-xs font-semibold text-brand-ink">
                         ⭐ 프로 플랜이면 30·90일 추이와 요일별 분석을 볼 수 있어요.{" "}
-                        <button type="button" onClick={() => setSection("subscription")} className="font-bold underline">
+                        <button
+                          type="button"
+                          onClick={() => setSection("subscription")}
+                          className="font-extrabold underline"
+                        >
                           업그레이드
                         </button>
                       </p>
-                    )}
+                    ) : null}
                   </>
                 )}
               </div>
