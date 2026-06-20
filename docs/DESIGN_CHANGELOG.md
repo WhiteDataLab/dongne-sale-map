@@ -195,3 +195,34 @@
   - **델타(+N%)**: 전주 대비는 이전 7일 집계가 없어 보류(`TODO(out-of-scope)` 주석) — 데이터 날조 대신 '오늘 N명' 보조 노출 유지.
 - **변화 형태**: "사장님이 숫자를 느낄 때 결제한다" — 히어로·갈래요·자물쇠 업셀의 위계·터치·대비를 어르신 사장님 기준으로 마감. 매출 레버: 잠금 업셀 클릭 → 라이트/프로 업그레이드(L1).
 - 검증: `tsc`·`lint`·**프로덕션 빌드 통과**. 토큰 해석은 B-1에서 확인됨(`--brand-wash`/`--deal-ink` 등), 변경은 결정적 Tailwind 유틸 스왑(로직 무변경). ⚠️ `/manage/[id]`는 소유자 인증이 있어야 렌더되고 스크린샷 도구가 환경상 불가 → 실인앱 화면은 배포본에서 사장님 계정으로 확인 권장.
+
+### B-4. 지도 핀·마퀴 (Part2 §2)
+파일: [`globals.css`](../src/app/globals.css)(`.store-pin`/`.store-pin--selected`/`.store-cluster`) · [`MapExplorer.tsx`](../src/components/MapExplorer.tsx)(`buildPinElement` selected 인자·빈 동네 CTA)
+- **이미 충족**: 4종 핀(세일 가격 800·마감임박 deal 칩 펄스·스폰서 금색·일반 이름핀, P1-a), 마퀴 다크 밴드+`.num`+hover/reduced-motion 정지(P0).
+- **보완(B-4)**:
+  - **선택 핀**: `.store-pin--selected`(scale 1.12 + `0 0 0 3px var(--blue)` 링) 신설 + `buildPinElement(store, selected, onClick)`로 현재 열린 가게 핀 강조(effect deps에 `selectedStoreId`).
+  - **클러스터 흰 원**(§2-1): `--blue` 채움 → **흰 카드(surface)+웜 보더(line)+52px**, 카운트 `--ink`, 최저가 칩 `--deal-wash`/`--deal-ink`(세일 신호만 따뜻).
+  - **핀 히트영역 ≥44px**: `.store-pin { min-height: 44px }`(어르신 터치).
+  - **빈 동네 CTA**(§2-3): 정보 카드(막다른 화면) → **[➕ 제보하기] ≥56px 버튼** 추가(등록 모드 진입), 본문 14→16px.
+- **변화 형태**: 시그니처 표면(지도)에서 세일=따뜻함, 선택/클러스터/현재위치=블루·중성 원칙 일관. 매출 레버: 핀 노출→상세 진입.
+- 검증: dev 프리뷰 **computed style**(핀 height 44, 선택 핀 boxShadow에 `rgb(49,130,246) 0 0 0 3px`·transform 1.12, 클러스터 흰 배경+웜 보더 52px·가격 `#d62d14` on `#ffeae0`), `tsc`·`lint`·프로덕션 빌드 통과. (지도 SDK는 localhost 미등록으로 인앱 렌더 불가 → 마크업 주입 computed style로 검증.)
+
+### B-5. 공용 컴포넌트 접근성 (Part2 §4)
+파일: [`globals.css`](../src/app/globals.css)(`.btn-cta`) · [`ReviewForm.tsx`](../src/components/ReviewForm.tsx)
+- **이미 충족**: 신뢰 배지(`.badge--official/pro/verify/store` 아이콘+텍스트, P0), 그래프(추이=상승빨강/하락파랑 `PriceChart`·통계 막대 `--blue` `ProStats`, P2-3), `:active scale` reduced-motion(P0).
+- **보완(B-5)**:
+  - **CTA 버튼**: `.btn-cta { min-height: 52px }` + 14→15px(§4-1 주요 ≥52px).
+  - **리뷰 입력**(§4-6): 별점 버튼 탭영역 `size-11`(≥44px), textarea **16px**(`text-base`)+`bg-surface-2`+**포커스 링**(`focus:border-brand focus:ring-2 focus:ring-brand/30`), 등록 버튼 `min-h-[52px]`/800/`disabled:bg-ink-4`.
+  - **제외**: §4-2 스타일드 on/off 토글은 별도 공용 컴포넌트가 없고(네이티브 체크박스 사용), §4-3 hold는 '선택 패턴'·미사용 → '톤 적용' 범위 밖이라 신규 구현 안 함(스펜드 절제).
+- 검증: `tsc`·`lint`·프로덕션 빌드 통과.
+
+### B-6. 공유 표면 + reduced-motion 마감 (Part2 §5·§6)
+파일: [`Reveal.tsx`](../src/components/Reveal.tsx)
+- **이미 충족**: `/s/[id]` 토큰 패스+가격 deal-ink 800(P2-4), OG 동적 카드(P2-5), 핀 펄스·마퀴·stream·geo-dot·pin-bob/drop·`:active` 모두 reduced-motion 정지(P0~B-4).
+- **보완(B-6, §6 '완전 마감')**: **`Reveal` reduced-motion 미준수 수정** — `prefers-reduced-motion: reduce`면 `matchMedia`로 감지해 **등장 모션(fade+up)·transition 제거하고 즉시 표시**. `/s/[id]`·`/about` 등 Reveal 쓰는 모든 공개 페이지에 일괄 적용(§5-1 'Reveal reduced-motion 마감' 미완 항목 종결).
+- **변화 형태**: 접근성 모션 정책이 전 컴포넌트에 빠짐없이 적용 — reduced-motion 사용자에게 펄스·마퀴·스태거 등장이 전부 정지.
+- 검증: `tsc`·`lint`·프로덕션 빌드 통과, Reveal 로직 검토(reduce 시 transition 클래스 미부여·show 즉시 true).
+
+---
+
+> **후보 B 리뉴얼 완료**: ①토큰(B-1) → ②메뉴 리스트(B-2) → ③대시보드(B-3) → ④지도 핀·마퀴(B-4) → ⑤공용(B-5) → ⑥공유+reduced-motion(B-6). 구조·IA·API·결제 흐름 불변, 시각·접근성만. Part1/Part2 핸드오프 6단계 전부 반영.

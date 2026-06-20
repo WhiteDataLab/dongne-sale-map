@@ -229,7 +229,8 @@ summary:focus-visible {
   border-radius: var(--r-btn);
   font-family: inherit;
   font-weight: 700;
-  font-size: 14px;
+  font-size: 15px;
+  min-height: 52px; /* 어르신 터치 ≥52px (핸드오프 Part2 §4-1) */
   padding: 12px 14px;
   letter-spacing: -0.01em;
   cursor: pointer;
@@ -539,7 +540,8 @@ summary:focus-visible {
   align-items: center;
   gap: 4px;
   max-width: 160px;
-  padding: 4px 10px 4px 6px;
+  min-height: 44px; /* 어르신 터치 히트영역 ≥44px (핸드오프 Part2 §2-1) */
+  padding: 6px 12px 6px 8px;
   border-radius: 9999px;
   border: 1.5px solid var(--pin-color, #16a34a);
   background: #fff;
@@ -550,6 +552,12 @@ summary:focus-visible {
   cursor: pointer;
   transform: translateY(-2px);
   white-space: nowrap;
+}
+/* 선택된 핀: 크게 + 파란 링(현재 보고 있는 가게 표시) */
+.store-pin--selected {
+  transform: translateY(-2px) scale(1.12);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.22), 0 0 0 3px var(--blue);
+  z-index: 5;
 }
 .store-pin--gray {
   color: #6b7280;
@@ -663,13 +671,13 @@ summary:focus-visible {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-width: 42px;
-  min-height: 42px;
+  min-width: 52px;
+  min-height: 52px;
   padding: 6px 8px;
   border-radius: 9999px;
-  background: var(--blue);
-  border: 2px solid #fff;
-  color: #fff;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--ink);
   box-shadow: var(--sh-pin);
   cursor: pointer;
   white-space: nowrap;
@@ -679,16 +687,18 @@ summary:focus-visible {
   transform: scale(1.06);
 }
 .store-cluster__count {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 800;
   line-height: 1;
+  color: var(--ink);
 }
 .store-cluster__price {
   margin-top: 2px;
-  padding: 0 5px;
+  padding: 1px 6px;
   border-radius: 9999px;
-  background: var(--deal-grad);
-  font-size: 9px;
+  background: var(--deal-wash);
+  color: var(--deal-ink);
+  font-size: 10px;
   font-weight: 800;
   line-height: 1.4;
 }

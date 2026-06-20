@@ -288,7 +288,7 @@ export function MapExplorer() {
     overlaysRef.current = [];
 
     const addPin = (s: StoreDTO) => {
-      const el = buildPinElement(s, () => {
+      const el = buildPinElement(s, s.id === selectedStoreId, () => {
         if (!s.verified) {
           flashNotice(`'${s.name}' 은 인증 진행중인 가게예요.`);
           return;
@@ -329,7 +329,7 @@ export function MapExplorer() {
     } else {
       for (const s of stores) addPin(s);
     }
-  }, [stores, flashNotice]);
+  }, [stores, flashNotice, selectedStoreId]);
 
   // 현재 위치로 지도 이동 (좌표 저장 안 함 — 지도 이동 보조용)
   const goToMyLocation = useCallback(() => {
@@ -555,14 +555,25 @@ export function MapExplorer() {
       {/* 빈 상태 (스펙 6장) — 빈 동네를 '첫 제보' 초대로 */}
       {!error && !loadingStores && stores.length === 0 && (
         <div className="pointer-events-none absolute inset-x-0 bottom-6 z-10 flex justify-center px-4">
-          <div className="max-w-[17rem] rounded-2xl border border-line bg-white/95 px-5 py-4 text-center shadow-[var(--sh-1)] backdrop-blur">
+          <div className="pointer-events-auto max-w-[17rem] rounded-2xl border border-line bg-white/95 px-5 py-4 text-center shadow-[var(--sh-1)] backdrop-blur">
             <p className="text-2xl">🗺️</p>
-            <p className="mt-1.5 text-sm font-bold text-ink">이 동네는 아직 비어 있어요</p>
-            <p className="mt-1 text-xs font-medium leading-relaxed text-ink-3">
+            <p className="mt-1.5 text-base font-bold text-ink">이 동네는 아직 비어 있어요</p>
+            <p className="mt-1 text-sm font-medium leading-relaxed text-ink-3">
               첫 세일·가게를 제보하면
               <br />
               이웃들이 함께 봐요
             </p>
+            <button
+              type="button"
+              onClick={() => {
+                setResults(null);
+                setSelectedStoreId(null);
+                setRegisterMode(true);
+              }}
+              className="mt-3 inline-flex min-h-[56px] w-full items-center justify-center rounded-btn bg-brand px-5 text-sm font-bold text-white"
+            >
+              ➕ 제보하기
+            </button>
           </div>
         </div>
       )}
@@ -763,13 +774,16 @@ function buildClusterElement(cluster: Cluster, onClick: () => void): HTMLElement
   return el;
 }
 
-function buildPinElement(store: StoreDTO, onClick: () => void): HTMLElement {
+function buildPinElement(store: StoreDTO, selected: boolean, onClick: () => void): HTMLElement {
   const meta = CATEGORY_META[store.category];
   const wrap = document.createElement("div");
   // M1-A: 노출 중 스폰서(인증 가게)는 금색 핀으로 강조.
   const sponsored = store.sponsored && store.verified;
   wrap.className =
-    "store-pin" + (store.verified ? "" : " store-pin--gray") + (sponsored ? " store-pin--sponsor" : "");
+    "store-pin" +
+    (store.verified ? "" : " store-pin--gray") +
+    (sponsored ? " store-pin--sponsor" : "") +
+    (selected ? " store-pin--selected" : "");
   wrap.style.setProperty("--pin-color", store.verified ? meta.color : "#9ca3af");
 
   const icon = document.createElement("span");

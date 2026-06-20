@@ -285,14 +285,14 @@ export function ReviewForm({
       </div>
 
       {/* 별점 */}
-      <div className="flex gap-1 text-2xl">
+      <div className="flex gap-0.5 text-2xl">
         {[1, 2, 3, 4, 5].map((n) => (
           <button
             key={n}
             type="button"
             aria-label={`${n}점`}
             onClick={() => setRating(n)}
-            className={n <= rating ? "text-amber-500" : "text-ink-4"}
+            className={`flex size-11 items-center justify-center ${n <= rating ? "text-amber-500" : "text-ink-4"}`}
           >
             ★
           </button>
@@ -340,7 +340,7 @@ export function ReviewForm({
           rows={2}
           autoFocus
           placeholder="직접 남기고 싶은 후기를 적어 주세요."
-          className="resize-none rounded-lg border border-line px-3 py-2 text-sm"
+          className="resize-none rounded-lg border border-line bg-surface-2 px-3 py-2 text-base outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
         />
       )}
 
@@ -455,7 +455,7 @@ export function ReviewForm({
         type="button"
         onClick={submit}
         disabled={submitting}
-        className="rounded-lg bg-brand py-2.5 text-sm font-semibold text-white disabled:bg-gray-300"
+        className="min-h-[52px] rounded-lg bg-brand py-2.5 text-[15px] font-bold text-white disabled:bg-ink-4"
       >
         {submitting ? (isEdit ? "수정 중…" : "등록 중…") : isEdit ? "수정 완료" : "리뷰 등록"}
       </button>
