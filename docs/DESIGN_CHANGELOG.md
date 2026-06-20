@@ -78,5 +78,16 @@
 - **매출 레버**: 가격 화면 자체가 전환 표면(L1 직접).
 - 검증: tsc·dev 프리뷰 computed style(FREE `--surface-2`, LITE 보더/리본 `--blue`, PRO 다크 그라데이션·`#9DC2FF`, 트라이얼 `--deal-wash`/`--deal-ink`).
 
-### P1-d. 세일 카드 · 예약/갈래요 CTA
-_(작성 예정)_
+### P1-d. 세일 카드 · 예약/갈래요 CTA  ✅
+파일: [`SaleReserveBox.tsx`](../src/components/SaleReserveBox.tsx) · [`SaleListPanel.tsx`](../src/components/SaleListPanel.tsx) · [`SaleMarquee.tsx`](../src/components/SaleMarquee.tsx)
+- **AS-IS**:
+  - 예약 박스(`SaleReserveBox`): 장미색(rose) 톤, 작은 회색 버튼 `bg-rose-600`, 남은 수량은 회색 텍스트, **카운트다운 없음**.
+  - 세일 목록(`SaleListPanel`): 정렬 칩 `blue-600`, 가격 배지 `bg-red-50 text-red-600`(13px), 이름 `font-medium`.
+  - 마퀴: 다크 스트립 + 앰버 가격.
+- **TO-BE**:
+  - 예약 박스: **deal 그라데이션 CTA**(`--deal-grad` + 그림자, "예약하고 픽업"), **⏰ 카운트다운 「N 후 픽업 마감」**, "N개 남음" deal 필, 수량 스텝퍼·텍스트 토큰화. 예약완료/마감 상태도 deal-wash/surface-2로.
+  - 세일 목록: 정렬 칩 → `bg-brand`, 가격 배지 → **`bg-deal-wash text-deal-ink` 14px/800/.num**(가격이 주인공), 이름 `font-bold text-ink`, 구분선 `--line-2`.
+  - 마퀴: 다크 유지(지도 위 가독성) + 가격 `.num/800` 통일.
+- **변화 형태**: 거래(GMV)·광고(CPA)가 걸린 예약 버튼을 **따뜻한 그라데이션 + 카운트다운**으로 "지금" 강조. 목록은 가격을 키워 결정 속도 ↑.
+- **매출 레버**: 예약 전환(L2 GMV) · 갈래요/길찾기 CPA(L3).
+- 검증: tsc·dev 프리뷰 computed style(예약 박스 deal-wash/deal-ink·deal 그라데이션 버튼·opacity 변형 정상, 목록 가격 deal 필).

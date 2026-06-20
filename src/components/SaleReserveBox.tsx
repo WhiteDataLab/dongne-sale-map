@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { won } from "@/lib/format";
 import type { SaleDTO } from "@/lib/types";
+import { Countdown } from "./Countdown";
 
 /**
  * M7(L2) — 가게 상세 세일 항목의 픽업 예약 박스(소비자).
@@ -28,7 +29,7 @@ export function SaleReserveBox({
 
   if (info.myActiveReservationId) {
     return (
-      <div className="mt-2 rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700">
+      <div className="mt-2 rounded-xl bg-deal-wash px-3 py-2 text-xs font-semibold text-deal-ink">
         🏃 예약 완료! 매장에서 픽업하세요.{" "}
         <Link href="/reservations" className="font-bold underline">
           내 예약 보기
@@ -39,7 +40,7 @@ export function SaleReserveBox({
 
   if (info.soldOut) {
     return (
-      <div className="mt-2 rounded-lg bg-gray-100 px-3 py-2 text-center text-xs font-medium text-gray-400">
+      <div className="mt-2 rounded-xl bg-surface-2 px-3 py-2 text-center text-xs font-semibold text-ink-4">
         예약 마감
       </div>
     );
@@ -68,28 +69,35 @@ export function SaleReserveBox({
   }
 
   return (
-    <div className="mt-2 rounded-lg border border-rose-200 bg-rose-50/50 p-2.5">
-      <div className="flex items-center justify-between text-xs">
-        <span className="font-medium text-rose-700">🏃 픽업 예약</span>
-        {info.remaining != null && <span className="text-gray-500">남은 수량 {info.remaining}개</span>}
+    <div className="mt-2 rounded-xl border border-deal/40 bg-deal-wash/60 p-3">
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-bold text-deal-ink">🏃 픽업 예약</span>
+        {info.remaining != null && (
+          <span className="num rounded-full bg-deal-wash px-2 py-0.5 text-[11px] font-extrabold text-deal-ink">
+            {info.remaining}개 남음
+          </span>
+        )}
       </div>
-      {info.pickupInfo && <p className="mt-1 text-[11px] text-gray-500">📍 {info.pickupInfo}</p>}
-      <div className="mt-2 flex items-center gap-2">
-        <div className="flex items-center rounded-lg border border-gray-300 bg-white">
+      <p className="mt-1 text-xs font-semibold text-deal-ink">
+        ⏰ <Countdown to={sale.expiresAt} /> 후 픽업 마감
+      </p>
+      {info.pickupInfo && <p className="mt-1 text-[11px] font-medium text-ink-3">📍 {info.pickupInfo}</p>}
+      <div className="mt-2.5 flex items-center gap-2">
+        <div className="flex items-center rounded-lg border border-line bg-white">
           <button
             type="button"
             onClick={() => setQty((q) => Math.max(1, q - 1))}
-            className="px-2.5 py-1 text-gray-600 disabled:opacity-40"
+            className="px-2.5 py-1 text-ink-2 disabled:opacity-40"
             disabled={qty <= 1}
             aria-label="수량 감소"
           >
             −
           </button>
-          <span className="w-6 text-center text-sm font-medium">{qty}</span>
+          <span className="num w-6 text-center text-sm font-bold text-ink">{qty}</span>
           <button
             type="button"
             onClick={() => setQty((q) => Math.min(max, q + 1))}
-            className="px-2.5 py-1 text-gray-600 disabled:opacity-40"
+            className="px-2.5 py-1 text-ink-2 disabled:opacity-40"
             disabled={qty >= max}
             aria-label="수량 증가"
           >
@@ -100,12 +108,13 @@ export function SaleReserveBox({
           type="button"
           onClick={reserve}
           disabled={busy}
-          className="flex-1 rounded-lg bg-rose-600 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-rose-700 active:bg-rose-800 disabled:opacity-50"
+          style={{ background: "var(--deal-grad)" }}
+          className="flex-1 rounded-xl py-2.5 text-sm font-bold text-white shadow-[0_6px_16px_rgba(255,59,48,0.26)] disabled:opacity-50"
         >
-          {busy ? "예약 중…" : `${won(sale.salePrice * qty)} 예약하기`}
+          {busy ? "예약 중…" : `${won(sale.salePrice * qty)} 예약하고 픽업`}
         </button>
       </div>
-      <p className="mt-1.5 text-center text-[11px] text-gray-400">결제는 매장에서 현장결제예요.</p>
+      <p className="mt-1.5 text-center text-[11px] font-medium text-ink-4">결제는 매장에서 현장결제예요.</p>
     </div>
   );
 }

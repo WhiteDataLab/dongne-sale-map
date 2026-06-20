@@ -42,15 +42,15 @@ export function SaleListPanel({
 
   return (
     <div className="pointer-events-auto absolute inset-x-0 bottom-0 z-30 flex max-h-[62%] flex-col rounded-t-2xl bg-white shadow-2xl md:inset-x-auto md:right-0 md:top-0 md:bottom-0 md:max-h-none md:w-[360px] md:max-w-[88vw] md:rounded-t-none md:rounded-l-2xl">
-      <div className="flex shrink-0 items-center justify-between border-b border-gray-100 px-4 pb-2 pt-3">
-        <h2 className="text-sm font-bold">
-          🔥 세일 목록 <span className="text-gray-400">({sorted.length})</span>
+      <div className="flex shrink-0 items-center justify-between border-b border-line-2 px-4 pb-2 pt-3">
+        <h2 className="text-sm font-bold text-ink">
+          🔥 세일 목록 <span className="num text-ink-3">({sorted.length})</span>
         </h2>
         <button
           type="button"
           onClick={onClose}
           aria-label="목록 닫기"
-          className="rounded-full px-2 py-1 text-sm text-gray-500 hover:bg-gray-100"
+          className="rounded-full px-2 py-1 text-sm font-medium text-ink-3 hover:bg-surface-2"
         >
           지도 보기 ✕
         </button>
@@ -64,10 +64,10 @@ export function SaleListPanel({
             type="button"
             onClick={() => setSort(s.key)}
             className={[
-              "rounded-full border px-3 py-1 text-xs font-medium transition",
+              "rounded-full border px-3 py-1 text-xs font-semibold transition",
               sort === s.key
-                ? "border-blue-600 bg-blue-600 text-white"
-                : "border-gray-200 text-gray-600 hover:bg-gray-50",
+                ? "border-brand bg-brand text-white"
+                : "border-line text-ink-2 hover:bg-surface-2",
             ].join(" ")}
           >
             {s.label}
@@ -77,26 +77,26 @@ export function SaleListPanel({
 
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
         {sorted.length === 0 ? (
-          <p className="px-4 py-10 text-center text-sm text-gray-400">
+          <p className="px-4 py-10 text-center text-sm text-ink-3">
             이 지역에 진행 중인 세일이 없어요.
             <br />
             지도를 움직여 다른 동네를 둘러보세요.
           </p>
         ) : (
-          <ul className="divide-y divide-gray-50">
+          <ul className="divide-y divide-line-2">
             {sorted.map((s) => (
               <li key={s.id}>
                 <button
                   type="button"
                   onClick={() => onSelect(s.id)}
-                  className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 active:bg-gray-100"
+                  className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-surface-2 active:bg-line-2"
                 >
                   <span className="text-xl" aria-hidden>
                     {CATEGORY_META[s.category].icon}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{s.name}</p>
-                    <p className="truncate text-xs text-gray-400">{s.address}</p>
+                    <p className="truncate text-sm font-bold text-ink">{s.name}</p>
+                    <p className="truncate text-xs text-ink-3">{s.address}</p>
                     {s.saleSoonestExpiry && (
                       <p className="mt-0.5 text-xs">
                         <Countdown to={s.saleSoonestExpiry} />
@@ -104,7 +104,7 @@ export function SaleListPanel({
                     )}
                   </div>
                   {s.saleMinPrice != null && (
-                    <span className="shrink-0 rounded-full bg-red-50 px-2 py-1 text-xs font-bold text-red-600">
+                    <span className="num shrink-0 rounded-full bg-deal-wash px-2.5 py-1 text-sm font-extrabold text-deal-ink">
                       {won(s.saleMinPrice)}~
                     </span>
                   )}
