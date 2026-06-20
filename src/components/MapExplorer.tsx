@@ -771,12 +771,6 @@ function buildPinElement(store: StoreDTO, onClick: () => void): HTMLElement {
   icon.className = "store-pin__icon";
   icon.textContent = sponsored ? "👑" : meta.icon;
 
-  const name = document.createElement("span");
-  name.className = "store-pin__name";
-  name.textContent = store.name;
-
-  wrap.append(icon, name);
-
   // M3/M4: 받을 수 있는 쿠폰 보유 가게는 🎟️ 코너 배지(발견성).
   if (store.hasCoupon) {
     const cp = document.createElement("span");
@@ -785,37 +779,72 @@ function buildPinElement(store: StoreDTO, onClick: () => void): HTMLElement {
     wrap.appendChild(cp);
   }
 
-  // 상태 우선순위: 폐업 제보 > 오늘 휴업 제보 > 영업종료(시간) > 세일
+  // 상태 우선순위: 폐업 제보 > 오늘 휴업 제보 > 영업종료(시간) > 세일 > 기본
   const tag = (text: string, cls: string) => {
     const b = document.createElement("span");
     b.className = `store-pin__status ${cls}`;
     b.textContent = text;
     wrap.appendChild(b);
   };
+  const nameEl = () => {
+    const name = document.createElement("span");
+    name.className = "store-pin__name";
+    name.textContent = store.name;
+    return name;
+  };
+
   if (store.shutdownReports > 0) {
     wrap.classList.add("store-pin--shutdown");
+    wrap.append(icon, nameEl());
     tag("폐업?", "store-pin__status--shutdown");
   } else if (store.closedTodayReports > 0) {
     wrap.classList.add("store-pin--alert");
+    wrap.append(icon, nameEl());
     tag("오늘 휴업?", "store-pin__status--today");
   } else if (store.openStatus === "preparing") {
     wrap.classList.add("store-pin--off");
+    wrap.append(icon, nameEl());
     tag("영업준비중", "store-pin__status--off");
   } else if (store.openStatus === "closed") {
     wrap.classList.add("store-pin--off");
+    wrap.append(icon, nameEl());
     tag("영업종료", "store-pin__status--off");
   } else if (store.hasActiveSale && store.verified) {
-    // 세일 가격을 핀에 바로 노출(호갱노노/오피넷식 '지도 위 숫자') + 마감임박 강조
-    const badge = document.createElement("span");
+    // P1-a 시그니처: '가격이 주인공'. 이름 대신 큰 가격(800) 카드 + 마감임박 deal 칩.
+    wrap.classList.add("store-pin--deal");
     const soon = store.saleSoonExpiring;
-    badge.className = "store-pin__sale" + (soon ? " store-pin__sale--soon" : "");
-    const priceText =
-      store.saleMinPrice != null ? `${store.saleMinPrice.toLocaleString("ko-KR")}원~` : "세일";
-    badge.textContent = (soon ? "⏰ " : "🔥 ") + priceText;
-    wrap.appendChild(badge);
-    if (soon) wrap.classList.add("store-pin--soon");
+    const price = document.createElement("span");
+    price.className = "store-pin__price num";
+    if (store.saleMinPrice != null) {
+      price.append(document.createTextNode(store.saleMinPrice.toLocaleString("ko-KR")));
+      const small = document.createElement("small");
+      small.textContent = "원~";
+      price.appendChild(small);
+    } else {
+      price.textContent = "세일중";
+    }
+    wrap.append(icon, price);
+    if (soon) {
+      wrap.classList.add("store-pin--soon");
+      const chip = document.createElement("span");
+      chip.className = "store-pin__soonchip";
+      chip.textContent = "⏰ " + soonLabel(store.saleSoonestExpiry);
+      wrap.appendChild(chip);
+    }
+  } else {
+    // 기본(세일 없음): 이름 핀
+    wrap.append(icon, nameEl());
   }
 
   wrap.addEventListener("click", onClick);
   return wrap;
+}
+
+/** 마감임박 칩 라벨: 남은 시간을 'N분'(60분 미만)/'1시간'(이상)으로. 핀은 idle/폴링 때 재생성. */
+function soonLabel(iso?: string | null): string {
+  if (!iso) return "마감임박";
+  const ms = new Date(iso).getTime() - Date.now();
+  if (ms <= 0) return "마감";
+  const m = Math.round(ms / 60000);
+  return m >= 60 ? "1시간" : `${m}분`;
 }

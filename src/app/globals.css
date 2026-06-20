@@ -441,6 +441,46 @@ summary:focus-visible {
   }
 }
 
+/* ── P1-a: 시그니처 가격 핀 (브리프) ──
+   세일 중인 가게는 '가격이 주인공'. 이름 대신 큰 가격(800)을 흰 카드에 띄우고,
+   마감임박엔 따뜻한 deal 칩(⏰ N분)을 붙여 "싸다 + 지금"을 0.5초에 전달한다. */
+.store-pin--deal {
+  border-color: transparent !important;
+  border-radius: var(--r-chip);
+  padding: 6px 11px 6px 9px;
+  background: #fff;
+  box-shadow: var(--sh-pin);
+  gap: 5px;
+}
+.store-pin__price {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--ink);
+  line-height: 1;
+}
+.store-pin__price small {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-3);
+  margin-left: 1px;
+}
+.store-pin__soonchip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 2px;
+  padding: 2px 7px;
+  border-radius: var(--r-pill);
+  background: var(--deal-grad);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+}
+/* 스폰서가 세일 중이면 금색 카드 + 가격(둘 다 유지) */
+.store-pin--sponsor.store-pin--deal {
+  background: linear-gradient(180deg, #fffbeb 0%, #fff 60%);
+}
+
 /* M1-A: 스폰서(정액 광고) 금색 핀 — 금테 + 은은한 글로우로 항상 눈에 띄게. */
 .store-pin--sponsor {
   border-color: #f59e0b !important;
