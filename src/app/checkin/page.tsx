@@ -13,7 +13,7 @@ export default async function CheckInPage() {
   const session = await auth();
   if (!session?.user) {
     return (
-      <div className="h-full overflow-y-auto p-6 text-center text-sm text-gray-500">
+      <div className="h-full overflow-y-auto p-6 text-center text-sm text-ink-3">
         <p className="mt-10">출석체크는 로그인 후 이용할 수 있어요.</p>
         <form
           action={async () => {
@@ -21,11 +21,11 @@ export default async function CheckInPage() {
             await signIn(undefined, { redirectTo: "/checkin" });
           }}
         >
-          <button className="mt-3 rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white">
+          <button className="mt-3 rounded-full bg-brand px-4 py-2 text-sm font-medium text-white">
             로그인하기
           </button>
         </form>
-        <Link href="/" className="mt-4 inline-block text-blue-600">
+        <Link href="/" className="mt-4 inline-block text-brand">
           ← 지도로
         </Link>
       </div>
@@ -56,33 +56,33 @@ export default async function CheckInPage() {
   const monthProgress = Math.min(30, effStreak % 30 === 0 && effStreak > 0 ? 30 : effStreak % 30);
 
   return (
-    <div className="h-full overflow-y-auto bg-gray-50">
+    <div className="h-full overflow-y-auto bg-surface-2">
       <div className="mx-auto flex max-w-md flex-col gap-4 p-5">
-        <Link href="/" className="text-sm text-gray-400">
+        <Link href="/" className="text-sm text-ink-3">
           ← 지도로
         </Link>
 
         <section className="rounded-2xl bg-white p-5 text-center shadow-sm">
           <h1 className="text-xl font-bold">출석체크</h1>
-          <p className="mt-1 text-sm text-gray-500">매일 출석하고 포인트를 모아요</p>
+          <p className="mt-1 text-sm text-ink-3">매일 출석하고 포인트를 모아요</p>
 
           <div className="mt-4 flex flex-col items-center">
             <span className="text-5xl">🔥</span>
-            <p className="mt-1 text-3xl font-extrabold text-blue-600">{effStreak}일</p>
-            <p className="text-xs text-gray-400">연속 출석</p>
+            <p className="mt-1 text-3xl font-extrabold text-brand">{effStreak}일</p>
+            <p className="text-xs text-ink-3">연속 출석</p>
           </div>
 
           {/* 주간(7일) 진행 */}
           <div className="mt-5 text-left">
             <div className="flex items-center justify-between text-xs">
-              <span className="font-medium text-gray-600">이번 주 출석 (7일마다 +20P)</span>
-              <span className="text-gray-400">{weekProgress}/7</span>
+              <span className="font-medium text-ink-2">이번 주 출석 (7일마다 +20P)</span>
+              <span className="text-ink-3">{weekProgress}/7</span>
             </div>
             <div className="mt-1.5 flex justify-between gap-1">
               {Array.from({ length: 7 }).map((_, i) => (
                 <div
                   key={i}
-                  className={`h-7 flex-1 rounded-md ${i < weekProgress ? "bg-blue-500" : "bg-gray-100"}`}
+                  className={`h-7 flex-1 rounded-md ${i < weekProgress ? "bg-blue-500" : "bg-surface-2"}`}
                 />
               ))}
             </div>
@@ -91,10 +91,10 @@ export default async function CheckInPage() {
           {/* 월간(30일) 진행 */}
           <div className="mt-4 text-left">
             <div className="flex items-center justify-between text-xs">
-              <span className="font-medium text-gray-600">이번 달 출석 (30일마다 +50P)</span>
-              <span className="text-gray-400">{monthProgress}/30</span>
+              <span className="font-medium text-ink-2">이번 달 출석 (30일마다 +50P)</span>
+              <span className="text-ink-3">{monthProgress}/30</span>
             </div>
-            <div className="mt-1.5 h-2.5 w-full overflow-hidden rounded-full bg-gray-100">
+            <div className="mt-1.5 h-2.5 w-full overflow-hidden rounded-full bg-surface-2">
               <div
                 className="h-full rounded-full bg-amber-500 transition-all"
                 style={{ width: `${(monthProgress / 30) * 100}%` }}
@@ -107,14 +107,14 @@ export default async function CheckInPage() {
           </div>
         </section>
 
-        <section className="rounded-2xl bg-white p-4 text-sm text-gray-600 shadow-sm">
+        <section className="rounded-2xl bg-white p-4 text-sm text-ink-2 shadow-sm">
           <h2 className="mb-2 font-semibold">적립 안내</h2>
           <ul className="flex flex-col gap-1 text-xs">
-            <li>· 매일 출석 시 <b className="text-blue-600">+10P</b></li>
-            <li>· 연속 7일마다 <b className="text-blue-600">+20P</b> 추가</li>
+            <li>· 매일 출석 시 <b className="text-brand">+10P</b></li>
+            <li>· 연속 7일마다 <b className="text-brand">+20P</b> 추가</li>
             <li>· 연속 30일마다 <b className="text-amber-600">+50P</b> 추가</li>
-            <li className="text-gray-400">· 하루라도 빠지면 연속일수가 1일부터 다시 시작돼요. (한국시간 자정 기준)</li>
-            <li className="text-gray-400">· 포인트는 적립 대기(표시용)예요.</li>
+            <li className="text-ink-3">· 하루라도 빠지면 연속일수가 1일부터 다시 시작돼요. (한국시간 자정 기준)</li>
+            <li className="text-ink-3">· 포인트는 적립 대기(표시용)예요.</li>
           </ul>
         </section>
       </div>

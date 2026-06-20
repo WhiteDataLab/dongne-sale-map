@@ -48,11 +48,11 @@ export function CheckInButton({ checkedToday }: { checkedToday: boolean }) {
         type="button"
         onClick={checkIn}
         disabled={busy}
-        className="w-full rounded-xl bg-blue-600 py-3.5 text-base font-bold text-white shadow-sm transition-colors hover:bg-blue-700 active:bg-blue-800 disabled:bg-gray-300"
+        className="w-full rounded-xl bg-brand py-3.5 text-base font-bold text-white shadow-sm transition-colors hover:bg-brand-ink active:bg-blue-800 disabled:bg-gray-300"
       >
         {busy ? "처리 중…" : "오늘 출석체크하고 +10P 받기"}
       </button>
-      {msg && <p className="mt-2 text-center text-sm text-gray-500">{msg}</p>}
+      {msg && <p className="mt-2 text-center text-sm text-ink-3">{msg}</p>}
     </div>
   );
 }

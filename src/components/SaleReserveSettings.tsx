@@ -52,16 +52,16 @@ export function SaleReserveSettings({
             type="button"
             onClick={() => patch({ reservable: false }, "픽업 예약을 껐어요.")}
             disabled={busy}
-            className="text-gray-500 underline disabled:opacity-50"
+            className="text-ink-3 underline disabled:opacity-50"
           >
             끄기
           </button>
         </div>
-        <p className="mt-1 text-gray-600">
+        <p className="mt-1 text-ink-2">
           총 {info.stockTotal}개 중 남은 수량 <b>{info.remaining}개</b>
           {info.soldOut && <span className="ml-1 text-rose-600">(마감)</span>}
         </p>
-        {info.pickupInfo && <p className="mt-0.5 text-gray-500">📍 {info.pickupInfo}</p>}
+        {info.pickupInfo && <p className="mt-0.5 text-ink-3">📍 {info.pickupInfo}</p>}
       </div>
     );
   }
@@ -81,7 +81,7 @@ export function SaleReserveSettings({
   return (
     <div className="mt-2 rounded-lg border border-rose-200 bg-rose-50/50 p-2.5">
       <p className="text-xs font-medium text-rose-700">픽업 예약 받기</p>
-      <label className="mt-2 block text-[11px] text-gray-500">
+      <label className="mt-2 block text-[11px] text-ink-3">
         예약 받을 수량
         <input
           type="number"
@@ -89,10 +89,10 @@ export function SaleReserveSettings({
           max={9999}
           value={stock}
           onChange={(e) => setStock(e.target.value)}
-          className="mt-0.5 w-full rounded-lg border border-gray-300 px-2 py-1 text-sm"
+          className="mt-0.5 w-full rounded-lg border border-line px-2 py-1 text-sm"
         />
       </label>
-      <label className="mt-2 block text-[11px] text-gray-500">
+      <label className="mt-2 block text-[11px] text-ink-3">
         픽업 안내 (선택)
         <input
           type="text"
@@ -100,14 +100,14 @@ export function SaleReserveSettings({
           maxLength={200}
           placeholder="예: 오늘 20시까지 카운터에서 픽업"
           onChange={(e) => setPickupInfo(e.target.value)}
-          className="mt-0.5 w-full rounded-lg border border-gray-300 px-2 py-1 text-sm"
+          className="mt-0.5 w-full rounded-lg border border-line px-2 py-1 text-sm"
         />
       </label>
       <div className="mt-2 flex gap-2">
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs text-gray-600"
+          className="rounded-lg border border-line px-3 py-1.5 text-xs text-ink-2"
         >
           취소
         </button>

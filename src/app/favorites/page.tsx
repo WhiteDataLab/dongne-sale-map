@@ -13,7 +13,7 @@ export default async function FavoritesPage() {
   const session = await auth();
   if (!session?.user) {
     return (
-      <div className="h-full overflow-y-auto p-6 text-center text-sm text-gray-500">
+      <div className="h-full overflow-y-auto p-6 text-center text-sm text-ink-3">
         <p className="mt-10">로그인이 필요해요.</p>
         <form
           action={async () => {
@@ -25,7 +25,7 @@ export default async function FavoritesPage() {
             네이버 로그인
           </button>
         </form>
-        <Link href="/" className="mt-4 inline-block text-blue-600">
+        <Link href="/" className="mt-4 inline-block text-brand">
           ← 지도로
         </Link>
       </div>
@@ -80,13 +80,13 @@ export default async function FavoritesPage() {
   return (
     <div className="h-full overflow-y-auto">
       <div className="mx-auto flex max-w-lg flex-col gap-3 p-5">
-        <Link href="/" className="text-sm text-gray-400">
+        <Link href="/" className="text-sm text-ink-3">
           ← 지도로
         </Link>
         <h1 className="text-xl font-bold">즐겨찾기 {favs.length > 0 && `(${favs.length})`}</h1>
 
         {favs.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-gray-200 p-6 text-center text-sm text-gray-400">
+          <p className="rounded-xl border border-dashed border-line p-6 text-center text-sm text-ink-3">
             아직 즐겨찾기한 가게가 없어요.
             <br />
             지도에서 가게를 열고 ♥ 를 눌러보세요.
@@ -97,21 +97,21 @@ export default async function FavoritesPage() {
               <Link
                 key={f.id}
                 href={`/?store=${f.id}&lat=${f.lat}&lng=${f.lng}`}
-                className="flex items-center gap-3 rounded-xl border border-gray-200 p-3 transition-colors hover:bg-gray-50 active:bg-gray-100"
+                className="flex items-center gap-3 rounded-xl border border-line p-3 transition-colors hover:bg-surface-2 active:bg-surface-2"
               >
                 <span className="text-xl" aria-hidden>
                   {CATEGORY_META[f.category].icon}
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-medium">{f.name}</p>
-                  <p className="truncate text-xs text-gray-400">{f.address}</p>
+                  <p className="truncate text-xs text-ink-3">{f.address}</p>
                 </div>
                 {f.hasActiveSale ? (
                   <span className="shrink-0 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-600">
                     🔥 세일중
                   </span>
                 ) : (
-                  <span className="shrink-0 text-xs text-gray-300">세일 없음</span>
+                  <span className="shrink-0 text-xs text-ink-4">세일 없음</span>
                 )}
               </Link>
             ))}

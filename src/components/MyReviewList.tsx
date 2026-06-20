@@ -13,7 +13,7 @@ export function MyReviewList({ reviews }: { reviews: MyReview[] }) {
 
   if (reviews.length === 0) {
     return (
-      <p className="rounded-xl border border-dashed border-gray-200 p-4 text-center text-sm text-gray-400">
+      <p className="rounded-xl border border-dashed border-line p-4 text-center text-sm text-ink-3">
         아직 작성한 리뷰가 없어요.
       </p>
     );
@@ -37,7 +37,7 @@ export function MyReviewList({ reviews }: { reviews: MyReview[] }) {
             setExpanded(true);
             setPage(0);
           }}
-          className="mt-2 w-full rounded-lg border border-gray-300 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
+          className="mt-2 w-full rounded-lg border border-line py-2 text-sm font-medium text-ink-2 hover:bg-surface-2"
         >
           펼쳐서 보기 (전체 {reviews.length}건)
         </button>
@@ -51,7 +51,7 @@ export function MyReviewList({ reviews }: { reviews: MyReview[] }) {
               setExpanded(false);
               setPage(0);
             }}
-            className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-500 hover:bg-gray-50"
+            className="rounded-lg border border-line px-3 py-1.5 text-xs font-medium text-ink-3 hover:bg-surface-2"
           >
             접기
           </button>
@@ -61,18 +61,18 @@ export function MyReviewList({ reviews }: { reviews: MyReview[] }) {
                 type="button"
                 onClick={() => setPage((p) => Math.max(0, p - 1))}
                 disabled={page === 0}
-                className="rounded-lg border border-gray-300 px-2.5 py-1 font-medium text-gray-600 disabled:text-gray-300 hover:enabled:bg-gray-50"
+                className="rounded-lg border border-line px-2.5 py-1 font-medium text-ink-2 disabled:text-ink-4 hover:enabled:bg-surface-2"
               >
                 이전
               </button>
-              <span className="tabular-nums text-gray-500">
+              <span className="tabular-nums text-ink-3">
                 {page + 1} / {totalPages}
               </span>
               <button
                 type="button"
                 onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
                 disabled={page >= totalPages - 1}
-                className="rounded-lg border border-gray-300 px-2.5 py-1 font-medium text-gray-600 disabled:text-gray-300 hover:enabled:bg-gray-50"
+                className="rounded-lg border border-line px-2.5 py-1 font-medium text-ink-2 disabled:text-ink-4 hover:enabled:bg-surface-2"
               >
                 다음
               </button>

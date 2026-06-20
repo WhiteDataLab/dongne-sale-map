@@ -258,7 +258,7 @@ export function StoreSheet({
           type="button"
           aria-label="닫기"
           onClick={onClose}
-          className="absolute left-3 top-3 z-20 hidden size-8 items-center justify-center rounded-full bg-white/90 text-gray-600 shadow md:flex"
+          className="absolute left-3 top-3 z-20 hidden size-8 items-center justify-center rounded-full bg-white/90 text-ink-2 shadow md:flex"
         >
           ✕
         </button>
@@ -283,7 +283,7 @@ export function StoreSheet({
                   <button
                     type="button"
                     onClick={() => bannerRef.current?.click()}
-                    className="flex h-24 w-full items-center justify-center bg-gray-100 text-sm text-gray-400"
+                    className="flex h-24 w-full items-center justify-center bg-surface-2 text-sm text-ink-3"
                   >
                     ＋ 메인 사진 추가 (사장님·관리자)
                   </button>
@@ -362,7 +362,7 @@ export function StoreSheet({
                 <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
                   <OpenBadge status={detail.openStatus} />
                   {userLoc ? (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 font-medium text-blue-600">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-brand-wash px-2 py-0.5 font-medium text-brand">
                       <GpsIcon className="size-3" /> 내 위치에서 {formatDistance(haversineMeters(userLoc.lat, userLoc.lng, detail.lat, detail.lng))}
                     </span>
                   ) : (
@@ -370,7 +370,7 @@ export function StoreSheet({
                       <button
                         type="button"
                         onClick={onLocate}
-                        className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-gray-500 hover:bg-gray-200"
+                        className="inline-flex items-center gap-1 rounded-full bg-surface-2 px-2 py-0.5 text-ink-3 hover:bg-line-2"
                       >
                         <GpsIcon className="size-3" /> 거리 보기
                       </button>
@@ -379,16 +379,16 @@ export function StoreSheet({
                   {detail.avgRating !== null && (
                     <span className="text-amber-500">
                       ★ {detail.avgRating}{" "}
-                      <span className="text-gray-400">({detail.reviewCount})</span>
+                      <span className="text-ink-3">({detail.reviewCount})</span>
                     </span>
                   )}
-                  <span className="truncate text-gray-400">{detail.address}</span>
+                  <span className="truncate text-ink-3">{detail.address}</span>
                   <a
                     href={`https://map.kakao.com/link/to/${encodeURIComponent(detail.name)},${detail.lat},${detail.lng}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={() => track({ storeId: detail.id, type: "directions_click", source: "detail" })}
-                    className="rounded-full bg-blue-50 px-2 py-0.5 font-medium text-blue-600 hover:bg-blue-100"
+                    className="rounded-full bg-brand-wash px-2 py-0.5 font-medium text-brand hover:bg-brand-wash"
                   >
                     🧭 길찾기
                   </a>
@@ -405,7 +405,7 @@ export function StoreSheet({
                 </div>
                 <div className="mt-1 flex items-center gap-1.5 text-xs">
                   <Avatar img={detail.registeredBy.img} />
-                  <span className="text-gray-500">{detail.registeredBy.nickname}님이 등록</span>
+                  <span className="text-ink-3">{detail.registeredBy.nickname}님이 등록</span>
                 </div>
               </div>
               <ShareButton
@@ -413,7 +413,7 @@ export function StoreSheet({
                 title={`${detail.name} 세일 정보`}
                 text="동네 세일 지도에서 확인해보세요!"
                 onShared={() => track({ storeId: detail.id, type: "share", source: "detail" })}
-                className="shrink-0 self-start rounded-full border border-gray-200 px-2 py-1 text-xs text-gray-500"
+                className="shrink-0 self-start rounded-full border border-line px-2 py-1 text-xs text-ink-3"
               >
                 🔗 공유
               </ShareButton>
@@ -441,18 +441,18 @@ export function StoreSheet({
                 }}
                 className="shrink-0 text-2xl leading-none"
               >
-                <span className={favorite ? "text-red-500" : "text-gray-300"}>
+                <span className={favorite ? "text-red-500" : "text-ink-4"}>
                   {favorite ? "♥" : "♡"}
                 </span>
               </button>
             </div>
             </>
           ) : (
-            <div className="h-12 animate-pulse rounded bg-gray-100" />
+            <div className="h-12 animate-pulse rounded bg-surface-2" />
           )}
 
           {/* 탭 */}
-          <div className="mt-3 flex border-b border-gray-100">
+          <div className="mt-3 flex border-b border-line-2">
             {TABS.map((t) => (
               <button
                 key={t.key}
@@ -464,8 +464,8 @@ export function StoreSheet({
                 className={[
                   "flex-1 border-b-2 pb-2 text-sm font-medium transition",
                   tab === t.key
-                    ? "border-blue-600 text-blue-600"
-                    : "border-transparent text-gray-400",
+                    ? "border-brand text-brand"
+                    : "border-transparent text-ink-3",
                 ].join(" ")}
               >
                 {t.label}
@@ -489,7 +489,7 @@ export function StoreSheet({
             >
               <div className="min-w-0">
                 <p className="text-xs font-semibold text-indigo-700">⚙️ 내 가게 관리</p>
-                <p className="mt-0.5 text-[11px] text-gray-500">
+                <p className="mt-0.5 text-[11px] text-ink-3">
                   통계 · 메뉴 · 세일 · 쿠폰 · 사진 · 구독을 넓은 화면에서 관리해요
                 </p>
               </div>
@@ -516,7 +516,7 @@ export function StoreSheet({
             </div>
           )}
           {loading || !detail ? (
-            <p className="py-10 text-center text-sm text-gray-400">불러오는 중…</p>
+            <p className="py-10 text-center text-sm text-ink-3">불러오는 중…</p>
           ) : tab === "products" ? (
             <ProductsTab
               detail={viewDetail!}
@@ -590,7 +590,7 @@ function ClosureBanner({
         <button
           type="button"
           onClick={onReport}
-          className="text-xs text-gray-400 underline-offset-2 hover:text-amber-600 hover:underline"
+          className="text-xs text-ink-3 underline-offset-2 hover:text-amber-600 hover:underline"
         >
           🚪 휴업/폐업 제보
         </button>
@@ -602,13 +602,13 @@ function ClosureBanner({
     <div
       className={[
         "rounded-xl border p-3",
-        shutdown.length > 0 ? "border-gray-800 bg-gray-100" : "border-amber-300 bg-amber-50",
+        shutdown.length > 0 ? "border-gray-800 bg-surface-2" : "border-amber-300 bg-amber-50",
       ].join(" ")}
     >
       <p className="text-sm font-semibold">
         {shutdown.length > 0 ? "🚫 폐업 제보가 있어요" : "⚠️ 오늘 휴업 제보가 있어요"}
       </p>
-      <p className="mt-0.5 text-xs text-gray-500">
+      <p className="mt-0.5 text-xs text-ink-3">
         {shutdown.length > 0 && `폐업 제보 ${shutdown.length}건`}
         {shutdown.length > 0 && today.length > 0 && " · "}
         {today.length > 0 && `오늘 휴업 제보 ${today.length}건`} · 이웃 제보(미확정)
@@ -623,13 +623,13 @@ function ClosureBanner({
               <div key={r.id} className="shrink-0">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={r.photoUrl ?? ""} alt="" className="size-16 rounded-lg object-cover" />
-                <p className="mt-0.5 w-16 truncate text-[10px] text-gray-400">{r.nickname}</p>
+                <p className="mt-0.5 w-16 truncate text-[10px] text-ink-3">{r.nickname}</p>
               </div>
             ))}
         </div>
       )}
       {reports.find((r) => r.note) && (
-        <p className="mt-1 text-xs text-gray-600">“{reports.find((r) => r.note)?.note}”</p>
+        <p className="mt-1 text-xs text-ink-2">“{reports.find((r) => r.note)?.note}”</p>
       )}
       <button
         type="button"
@@ -735,7 +735,7 @@ export function GalleryStrip({
         ) : (
           <Link
             href={`/stores/${storeId}/sponsor`}
-            className="mt-1 inline-block rounded-lg border border-dashed border-gray-300 px-3 py-1 text-xs text-gray-400"
+            className="mt-1 inline-block rounded-lg border border-dashed border-line px-3 py-1 text-xs text-ink-3"
           >
             🖼️ 프로 플랜에서 사진 갤러리를 추가할 수 있어요 →
           </Link>
@@ -855,7 +855,7 @@ function Benchmark({ b }: { b: NonNullable<StoreStats["benchmark"]> }) {
 
 function OpenBadge({ status }: { status: StoreDetailDTO["openStatus"] }) {
   if (status === null) {
-    return <span className="rounded-full bg-gray-100 px-2 py-0.5 text-gray-500">영업정보 없음</span>;
+    return <span className="rounded-full bg-surface-2 px-2 py-0.5 text-ink-3">영업정보 없음</span>;
   }
   if (status === "open") {
     return (
@@ -870,7 +870,7 @@ function OpenBadge({ status }: { status: StoreDetailDTO["openStatus"] }) {
     );
   }
   return (
-    <span className="rounded-full bg-gray-200 px-2 py-0.5 font-medium text-gray-600">영업종료</span>
+    <span className="rounded-full bg-gray-200 px-2 py-0.5 font-medium text-ink-2">영업종료</span>
   );
 }
 
@@ -933,14 +933,14 @@ export function ProductsTab({
           <button
             type="button"
             onClick={() => setComposing({ mode: "add" })}
-            className="rounded-lg border border-blue-600 py-2 text-sm font-medium text-blue-600"
+            className="rounded-lg border border-brand py-2 text-sm font-medium text-brand"
           >
             ＋ 메뉴 추가
           </button>
         ))}
 
       {!detail.hasOwner && (
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-ink-3">
           사장님 미등록 가게예요. 이웃 누구나 메뉴를 등록·수정할 수 있어요.
         </p>
       )}
@@ -965,13 +965,13 @@ export function ProductsTab({
                   ]
                     .filter((x) => x && String(x).trim())
                     .join(" · ");
-                  return meta ? <p className="text-xs text-gray-500">{meta}</p> : null;
+                  return meta ? <p className="text-xs text-ink-3">{meta}</p> : null;
                 })()}
                 <div className="mt-1 flex items-center gap-1.5">
                   <Avatar img={p.contributorImg} />
-                  <span className="text-xs text-gray-500">{p.contributorNickname}</span>
-                  <span className="text-xs text-gray-300">·</span>
-                  <span className="text-xs text-gray-400">{freshnessLabel(p.updatedAt)}</span>
+                  <span className="text-xs text-ink-3">{p.contributorNickname}</span>
+                  <span className="text-xs text-ink-4">·</span>
+                  <span className="text-xs text-ink-3">{freshnessLabel(p.updatedAt)}</span>
                 </div>
                 <div className="mt-1 flex items-center gap-3">
                   {detail.canManageMenu && (
@@ -979,7 +979,7 @@ export function ProductsTab({
                       <button
                         type="button"
                         onClick={() => setComposing({ mode: "edit", product: p })}
-                        className="text-xs text-blue-600"
+                        className="text-xs text-brand"
                       >
                         수정
                       </button>
@@ -1010,7 +1010,7 @@ export function ProductsTab({
 
 function Avatar({ img }: { img: string | null }) {
   return (
-    <span className="flex size-5 items-center justify-center overflow-hidden rounded-full bg-gray-100 text-[10px]">
+    <span className="flex size-5 items-center justify-center overflow-hidden rounded-full bg-surface-2 text-[10px]">
       {img ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={img} alt="" className="size-full object-cover" />
@@ -1052,7 +1052,7 @@ export function SalesTab({
         <button
           type="button"
           onClick={onCompose}
-          className="rounded-lg border border-blue-600 py-2 text-sm font-medium text-blue-600"
+          className="rounded-lg border border-brand py-2 text-sm font-medium text-brand"
         >
           🔥 세일 제보하기
         </button>
@@ -1060,7 +1060,7 @@ export function SalesTab({
 
       {detail.priceTrends.length > 0 && (
         <section className="flex flex-col gap-2">
-          <h3 className="text-sm font-semibold">📈 가격 추이 <span className="font-normal text-gray-400">(최근 90일 세일가)</span></h3>
+          <h3 className="text-sm font-semibold">📈 가격 추이 <span className="font-normal text-ink-3">(최근 90일 세일가)</span></h3>
           {detail.priceTrends.map((t) => (
             <PriceChart key={t.key} trend={t} />
           ))}
@@ -1072,19 +1072,19 @@ export function SalesTab({
       ) : (
         <ul className="flex flex-col gap-3">
           {detail.sales.map((s) => (
-        <li key={s.id} className="overflow-hidden rounded-xl border border-gray-100">
+        <li key={s.id} className="overflow-hidden rounded-xl border border-line-2">
           <PhotoCarousel urls={s.photoUrls?.length ? s.photoUrls : s.photoUrl ? [s.photoUrl] : []} />
           <div className="p-3">
             <div className="flex items-baseline justify-between gap-2">
               <p className="truncate font-medium">{s.title}</p>
               <p className="shrink-0 font-bold text-red-600">{won(s.salePrice)}</p>
             </div>
-            {s.qty?.trim() && <p className="text-xs text-gray-500">{s.qty}</p>}
+            {s.qty?.trim() && <p className="text-xs text-ink-3">{s.qty}</p>}
             <div className="mt-0.5 flex items-center gap-2 text-xs">
               <span className="rounded bg-red-50 px-1.5 py-0.5 font-medium text-red-600">
                 {untilLabel(s.expiresAt)}
               </span>
-              <span className="text-gray-400">{freshnessLabel(s.createdAt)}</span>
+              <span className="text-ink-3">{freshnessLabel(s.createdAt)}</span>
               {s.isMine && (
                 <button
                   type="button"
@@ -1181,7 +1181,7 @@ function SectionHead({
         <button
           type="button"
           onClick={onEdit}
-          className="rounded-lg border border-blue-200 px-2.5 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50"
+          className="rounded-lg border border-brand/40 px-2.5 py-1 text-xs font-medium text-brand hover:bg-brand-wash"
         >
           수정
         </button>
@@ -1191,7 +1191,7 @@ function SectionHead({
 }
 
 const inputCls =
-  "w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-blue-500";
+  "w-full rounded-lg border border-line px-3 py-2 text-sm outline-none focus:border-brand";
 
 /** 가게 소개(description) — 소유자/관리자만 편집. */
 function IntroSection({
@@ -1240,7 +1240,7 @@ function IntroSection({
           />
         </div>
       ) : (
-        <p className="whitespace-pre-wrap text-gray-600">
+        <p className="whitespace-pre-wrap text-ink-2">
           {detail.description?.trim() || "아직 등록된 소개가 없어요."}
         </p>
       )}
@@ -1277,9 +1277,9 @@ function BasicInfoSection({
       />
       {editing ? (
         <div className="flex flex-col gap-2">
-          <label className="text-xs text-gray-400">주소</label>
+          <label className="text-xs text-ink-3">주소</label>
           <input value={address} onChange={(e) => setAddress(e.target.value)} className={inputCls} />
-          <label className="text-xs text-gray-400">전화번호 (선택)</label>
+          <label className="text-xs text-ink-3">전화번호 (선택)</label>
           <input
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
@@ -1300,13 +1300,13 @@ function BasicInfoSection({
           />
         </div>
       ) : (
-        <dl className="flex flex-col gap-1 text-gray-600">
+        <dl className="flex flex-col gap-1 text-ink-2">
           <div className="flex gap-2">
-            <dt className="w-12 shrink-0 text-gray-400">주소</dt>
+            <dt className="w-12 shrink-0 text-ink-3">주소</dt>
             <dd>{detail.address}</dd>
           </div>
           <div className="flex gap-2">
-            <dt className="w-12 shrink-0 text-gray-400">전화</dt>
+            <dt className="w-12 shrink-0 text-ink-3">전화</dt>
             <dd>{detail.phone ?? "정보 없음"}</dd>
           </div>
         </dl>
@@ -1375,25 +1375,25 @@ function HoursSection({
               <div key={d} className="flex items-center gap-2 text-sm">
                 <span className="w-6 shrink-0 font-medium">{DAY_LABELS[d]}</span>
                 {v.closed ? (
-                  <span className="flex-1 text-gray-400">휴무</span>
+                  <span className="flex-1 text-ink-3">휴무</span>
                 ) : (
                   <span className="flex flex-1 items-center gap-1">
                     <input
                       type="time"
                       value={v.open}
                       onChange={(e) => setDay(d, { open: e.target.value })}
-                      className="rounded border border-gray-200 px-2 py-1"
+                      className="rounded border border-line px-2 py-1"
                     />
-                    <span className="text-gray-400">–</span>
+                    <span className="text-ink-3">–</span>
                     <input
                       type="time"
                       value={v.close}
                       onChange={(e) => setDay(d, { close: e.target.value })}
-                      className="rounded border border-gray-200 px-2 py-1"
+                      className="rounded border border-line px-2 py-1"
                     />
                   </span>
                 )}
-                <label className="flex shrink-0 items-center gap-1 text-xs text-gray-500">
+                <label className="flex shrink-0 items-center gap-1 text-xs text-ink-3">
                   <input
                     type="checkbox"
                     checked={v.closed}
@@ -1407,13 +1407,13 @@ function HoursSection({
           <SaveCancel busy={busy} onCancel={() => setEditing(false)} onSave={save} />
         </div>
       ) : detail.hours ? (
-        <ul className="flex flex-col gap-0.5 text-gray-600">
+        <ul className="flex flex-col gap-0.5 text-ink-2">
           {DAY_KEYS.map((d) => {
             const today = getKstNow().dayKey === d;
             return (
               <li
                 key={d}
-                className={`flex justify-between ${today ? "font-semibold text-gray-900" : ""}`}
+                className={`flex justify-between ${today ? "font-semibold text-ink" : ""}`}
               >
                 <span>{DAY_LABELS[d]}</span>
                 <span>{formatDayHours(detail.hours?.[d] ?? null)}</span>
@@ -1422,7 +1422,7 @@ function HoursSection({
           })}
         </ul>
       ) : (
-        <p className="text-gray-400">영업시간 정보가 없어요.</p>
+        <p className="text-ink-3">영업시간 정보가 없어요.</p>
       )}
     </section>
   );
@@ -1444,14 +1444,14 @@ function SaveCancel({
         type="button"
         onClick={onSave}
         disabled={busy}
-        className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white disabled:bg-gray-300"
+        className="rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-white disabled:bg-gray-300"
       >
         {busy ? "저장 중…" : "저장"}
       </button>
       <button
         type="button"
         onClick={onCancel}
-        className="rounded-lg border border-gray-200 px-2.5 py-1 text-xs text-gray-500 hover:bg-gray-50"
+        className="rounded-lg border border-line px-2.5 py-1 text-xs text-ink-3 hover:bg-surface-2"
       >
         취소
       </button>
@@ -1530,7 +1530,7 @@ function NoticeSection({
                 type="button"
                 onClick={() => save("")}
                 disabled={busy}
-                className="text-xs text-red-500 disabled:text-gray-300"
+                className="text-xs text-red-500 disabled:text-ink-4"
               >
                 삭제
               </button>
@@ -1561,7 +1561,7 @@ function NoticeSection({
             <button
               type="button"
               onClick={() => setEditing(false)}
-              className="text-xs text-gray-500"
+              className="text-xs text-ink-3"
             >
               취소
             </button>
@@ -1594,7 +1594,7 @@ export function NoticeTab({
       <BasicInfoSection detail={detail} onToast={onToast} onDone={onDone} />
       <HoursSection detail={detail} onToast={onToast} onDone={onDone} />
 
-      <section className="border-t border-gray-100 pt-3">
+      <section className="border-t border-line-2 pt-3">
         <MerchantApply
           storeId={detail.id}
           hasOwner={detail.hasOwner}
@@ -1603,8 +1603,8 @@ export function NoticeTab({
         />
       </section>
 
-      <section className="border-t border-gray-100 pt-3">
-        <span className="text-gray-400">잘못된 가게 정보인가요? </span>
+      <section className="border-t border-line-2 pt-3">
+        <span className="text-ink-3">잘못된 가게 정보인가요? </span>
         <ReportButton
           targetType="store"
           targetId={detail.id}
@@ -1674,17 +1674,17 @@ function ReviewsTab({
         <button
           type="button"
           onClick={onCompose}
-          className="rounded-lg border border-blue-600 py-2 text-sm font-medium text-blue-600"
+          className="rounded-lg border border-brand py-2 text-sm font-medium text-brand"
         >
           ✍️ 리뷰 쓰기
         </button>
       )}
 
       {detail.avgRating !== null && (
-        <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+        <div className="flex items-center gap-2 border-b border-line-2 pb-2">
           <span className="text-2xl font-bold">{detail.avgRating}</span>
           <span className="text-amber-500">{starString(detail.avgRating)}</span>
-          <span className="text-xs text-gray-400">리뷰 {detail.reviewCount}개</span>
+          <span className="text-xs text-ink-3">리뷰 {detail.reviewCount}개</span>
         </div>
       )}
       {detail.reviews.length === 0 ? (
@@ -1696,7 +1696,7 @@ function ReviewsTab({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
                   <span className="text-sm font-medium">{r.nickname}</span>
-                  <span className="text-xs text-gray-400">{reviewDateLabel(r.createdAt)}</span>
+                  <span className="text-xs text-ink-3">{reviewDateLabel(r.createdAt)}</span>
                 </div>
                 <span className="text-amber-500 text-sm">{starString(r.rating)}</span>
               </div>
@@ -1710,7 +1710,7 @@ function ReviewsTab({
               {r.photoUrls?.length > 0 && (
                 <div className="mt-1.5 flex gap-1.5 overflow-x-auto">
                   {r.photoUrls.map((u, i) => (
-                    <div key={i} className="zoomable size-20 shrink-0 overflow-hidden rounded-lg bg-gray-100">
+                    <div key={i} className="zoomable size-20 shrink-0 overflow-hidden rounded-lg bg-surface-2">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={u} alt="" className="size-full object-cover" />
                     </div>
@@ -1718,7 +1718,7 @@ function ReviewsTab({
                 </div>
               )}
               <div className="mt-1.5 flex items-center justify-between">
-                <span className="text-xs text-gray-300">
+                <span className="text-xs text-ink-4">
                   {!r.scored && "별점·포인트 미반영"}
                 </span>
                 <div className="flex items-center gap-3">
@@ -1727,7 +1727,7 @@ function ReviewsTab({
                       <button
                         type="button"
                         onClick={() => setEditReview(r)}
-                        className="text-xs text-blue-600"
+                        className="text-xs text-brand"
                       >
                         수정
                       </button>
@@ -1773,7 +1773,7 @@ function PhotoCarousel({ urls }: { urls: string[] }) {
 
   if (urls.length === 0) {
     return (
-      <div className="flex aspect-video w-full items-center justify-center bg-gray-100 text-3xl text-gray-300">
+      <div className="flex aspect-video w-full items-center justify-center bg-surface-2 text-3xl text-ink-4">
         🧺
       </div>
     );
@@ -1809,12 +1809,12 @@ function PhotoCarousel({ urls }: { urls: string[] }) {
 
 function Thumb({ url }: { url: string | null }) {
   return (
-    <div className="zoomable size-16 shrink-0 rounded-lg bg-gray-100">
+    <div className="zoomable size-16 shrink-0 rounded-lg bg-surface-2">
       {url ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={url} alt="" className="size-full object-cover" />
       ) : (
-        <div className="flex size-full items-center justify-center text-gray-300">🧺</div>
+        <div className="flex size-full items-center justify-center text-ink-4">🧺</div>
       )}
     </div>
   );

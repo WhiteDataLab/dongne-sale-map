@@ -6,12 +6,12 @@ export const metadata = { title: "위치기반서비스 이용약관 — 동네 
 export default function LocationTermsPage() {
   return (
     <div className="h-full overflow-y-auto">
-      <article className="mx-auto max-w-2xl space-y-4 p-5 text-sm leading-relaxed text-gray-700">
-        <Link href="/" className="text-gray-400">
+      <article className="mx-auto max-w-2xl space-y-4 p-5 text-sm leading-relaxed text-ink-2">
+        <Link href="/" className="text-ink-3">
           ← 지도로
         </Link>
-        <h1 className="text-xl font-bold text-gray-900">위치기반서비스 이용약관</h1>
-        <p className="text-xs text-gray-400">
+        <h1 className="text-xl font-bold text-ink">위치기반서비스 이용약관</h1>
+        <p className="text-xs text-ink-3">
           본 약관은 MVP 단계의 초안이며, 정식 운영 전 법률 검토가 필요합니다.
         </p>
 
@@ -60,7 +60,7 @@ export default function LocationTermsPage() {
         <section>
           <h2 className="font-semibold">제6조 (문의)</h2>
           <p>
-            위치기반서비스 관련 문의는 <Link href="/support" className="text-blue-600">고객센터</Link>로
+            위치기반서비스 관련 문의는 <Link href="/support" className="text-brand">고객센터</Link>로
             접수해 주세요.
           </p>
         </section>

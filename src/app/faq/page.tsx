@@ -38,27 +38,27 @@ export default function FaqPage() {
   return (
     <div className="h-full overflow-y-auto">
       <div className="mx-auto max-w-2xl space-y-4 p-5">
-        <Link href="/" className="text-sm text-gray-400">
+        <Link href="/" className="text-sm text-ink-3">
           ← 지도로
         </Link>
-        <h1 className="text-xl font-bold text-gray-900">자주 묻는 질문</h1>
+        <h1 className="text-xl font-bold text-ink">자주 묻는 질문</h1>
 
         <ul className="flex flex-col gap-2">
           {FAQS.map((f) => (
-            <li key={f.q} className="rounded-xl border border-gray-200">
+            <li key={f.q} className="rounded-xl border border-line">
               <details className="group">
-                <summary className="flex cursor-pointer items-center justify-between gap-2 p-4 text-sm font-medium text-gray-800">
+                <summary className="flex cursor-pointer items-center justify-between gap-2 p-4 text-sm font-medium text-ink">
                   <span>Q. {f.q}</span>
-                  <span className="text-gray-300 transition-transform group-open:rotate-180">▾</span>
+                  <span className="text-ink-4 transition-transform group-open:rotate-180">▾</span>
                 </summary>
-                <p className="px-4 pb-4 text-sm leading-relaxed text-gray-600">{f.a}</p>
+                <p className="px-4 pb-4 text-sm leading-relaxed text-ink-2">{f.a}</p>
               </details>
             </li>
           ))}
         </ul>
 
-        <p className="rounded-xl bg-gray-50 p-4 text-sm text-gray-500">
-          더 궁금한 점이 있으면 <Link href="/support" className="font-medium text-blue-600">고객센터</Link>로
+        <p className="rounded-xl bg-surface-2 p-4 text-sm text-ink-3">
+          더 궁금한 점이 있으면 <Link href="/support" className="font-medium text-brand">고객센터</Link>로
           문의해 주세요.
         </p>
       </div>

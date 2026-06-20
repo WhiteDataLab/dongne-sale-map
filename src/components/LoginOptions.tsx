@@ -81,13 +81,13 @@ export function LoginOptions({
   };
 
   const inputClass =
-    "w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500";
+    "w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand";
   const primaryBtn =
-    "w-full rounded-lg bg-blue-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 active:bg-blue-800 disabled:bg-gray-300";
+    "w-full rounded-lg bg-brand py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-ink active:bg-blue-800 disabled:bg-gray-300";
 
   return (
     <div className="mx-auto flex max-w-sm flex-col gap-5 p-6">
-      <Link href="/" className="text-sm text-gray-400">
+      <Link href="/" className="text-sm text-ink-3">
         ← 지도로
       </Link>
       <h1 className="text-xl font-bold">로그인 / 회원가입</h1>
@@ -114,7 +114,7 @@ export function LoginOptions({
         )}
       </div>
 
-      <div className="flex items-center gap-2 text-xs text-gray-300">
+      <div className="flex items-center gap-2 text-xs text-ink-4">
         <span className="h-px flex-1 bg-gray-200" />
         또는 전화번호
         <span className="h-px flex-1 bg-gray-200" />
@@ -158,7 +158,7 @@ export function LoginOptions({
 
       {step === "signup" && (
         <div className="flex flex-col gap-2">
-          <p className="text-xs text-gray-500">처음 오셨네요! 간단히 가입할게요.</p>
+          <p className="text-xs text-ink-3">처음 오셨네요! 간단히 가입할게요.</p>
           <input
             value={nickname}
             onChange={(e) => setNickname(e.target.value)}

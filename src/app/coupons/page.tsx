@@ -11,7 +11,7 @@ export default async function MyCouponsPage() {
   const session = await auth();
   if (!session?.user) {
     return (
-      <div className="h-full overflow-y-auto p-6 text-center text-sm text-gray-500">
+      <div className="h-full overflow-y-auto p-6 text-center text-sm text-ink-3">
         <p className="mt-10">로그인이 필요해요.</p>
         <form
           action={async () => {
@@ -23,7 +23,7 @@ export default async function MyCouponsPage() {
             네이버 로그인
           </button>
         </form>
-        <Link href="/" className="mt-4 inline-block text-blue-600">
+        <Link href="/" className="mt-4 inline-block text-brand">
           ← 지도로
         </Link>
       </div>
@@ -40,7 +40,7 @@ export default async function MyCouponsPage() {
   return (
     <div className="h-full overflow-y-auto">
       <div className="mx-auto flex max-w-lg flex-col gap-3 p-5">
-        <Link href="/" className="text-sm text-gray-400">
+        <Link href="/" className="text-sm text-ink-3">
           ← 지도로
         </Link>
         <h1 className="text-xl font-bold">내 쿠폰 {coupons.length > 0 && `(${coupons.length})`}</h1>

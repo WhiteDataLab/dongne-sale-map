@@ -5,8 +5,8 @@
  */
 export function MapPlaceholder() {
   return (
-    <div className="flex h-full w-full items-center justify-center bg-gray-100">
-      <div className="flex flex-col items-center gap-2 text-center text-gray-400">
+    <div className="flex h-full w-full items-center justify-center bg-surface-2">
+      <div className="flex flex-col items-center gap-2 text-center text-ink-3">
         <div className="text-4xl">🗺️</div>
         <p className="text-sm">지도 영역 (Phase 1에서 카카오맵 연동)</p>
         <p className="text-xs">기본 중심: 서울 동대문구 이문동</p>

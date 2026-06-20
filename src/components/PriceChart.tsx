@@ -29,7 +29,7 @@ export function PriceChart({ trend }: { trend: PriceTrend }) {
     new Date(d).toLocaleDateString("ko-KR", { month: "numeric", day: "numeric" });
 
   return (
-    <div className="rounded-xl border border-gray-100 p-3">
+    <div className="rounded-xl border border-line-2 p-3">
       <div className="flex items-baseline justify-between gap-2">
         <p className="truncate text-sm font-medium">{trend.label}</p>
         <p className="shrink-0 text-sm font-bold" style={{ color }}>
@@ -51,7 +51,7 @@ export function PriceChart({ trend }: { trend: PriceTrend }) {
           vectorEffect="non-scaling-stroke"
         />
       </svg>
-      <div className="mt-1 flex justify-between text-[11px] text-gray-400">
+      <div className="mt-1 flex justify-between text-[11px] text-ink-3">
         <span>{lastFmt(trend.points[0].t)} · 최저 {won(min)}</span>
         <span>최고 {won(max)} · {lastFmt(trend.points[n - 1].t)}</span>
       </div>

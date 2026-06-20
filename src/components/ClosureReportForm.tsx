@@ -76,7 +76,7 @@ export function ClosureReportForm({
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-lg border border-gray-200 px-2.5 py-1 text-sm text-gray-500 hover:bg-gray-50"
+          className="rounded-lg border border-line px-2.5 py-1 text-sm text-ink-3 hover:bg-surface-2"
         >
           닫기
         </button>
@@ -95,7 +95,7 @@ export function ClosureReportForm({
               "flex-1 rounded-lg border px-3 py-2 text-sm",
               kind === o.k
                 ? "border-amber-600 bg-amber-600 text-white"
-                : "border-gray-200 bg-white text-gray-600",
+                : "border-line bg-white text-ink-2",
             ].join(" ")}
           >
             {o.label}
@@ -105,7 +105,7 @@ export function ClosureReportForm({
 
       {/* 현장 사진 1장 */}
       {preview ? (
-        <div className="relative aspect-video overflow-hidden rounded-lg bg-gray-100">
+        <div className="relative aspect-video overflow-hidden rounded-lg bg-surface-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={preview} alt="" className="h-full w-full object-cover" />
           <button
@@ -131,7 +131,7 @@ export function ClosureReportForm({
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
-          className="flex aspect-video flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-white text-sm text-gray-400"
+          className="flex aspect-video flex-col items-center justify-center rounded-lg border-2 border-dashed border-line bg-white text-sm text-ink-3"
         >
           <span className="text-2xl">📷</span>
           현장 사진 찍기 / 올리기
@@ -153,7 +153,7 @@ export function ClosureReportForm({
         value={note}
         onChange={(e) => setNote(e.target.value)}
         placeholder="한줄 메모 (선택, 예: 셔터 내려가 있어요)"
-        className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
+        className="rounded-lg border border-line px-3 py-2 text-sm"
       />
 
       <button

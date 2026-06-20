@@ -118,8 +118,8 @@ export function AboutEditor({
   };
 
   const inputCls =
-    "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500";
-  const labelCls = "text-xs font-medium text-gray-500";
+    "w-full rounded-lg border border-line px-3 py-2 text-sm outline-none focus:border-brand";
+  const labelCls = "text-xs font-medium text-ink-3";
 
   if (!open) {
     return (
@@ -130,7 +130,7 @@ export function AboutEditor({
           setVideo(introVideo);
           setOpen(true);
         }}
-        className="fixed bottom-5 right-5 z-40 rounded-full bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-blue-700"
+        className="fixed bottom-5 right-5 z-40 rounded-full bg-brand px-5 py-3 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-brand-ink"
       >
         ✏️ 소개 편집
       </button>
@@ -141,13 +141,13 @@ export function AboutEditor({
     <div className="fixed inset-0 z-50 flex flex-col bg-black/40">
       <div className="mx-auto flex h-full w-full max-w-2xl flex-col bg-white shadow-2xl">
         {/* 헤더 */}
-        <div className="flex shrink-0 items-center justify-between border-b border-gray-100 px-4 py-3">
+        <div className="flex shrink-0 items-center justify-between border-b border-line-2 px-4 py-3">
           <h2 className="text-base font-bold">서비스 소개 편집</h2>
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600"
+              className="rounded-lg border border-line px-3 py-1.5 text-xs font-medium text-ink-2"
             >
               닫기
             </button>
@@ -155,7 +155,7 @@ export function AboutEditor({
               type="button"
               onClick={save}
               disabled={busy}
-              className="rounded-lg bg-blue-600 px-4 py-1.5 text-xs font-semibold text-white disabled:bg-gray-300"
+              className="rounded-lg bg-brand px-4 py-1.5 text-xs font-semibold text-white disabled:bg-gray-300"
             >
               {busy ? "저장 중…" : "저장"}
             </button>
@@ -185,7 +185,7 @@ export function AboutEditor({
             {video ? (
               <video src={video} controls playsInline className="mb-2 aspect-video w-full rounded-lg bg-black" />
             ) : (
-              <p className="mb-2 text-xs text-gray-400">등록된 영상이 없어요. (mp4·webm·mov, 50MB 이하)</p>
+              <p className="mb-2 text-xs text-ink-3">등록된 영상이 없어요. (mp4·webm·mov, 50MB 이하)</p>
             )}
             <VideoButtons busy={busy} hasVideo={!!video} onPick={uploadVideo} onRemove={removeVideo} />
           </fieldset>
@@ -212,7 +212,7 @@ export function AboutEditor({
             <button
               type="button"
               onClick={addBlock}
-              className="mt-3 w-full rounded-lg border border-dashed border-blue-400 py-2 text-sm font-medium text-blue-600"
+              className="mt-3 w-full rounded-lg border border-dashed border-blue-400 py-2 text-sm font-medium text-brand"
             >
               ＋ 섹션 추가
             </button>
@@ -261,7 +261,7 @@ function VideoButtons({
         type="button"
         onClick={() => ref.current?.click()}
         disabled={busy}
-        className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white disabled:bg-gray-300"
+        className="rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-white disabled:bg-gray-300"
       >
         {hasVideo ? "영상 교체" : "영상 업로드"}
       </button>
@@ -270,7 +270,7 @@ function VideoButtons({
           type="button"
           onClick={onRemove}
           disabled={busy}
-          className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600"
+          className="rounded-lg border border-line px-3 py-1.5 text-xs font-medium text-ink-2"
         >
           삭제
         </button>
@@ -315,12 +315,12 @@ function BlockCard({
   const [uploading, setUploading] = useState(false);
 
   return (
-    <div className="rounded-xl border border-gray-200 p-3">
+    <div className="rounded-xl border border-line p-3">
       <div className="mb-2 flex items-center justify-between">
-        <span className="text-xs font-semibold text-gray-400">섹션 {index + 1}</span>
+        <span className="text-xs font-semibold text-ink-3">섹션 {index + 1}</span>
         <div className="flex items-center gap-1.5 text-xs">
-          <button type="button" onClick={() => onMove(-1)} disabled={index === 0} className="px-1 text-gray-500 disabled:text-gray-300">↑</button>
-          <button type="button" onClick={() => onMove(1)} disabled={index === total - 1} className="px-1 text-gray-500 disabled:text-gray-300">↓</button>
+          <button type="button" onClick={() => onMove(-1)} disabled={index === 0} className="px-1 text-ink-3 disabled:text-ink-4">↑</button>
+          <button type="button" onClick={() => onMove(1)} disabled={index === total - 1} className="px-1 text-ink-3 disabled:text-ink-4">↓</button>
           <button type="button" onClick={onRemove} className="px-1 text-red-500">삭제</button>
         </div>
       </div>
@@ -331,16 +331,16 @@ function BlockCard({
         <textarea value={block.desc} onChange={(e) => onChange({ desc: e.target.value })} rows={2} className={`${inputCls} resize-none`} />
 
         <div className="flex items-center gap-3">
-          <label className="flex items-center gap-1 text-xs text-gray-600">
+          <label className="flex items-center gap-1 text-xs text-ink-2">
             <input type="checkbox" checked={!!block.dark} onChange={(e) => onChange({ dark: e.target.checked })} />
             어두운 배경
           </label>
-          <label className="flex items-center gap-1 text-xs text-gray-600">
+          <label className="flex items-center gap-1 text-xs text-ink-2">
             이모지
             <input
               value={block.emoji}
               onChange={(e) => onChange({ emoji: e.target.value })}
-              className="w-12 rounded border border-gray-300 px-1 py-0.5 text-center"
+              className="w-12 rounded border border-line px-1 py-0.5 text-center"
             />
           </label>
         </div>
@@ -363,7 +363,7 @@ function BlockCard({
             type="button"
             onClick={() => ref.current?.click()}
             disabled={uploading}
-            className="rounded-lg border border-dashed border-gray-300 py-2 text-xs font-medium text-gray-500 disabled:text-gray-300"
+            className="rounded-lg border border-dashed border-line py-2 text-xs font-medium text-ink-3 disabled:text-ink-4"
           >
             {uploading ? "업로드 중…" : "＋ 이미지 업로드 (없으면 이모지로 표시)"}
           </button>

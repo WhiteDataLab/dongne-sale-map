@@ -40,7 +40,7 @@ export function Countdown({ to, className = "" }: { to: string; className?: stri
     <span
       className={[
         "tabular-nums",
-        remain <= 0 ? "text-gray-400" : urgent ? "font-semibold text-orange-600" : "text-gray-500",
+        remain <= 0 ? "text-ink-3" : urgent ? "font-semibold text-orange-600" : "text-ink-3",
         className,
       ].join(" ")}
     >

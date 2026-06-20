@@ -24,10 +24,10 @@ export function MerchantApply({
     return <p className="text-xs font-medium text-amber-700">👑 사장님으로 인증된 내 가게예요.</p>;
   }
   if (hasOwner) {
-    return <p className="text-xs text-gray-400">사장님이 인증한 가게예요.</p>;
+    return <p className="text-xs text-ink-3">사장님이 인증한 가게예요.</p>;
   }
   if (done) {
-    return <p className="text-xs text-blue-600">인증 신청 완료 — 관리자 검토 후 승인돼요.</p>;
+    return <p className="text-xs text-brand">인증 신청 완료 — 관리자 검토 후 승인돼요.</p>;
   }
 
   const submit = async () => {
@@ -57,7 +57,7 @@ export function MerchantApply({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="text-xs font-medium text-blue-600 underline-offset-2 hover:underline"
+        className="text-xs font-medium text-brand underline-offset-2 hover:underline"
       >
         이 가게 사장님이신가요? 인증 신청 →
       </button>
@@ -65,14 +65,14 @@ export function MerchantApply({
   }
 
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-blue-200 bg-blue-50 p-3">
-      <p className="text-xs text-gray-600">
+    <div className="flex flex-col gap-2 rounded-lg border border-brand/40 bg-brand-wash p-3">
+      <p className="text-xs text-ink-2">
         사업자등록증 사진(또는 PDF)을 올려주세요. 관리자 확인 후 사장님 권한이 부여돼요.
       </p>
       <button
         type="button"
         onClick={() => ref.current?.click()}
-        className="truncate rounded border border-gray-300 bg-white px-3 py-2 text-left text-xs"
+        className="truncate rounded border border-line bg-white px-3 py-2 text-left text-xs"
       >
         {file ? `📎 ${file.name}` : "파일 첨부"}
       </button>
@@ -88,14 +88,14 @@ export function MerchantApply({
           type="button"
           onClick={submit}
           disabled={busy}
-          className="flex-1 rounded bg-blue-600 py-2 text-xs font-medium text-white transition-colors hover:bg-blue-700 disabled:bg-gray-300"
+          className="flex-1 rounded bg-brand py-2 text-xs font-medium text-white transition-colors hover:bg-brand-ink disabled:bg-gray-300"
         >
           {busy ? "신청 중…" : "인증 신청"}
         </button>
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="rounded border border-gray-300 px-3 text-xs text-gray-500"
+          className="rounded border border-line px-3 text-xs text-ink-3"
         >
           취소
         </button>

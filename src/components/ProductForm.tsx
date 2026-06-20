@@ -108,13 +108,13 @@ export function ProductForm({
   };
 
   return (
-    <div className="flex flex-col gap-2 rounded-xl border border-gray-200 bg-gray-50 p-3">
+    <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface-2 p-3">
       <div className="flex items-center justify-between">
         <h4 className="font-semibold">{editing ? "메뉴 수정" : "메뉴 추가"}</h4>
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-lg border border-gray-200 px-2.5 py-1 text-sm text-gray-500 hover:bg-gray-50"
+          className="rounded-lg border border-line px-2.5 py-1 text-sm text-ink-3 hover:bg-surface-2"
         >
           닫기
         </button>
@@ -123,13 +123,13 @@ export function ProductForm({
       <button
         type="button"
         onClick={() => ref.current?.click()}
-        className="flex h-28 items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-gray-300 bg-white"
+        className="flex h-28 items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-line bg-white"
       >
         {preview ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={preview} alt="" className="h-full w-full object-cover" />
         ) : (
-          <span className="text-sm text-gray-400">📷 사진 {editing ? "변경" : "추가(필수)"}</span>
+          <span className="text-sm text-ink-3">📷 사진 {editing ? "변경" : "추가(필수)"}</span>
         )}
       </button>
       <input
@@ -150,7 +150,7 @@ export function ProductForm({
         <button
           type="button"
           onClick={() => setPhotoEditing(true)}
-          className="self-start text-xs font-medium text-blue-600"
+          className="self-start text-xs font-medium text-brand"
         >
           ✏️ 사진 편집 (자르기/펜)
         </button>
@@ -171,7 +171,7 @@ export function ProductForm({
         value={name}
         onChange={(e) => setName(e.target.value)}
         placeholder={hasQty ? "메뉴명 (예: 사과 부사)" : "메뉴/서비스명 (예: 커트, 드라이클리닝)"}
-        className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
+        className="rounded-lg border border-line px-3 py-2 text-sm"
       />
       <div className="flex gap-2">
         <input
@@ -179,14 +179,14 @@ export function ProductForm({
           onChange={(e) => setPrice(e.target.value)}
           inputMode="numeric"
           placeholder="가격(원)"
-          className={`${hasQty ? "w-1/2" : "w-full"} rounded-lg border border-gray-200 px-3 py-2 text-sm`}
+          className={`${hasQty ? "w-1/2" : "w-full"} rounded-lg border border-line px-3 py-2 text-sm`}
         />
         {hasQty && (
           <input
             value={qtyUnit}
             onChange={(e) => setQtyUnit(e.target.value)}
             placeholder="단위 (예: 5개, 1kg)"
-            className="w-1/2 rounded-lg border border-gray-200 px-3 py-2 text-sm"
+            className="w-1/2 rounded-lg border border-line px-3 py-2 text-sm"
           />
         )}
       </div>
@@ -195,7 +195,7 @@ export function ProductForm({
           value={origin}
           onChange={(e) => setOrigin(e.target.value)}
           placeholder="원산지 (선택)"
-          className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
+          className="rounded-lg border border-line px-3 py-2 text-sm"
         />
       )}
 
@@ -203,7 +203,7 @@ export function ProductForm({
         type="button"
         onClick={submit}
         disabled={busy}
-        className="rounded-lg bg-blue-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:bg-gray-300"
+        className="rounded-lg bg-brand py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-ink disabled:bg-gray-300"
       >
         {busy ? "저장 중…" : editing ? "메뉴 수정" : "메뉴 추가"}
       </button>

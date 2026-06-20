@@ -21,8 +21,8 @@ export function SideNav({
   const close = () => setOpen(false);
 
   const itemClass =
-    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 active:bg-gray-200";
-  const groupLabel = "px-3 pb-1 pt-3 text-xs font-semibold uppercase tracking-wide text-gray-400";
+    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-ink-2 transition-colors hover:bg-surface-2 active:bg-gray-200";
+  const groupLabel = "px-3 pb-1 pt-3 text-xs font-semibold uppercase tracking-wide text-ink-3";
 
   const Item = ({ href, children }: { href: string; children: React.ReactNode }) => (
     <Link href={href} onClick={close} className={itemClass}>
@@ -40,7 +40,7 @@ export function SideNav({
           window.dispatchEvent(new CustomEvent("app:overlay-close"));
         }}
         aria-label="메뉴 열기"
-        className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full text-xl text-gray-700 transition-colors hover:bg-gray-100 active:bg-gray-200"
+        className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full text-xl text-ink-2 transition-colors hover:bg-surface-2 active:bg-gray-200"
       >
         {user?.image ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -69,9 +69,9 @@ export function SideNav({
             <Link
               href="/account"
               onClick={close}
-              className="flex items-center gap-3 border-b border-gray-100 p-4 transition-colors hover:bg-gray-50"
+              className="flex items-center gap-3 border-b border-line-2 p-4 transition-colors hover:bg-surface-2"
             >
-              <div className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-100 text-xl">
+              <div className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-surface-2 text-xl">
                 {user.image ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={user.image} alt="" className="size-12 object-cover" />
@@ -81,15 +81,15 @@ export function SideNav({
               </div>
               <div className="min-w-0">
                 <p className="truncate font-semibold">{user.name}님</p>
-                <p className="text-xs text-gray-400">프로필 사진 변경 ›</p>
+                <p className="text-xs text-ink-3">프로필 사진 변경 ›</p>
               </div>
             </Link>
           ) : (
-            <div className="flex items-center gap-3 border-b border-gray-100 p-4">
-              <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-100 text-xl">
+            <div className="flex items-center gap-3 border-b border-line-2 p-4">
+              <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-surface-2 text-xl">
                 🙂
               </div>
-              <p className="text-sm text-gray-500">로그인하고 시작해요</p>
+              <p className="text-sm text-ink-3">로그인하고 시작해요</p>
             </div>
           )}
 
@@ -138,27 +138,27 @@ export function SideNav({
             )}
 
             {/* 약관·정책 (푸터 묶음) */}
-            <div className="mt-3 border-t border-gray-100 px-3 pt-3">
-              <div className="flex flex-wrap gap-x-3 gap-y-1.5 text-xs text-gray-400">
-                <Link href="/about" onClick={close} className="hover:text-gray-600">서비스 소개</Link>
-                <Link href="/terms" onClick={close} className="hover:text-gray-600">이용약관</Link>
-                <Link href="/privacy" onClick={close} className="hover:text-gray-600">개인정보처리방침</Link>
-                <Link href="/location-terms" onClick={close} className="hover:text-gray-600">위치기반 약관</Link>
-                <Link href="/policy" onClick={close} className="hover:text-gray-600">운영정책</Link>
-                <Link href="/refund" onClick={close} className="hover:text-gray-600">교환/환불</Link>
-                <Link href="/company" onClick={close} className="hover:text-gray-600">운영 정보</Link>
-                <Link href="/sitemap" onClick={close} className="hover:text-gray-600">사이트맵</Link>
+            <div className="mt-3 border-t border-line-2 px-3 pt-3">
+              <div className="flex flex-wrap gap-x-3 gap-y-1.5 text-xs text-ink-3">
+                <Link href="/about" onClick={close} className="hover:text-ink-2">서비스 소개</Link>
+                <Link href="/terms" onClick={close} className="hover:text-ink-2">이용약관</Link>
+                <Link href="/privacy" onClick={close} className="hover:text-ink-2">개인정보처리방침</Link>
+                <Link href="/location-terms" onClick={close} className="hover:text-ink-2">위치기반 약관</Link>
+                <Link href="/policy" onClick={close} className="hover:text-ink-2">운영정책</Link>
+                <Link href="/refund" onClick={close} className="hover:text-ink-2">교환/환불</Link>
+                <Link href="/company" onClick={close} className="hover:text-ink-2">운영 정보</Link>
+                <Link href="/sitemap" onClick={close} className="hover:text-ink-2">사이트맵</Link>
               </div>
             </div>
           </nav>
 
           {/* 하단: 로그인/로그아웃 */}
-          <div className="border-t border-gray-100 p-3">
+          <div className="border-t border-line-2 p-3">
             {user ? (
               <form action={logoutAction}>
                 <button
                   type="submit"
-                  className="w-full rounded-lg border border-gray-300 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 active:bg-gray-200"
+                  className="w-full rounded-lg border border-line py-2.5 text-sm font-medium text-ink-2 transition-colors hover:bg-surface-2 active:bg-gray-200"
                 >
                   로그아웃
                 </button>
@@ -167,7 +167,7 @@ export function SideNav({
               <Link
                 href="/login"
                 onClick={close}
-                className="block w-full rounded-lg bg-blue-600 py-2.5 text-center text-sm font-medium text-white transition-colors hover:bg-blue-700 active:bg-blue-800"
+                className="block w-full rounded-lg bg-brand py-2.5 text-center text-sm font-medium text-white transition-colors hover:bg-brand-ink active:bg-blue-800"
               >
                 로그인 / 회원가입
               </Link>

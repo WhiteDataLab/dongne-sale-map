@@ -474,14 +474,14 @@ export function MapExplorer() {
   return (
     <div className="relative h-full w-full">
       {/* 지도 */}
-      <div ref={mapEl} className="h-full w-full bg-gray-100" />
+      <div ref={mapEl} className="h-full w-full bg-surface-2" />
 
       {/* 키 없음/로드 실패 안내 */}
       {error && (
-        <div className="absolute inset-0 z-20 flex items-center justify-center bg-gray-100 p-6 text-center">
-          <div className="max-w-sm text-sm text-gray-500">
+        <div className="absolute inset-0 z-20 flex items-center justify-center bg-surface-2 p-6 text-center">
+          <div className="max-w-sm text-sm text-ink-3">
             <p className="mb-2 text-3xl">🗺️</p>
-            <p className="font-medium text-gray-700">지도를 불러올 수 없어요</p>
+            <p className="font-medium text-ink-2">지도를 불러올 수 없어요</p>
             <p className="mt-1">{error}</p>
             <p className="mt-3 text-xs">
               카카오 개발자 콘솔에서 <b>플랫폼 &gt; Web</b> 에
@@ -502,25 +502,25 @@ export function MapExplorer() {
 
         {results && (
           <div className="pointer-events-auto max-h-64 overflow-y-auto rounded-xl bg-white shadow-lg">
-            <div className="flex items-center justify-between border-b border-gray-100 px-3 py-2 text-xs text-gray-400">
+            <div className="flex items-center justify-between border-b border-line-2 px-3 py-2 text-xs text-ink-3">
               <span>검색 결과 {results.length}곳 — 누르면 가게 보기/등록</span>
               <button type="button" onClick={() => setResults(null)}>
                 닫기
               </button>
             </div>
-            <ul className="divide-y divide-gray-50">
+            <ul className="divide-y divide-line-2">
               {results.map((pl, i) => (
                 <li key={`${pl.name}-${i}`}>
                   <button
                     type="button"
                     onClick={() => pickPlace(pl)}
-                    className="block w-full px-3 py-2.5 text-left hover:bg-gray-50"
+                    className="block w-full px-3 py-2.5 text-left hover:bg-surface-2"
                   >
                     <p className="truncate text-sm font-medium">
                       {pl.name}
-                      {pl.category && <span className="ml-1 text-xs text-gray-400">{pl.category}</span>}
+                      {pl.category && <span className="ml-1 text-xs text-ink-3">{pl.category}</span>}
                     </p>
-                    <p className="truncate text-xs text-gray-500">{pl.roadAddress || pl.address}</p>
+                    <p className="truncate text-xs text-ink-3">{pl.roadAddress || pl.address}</p>
                   </button>
                 </li>
               ))}
@@ -590,7 +590,7 @@ export function MapExplorer() {
             type="button"
             onClick={goToMyLocation}
             aria-label="현재 위치"
-            className="pointer-events-auto flex size-11 items-center justify-center rounded-full bg-white text-gray-700 shadow-md transition-colors hover:bg-gray-50 active:bg-gray-100"
+            className="pointer-events-auto flex size-11 items-center justify-center rounded-full bg-white text-ink-2 shadow-md transition-colors hover:bg-surface-2 active:bg-surface-2"
           >
             <GpsIcon className="size-5" />
           </button>
@@ -600,7 +600,7 @@ export function MapExplorer() {
               type="button"
               onClick={zoomIn}
               aria-label="확대"
-              className="flex size-11 items-center justify-center text-gray-700 transition-colors hover:bg-gray-50 active:bg-gray-100"
+              className="flex size-11 items-center justify-center text-ink-2 transition-colors hover:bg-surface-2 active:bg-surface-2"
             >
               <svg viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" className="size-5" aria-hidden="true">
                 <line x1="12" y1="5" x2="12" y2="19" />
@@ -612,7 +612,7 @@ export function MapExplorer() {
               type="button"
               onClick={zoomOut}
               aria-label="축소"
-              className="flex size-11 items-center justify-center text-gray-700 transition-colors hover:bg-gray-50 active:bg-gray-100"
+              className="flex size-11 items-center justify-center text-ink-2 transition-colors hover:bg-surface-2 active:bg-surface-2"
             >
               <svg viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" className="size-5" aria-hidden="true">
                 <line x1="5" y1="12" x2="19" y2="12" />
@@ -632,7 +632,7 @@ export function MapExplorer() {
             setRegisterMode(true);
           }}
           className={[
-            "absolute bottom-5 right-4 z-20 items-center gap-1 rounded-full bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-blue-700 active:bg-blue-800",
+            "absolute bottom-5 right-4 z-20 items-center gap-1 rounded-full bg-brand px-4 py-3 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-brand-ink active:bg-blue-800",
             // 모바일에서 가게 상세(바텀시트)가 열리면 가려지므로 숨김. 데스크톱(좌측 패널)은 유지.
             selectedStoreId ? "hidden sm:flex" : "flex",
           ].join(" ")}
@@ -644,7 +644,7 @@ export function MapExplorer() {
       {/* 등록 모드 안내 배너 */}
       {registerMode && !picked && (
         <div className="pointer-events-none absolute inset-x-0 top-28 z-30 flex justify-center px-4">
-          <div className="pointer-events-auto flex items-center gap-3 rounded-full bg-blue-600 px-4 py-2 text-sm text-white shadow-lg">
+          <div className="pointer-events-auto flex items-center gap-3 rounded-full bg-brand px-4 py-2 text-sm text-white shadow-lg">
             📍 지도를 눌러 가게 위치를 선택하세요
             <button type="button" onClick={exitRegister} className="font-semibold underline-offset-2">
               취소

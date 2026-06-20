@@ -30,15 +30,15 @@ export default async function SettingsPage() {
   return (
     <div className="h-full overflow-y-auto">
       <div className="mx-auto max-w-lg space-y-5 p-5">
-        <Link href="/" className="text-sm text-gray-400">
+        <Link href="/" className="text-sm text-ink-3">
           ← 지도로
         </Link>
-        <h1 className="text-xl font-bold text-gray-900">설정</h1>
+        <h1 className="text-xl font-bold text-ink">설정</h1>
 
         <Section title="계정" rows={account} />
         <Section title="약관 · 정책" rows={policy} />
 
-        <p className="text-center text-xs text-gray-400">
+        <p className="text-center text-xs text-ink-3">
           푸시 알림은 현재 제공되지 않아요. 알림은 앱 내 ‘알림’에서 확인할 수 있어요.
         </p>
       </div>
@@ -49,16 +49,16 @@ export default async function SettingsPage() {
 function Section({ title, rows }: { title: string; rows: Row[] }) {
   return (
     <section>
-      <h2 className="mb-2 text-sm font-semibold text-gray-700">{title}</h2>
-      <ul className="overflow-hidden rounded-xl border border-gray-200">
+      <h2 className="mb-2 text-sm font-semibold text-ink-2">{title}</h2>
+      <ul className="overflow-hidden rounded-xl border border-line">
         {rows.map((r, i) => (
-          <li key={`${r.href}-${r.label}`} className={i > 0 ? "border-t border-gray-100" : ""}>
-            <Link href={r.href} className="flex items-center justify-between gap-3 p-3.5 hover:bg-gray-50">
+          <li key={`${r.href}-${r.label}`} className={i > 0 ? "border-t border-line-2" : ""}>
+            <Link href={r.href} className="flex items-center justify-between gap-3 p-3.5 hover:bg-surface-2">
               <div className="min-w-0">
-                <p className="text-sm font-medium text-gray-800">{r.label}</p>
-                {r.desc && <p className="truncate text-xs text-gray-400">{r.desc}</p>}
+                <p className="text-sm font-medium text-ink">{r.label}</p>
+                {r.desc && <p className="truncate text-xs text-ink-3">{r.desc}</p>}
               </div>
-              <span className="shrink-0 text-gray-300">›</span>
+              <span className="shrink-0 text-ink-4">›</span>
             </Link>
           </li>
         ))}

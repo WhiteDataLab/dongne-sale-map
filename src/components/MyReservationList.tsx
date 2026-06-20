@@ -38,7 +38,7 @@ export function MyReservationList({ initial }: { initial: ReservationDTO[] }) {
 
   if (initial.length === 0) {
     return (
-      <p className="rounded-xl border border-dashed border-gray-200 p-6 text-center text-sm text-gray-400">
+      <p className="rounded-xl border border-dashed border-line p-6 text-center text-sm text-ink-3">
         아직 예약한 떨이가 없어요.
         <br />
         지도에서 가게를 열고 마감임박 세일을 <b>픽업 예약</b>해 보세요 🏃
@@ -64,7 +64,7 @@ export function MyReservationList({ initial }: { initial: ReservationDTO[] }) {
       )}
       {done.length > 0 && (
         <section className="flex flex-col gap-2">
-          <h2 className="text-sm font-semibold text-gray-400">지난 예약 ({done.length})</h2>
+          <h2 className="text-sm font-semibold text-ink-3">지난 예약 ({done.length})</h2>
           {done.map((r) => (
             <ReservationCard key={r.id} r={r} busy={false} />
           ))}
@@ -77,8 +77,8 @@ export function MyReservationList({ initial }: { initial: ReservationDTO[] }) {
 const STATUS_LABEL: Record<ReservationDTO["status"], { text: string; cls: string }> = {
   reserved: { text: "픽업 대기", cls: "bg-rose-50 text-rose-600" },
   picked_up: { text: "픽업 완료", cls: "bg-green-50 text-green-600" },
-  canceled: { text: "취소됨", cls: "bg-gray-100 text-gray-500" },
-  no_show: { text: "노쇼", cls: "bg-gray-100 text-gray-500" },
+  canceled: { text: "취소됨", cls: "bg-surface-2 text-ink-3" },
+  no_show: { text: "노쇼", cls: "bg-surface-2 text-ink-3" },
 };
 
 function ReservationCard({
@@ -94,7 +94,7 @@ function ReservationCard({
   const badge = STATUS_LABEL[r.status];
   const active = r.status === "reserved";
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-100">
+    <div className="overflow-hidden rounded-xl border border-line-2">
       <div className="flex gap-3 p-3">
         {r.photoUrl && (
           // eslint-disable-next-line @next/next/no-img-element
@@ -105,13 +105,13 @@ function ReservationCard({
             <span className={`rounded px-1.5 py-0.5 text-[11px] font-medium ${badge.cls}`}>
               {badge.text}
             </span>
-            <Link href={`/?store=${r.storeId}`} className="truncate text-xs text-gray-500 hover:underline">
+            <Link href={`/?store=${r.storeId}`} className="truncate text-xs text-ink-3 hover:underline">
               {meta?.icon} {r.storeName}
             </Link>
           </div>
           <p className="mt-0.5 truncate text-sm font-medium">{r.saleTitle}</p>
-          <p className="text-xs text-gray-500">
-            {won(r.unitPriceKrw)} × {r.qty}개 = <b className="text-gray-900">{won(r.amountKrw)}</b>
+          <p className="text-xs text-ink-3">
+            {won(r.unitPriceKrw)} × {r.qty}개 = <b className="text-ink">{won(r.amountKrw)}</b>
           </p>
           {active && (
             <p className="mt-0.5 text-xs">
@@ -121,22 +121,22 @@ function ReservationCard({
         </div>
       </div>
       {active && (
-        <div className="flex items-center justify-between gap-2 border-t border-gray-100 bg-gray-50 px-3 py-2">
-          <div className="text-xs text-gray-500">
-            예약번호 <span className="font-mono text-base font-bold tracking-widest text-gray-900">{r.pickupCode}</span>
+        <div className="flex items-center justify-between gap-2 border-t border-line-2 bg-surface-2 px-3 py-2">
+          <div className="text-xs text-ink-3">
+            예약번호 <span className="font-mono text-base font-bold tracking-widest text-ink">{r.pickupCode}</span>
           </div>
           <button
             type="button"
             onClick={onCancel}
             disabled={busy}
-            className="rounded-lg border border-gray-300 px-3 py-1 text-xs text-gray-600 disabled:opacity-50"
+            className="rounded-lg border border-line px-3 py-1 text-xs text-ink-2 disabled:opacity-50"
           >
             예약 취소
           </button>
         </div>
       )}
       {r.pickupInfo && active && (
-        <p className="border-t border-gray-100 px-3 py-2 text-[11px] text-gray-500">📍 {r.pickupInfo}</p>
+        <p className="border-t border-line-2 px-3 py-2 text-[11px] text-ink-3">📍 {r.pickupInfo}</p>
       )}
     </div>
   );

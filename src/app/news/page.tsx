@@ -94,14 +94,14 @@ export default async function NewsPage() {
   return (
     <div className="h-full overflow-y-auto">
       <div className="mx-auto max-w-2xl space-y-4 p-5">
-        <Link href="/" className="text-sm text-gray-400">
+        <Link href="/" className="text-sm text-ink-3">
           ← 지도로
         </Link>
-        <h1 className="text-xl font-bold text-gray-900">동네 소식</h1>
-        <p className="text-xs text-gray-400">우리 동네의 최근 세일 · 휴업/폐업 제보 · 새 가게 소식이에요.</p>
+        <h1 className="text-xl font-bold text-ink">동네 소식</h1>
+        <p className="text-xs text-ink-3">우리 동네의 최근 세일 · 휴업/폐업 제보 · 새 가게 소식이에요.</p>
 
         {items.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-gray-200 p-6 text-center text-sm text-gray-400">
+          <p className="rounded-xl border border-dashed border-line p-6 text-center text-sm text-ink-3">
             아직 소식이 없어요.
           </p>
         ) : (
@@ -110,14 +110,14 @@ export default async function NewsPage() {
               <li key={n.id}>
                 <Link
                   href={`/?store=${n.storeId}&lat=${n.lat}&lng=${n.lng}`}
-                  className="flex gap-3 rounded-xl border border-gray-200 p-3 transition-colors hover:bg-gray-50"
+                  className="flex gap-3 rounded-xl border border-line p-3 transition-colors hover:bg-surface-2"
                 >
                   <span className="text-xl" aria-hidden>
                     {n.icon}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm text-gray-800">{n.text}</p>
-                    <p className="mt-0.5 text-xs text-gray-400">{reviewDateLabel(n.createdAt.toISOString())}</p>
+                    <p className="text-sm text-ink">{n.text}</p>
+                    <p className="mt-0.5 text-xs text-ink-3">{reviewDateLabel(n.createdAt.toISOString())}</p>
                   </div>
                 </Link>
               </li>

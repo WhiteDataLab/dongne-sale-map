@@ -38,10 +38,10 @@ export default async function SponsorSubscribePage({
     </div>
   );
 
-  if (!store) return shell(<p className="mt-10 text-center text-sm text-gray-500">가게를 찾을 수 없어요.</p>);
+  if (!store) return shell(<p className="mt-10 text-center text-sm text-ink-3">가게를 찾을 수 없어요.</p>);
   if (!canManageStore(store, user)) {
     return shell(
-      <p className="mt-10 text-center text-sm text-gray-500">
+      <p className="mt-10 text-center text-sm text-ink-3">
         이 가게의 <b>사장님(소유자)</b>만 구독할 수 있어요.
       </p>,
     );
@@ -55,7 +55,7 @@ export default async function SponsorSubscribePage({
         <p className="mt-2 font-semibold">
           이미 {PLAN_LABEL[asSubPlan(active.plan)]} 플랜 구독 중이에요
         </p>
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="mt-1 text-sm text-ink-3">
           다음 결제 예정일: {new Date(active.nextBillingAt).toLocaleDateString("ko-KR")}
         </p>
         <Link href="/" className="mt-4 inline-block font-bold text-brand">← 지도로 돌아가기</Link>

@@ -6,12 +6,12 @@ export const metadata = { title: "운영정책 · 커뮤니티 가이드 — 동
 export default function PolicyPage() {
   return (
     <div className="h-full overflow-y-auto">
-      <article className="mx-auto max-w-2xl space-y-4 p-5 text-sm leading-relaxed text-gray-700">
-        <Link href="/" className="text-gray-400">
+      <article className="mx-auto max-w-2xl space-y-4 p-5 text-sm leading-relaxed text-ink-2">
+        <Link href="/" className="text-ink-3">
           ← 지도로
         </Link>
-        <h1 className="text-xl font-bold text-gray-900">운영정책 · 커뮤니티 가이드</h1>
-        <p className="text-xs text-gray-400">
+        <h1 className="text-xl font-bold text-ink">운영정책 · 커뮤니티 가이드</h1>
+        <p className="text-xs text-ink-3">
           이웃 모두가 믿고 쓰는 동네 지도를 위한 약속이에요.
         </p>
 
@@ -62,10 +62,10 @@ export default function PolicyPage() {
         <section>
           <h2 className="font-semibold">6. 관련 문서</h2>
           <p className="flex flex-wrap gap-x-3 gap-y-1">
-            <Link href="/terms" className="text-blue-600">이용약관</Link>
-            <Link href="/privacy" className="text-blue-600">개인정보처리방침</Link>
-            <Link href="/location-terms" className="text-blue-600">위치기반서비스 이용약관</Link>
-            <Link href="/refund" className="text-blue-600">포인트·기프티콘 교환/환불 정책</Link>
+            <Link href="/terms" className="text-brand">이용약관</Link>
+            <Link href="/privacy" className="text-brand">개인정보처리방침</Link>
+            <Link href="/location-terms" className="text-brand">위치기반서비스 이용약관</Link>
+            <Link href="/refund" className="text-brand">포인트·기프티콘 교환/환불 정책</Link>
           </p>
         </section>
       </article>

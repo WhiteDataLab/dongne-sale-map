@@ -101,13 +101,13 @@ export default async function NotificationsPage() {
   return (
     <div className="h-full overflow-y-auto">
       <div className="mx-auto max-w-2xl space-y-4 p-5">
-        <Link href="/" className="text-sm text-gray-400">
+        <Link href="/" className="text-sm text-ink-3">
           ← 지도로
         </Link>
-        <h1 className="text-xl font-bold text-gray-900">알림</h1>
+        <h1 className="text-xl font-bold text-ink">알림</h1>
         <NotificationList items={items.slice(0, 60)} />
         {!session?.user && (
-          <p className="text-center text-xs text-gray-400">
+          <p className="text-center text-xs text-ink-3">
             로그인하면 내 문의·교환 알림도 함께 볼 수 있어요.
           </p>
         )}

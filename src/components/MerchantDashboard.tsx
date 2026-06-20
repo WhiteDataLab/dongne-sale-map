@@ -105,13 +105,13 @@ export function MerchantDashboard({ storeId, storeName }: { storeId: string; sto
   const planLabel = detail?.sponsorSubscription ? PLAN_LABEL[asSubPlan(detail.sponsorSubscription.plan)] : null;
 
   return (
-    <div className="h-full overflow-y-auto bg-gray-50">
+    <div className="h-full overflow-y-auto bg-surface-2">
       <div className="mx-auto max-w-2xl p-4">
         {/* 헤더 */}
         <header className="mb-3">
           <div className="flex items-center justify-between">
-            <Link href="/" className="text-xs text-gray-400">← 지도</Link>
-            <Link href={`/?store=${storeId}`} className="text-xs text-blue-600">소비자 화면 미리보기 →</Link>
+            <Link href="/" className="text-xs text-ink-3">← 지도</Link>
+            <Link href={`/?store=${storeId}`} className="text-xs text-brand">소비자 화면 미리보기 →</Link>
           </div>
           <div className="mt-1 flex items-center gap-2">
             <span className="text-2xl" aria-hidden>
@@ -124,13 +124,13 @@ export function MerchantDashboard({ storeId, storeName }: { storeId: string; sto
               </span>
             )}
             {detail && !detail.verified && (
-              <span className="shrink-0 rounded-full bg-gray-200 px-2 py-0.5 text-[11px] text-gray-500">미인증</span>
+              <span className="shrink-0 rounded-full bg-gray-200 px-2 py-0.5 text-[11px] text-ink-3">미인증</span>
             )}
           </div>
         </header>
 
         {/* 섹션 네비 */}
-        <nav className="sticky top-0 z-10 -mx-4 mb-3 border-b border-gray-200 bg-gray-50/95 px-4 py-1.5 backdrop-blur">
+        <nav className="sticky top-0 z-10 -mx-4 mb-3 border-b border-line bg-surface-2/95 px-4 py-1.5 backdrop-blur">
           <div className="flex gap-1 overflow-x-auto">
             {SECTIONS.map((s) => (
               <button
@@ -139,7 +139,7 @@ export function MerchantDashboard({ storeId, storeName }: { storeId: string; sto
                 onClick={() => setSection(s.key)}
                 className={[
                   "shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition",
-                  section === s.key ? "bg-gray-900 text-white" : "text-gray-500 hover:bg-gray-100",
+                  section === s.key ? "bg-gray-900 text-white" : "text-ink-3 hover:bg-surface-2",
                 ].join(" ")}
               >
                 {s.label}
@@ -149,9 +149,9 @@ export function MerchantDashboard({ storeId, storeName }: { storeId: string; sto
         </nav>
 
         {!detail ? (
-          <p className="py-16 text-center text-sm text-gray-400">불러오는 중…</p>
+          <p className="py-16 text-center text-sm text-ink-3">불러오는 중…</p>
         ) : (
-          <main className="rounded-2xl border border-gray-200 bg-white p-4">
+          <main className="rounded-2xl border border-line bg-white p-4">
             {section === "stats" && (
               <div>
                 {!stats ? (
@@ -262,7 +262,7 @@ export function MerchantDashboard({ storeId, storeName }: { storeId: string; sto
             {section === "alerts" && (
               <div>
                 <h2 className="mb-2 text-sm font-bold">단골 알림 발송</h2>
-                <p className="mb-3 text-xs text-gray-400">
+                <p className="mb-3 text-xs text-ink-3">
                   우리 가게를 즐겨찾기한 손님에게 세일·소식을 인앱 알림으로 보내요. 손님이 알림함에서 확인해요.
                 </p>
                 <MerchantAlerts storeId={storeId} sales={detail.sales} onToast={showToast} />
@@ -272,7 +272,7 @@ export function MerchantDashboard({ storeId, storeName }: { storeId: string; sto
             {section === "regulars" && (
               <div>
                 <h2 className="mb-2 text-sm font-bold">단골 관리</h2>
-                <p className="mb-3 text-xs text-gray-400">
+                <p className="mb-3 text-xs text-ink-3">
                   누가 우리 단골이고 요즘 안 오는 손님이 누군지 보고, (프로) 이탈 단골에게 컴백 쿠폰을 보내요.
                 </p>
                 <MerchantRegulars storeId={storeId} onToast={showToast} />
@@ -282,7 +282,7 @@ export function MerchantDashboard({ storeId, storeName }: { storeId: string; sto
             {section === "reservations" && (
               <div>
                 <h2 className="mb-2 text-sm font-bold">픽업 예약</h2>
-                <p className="mb-3 text-xs text-gray-400">
+                <p className="mb-3 text-xs text-ink-3">
                   마감임박 떨이를 손님이 앱에서 선점하고 매장에서 픽업해요(현장결제). 세일/행사 탭에서 세일별로 <b>픽업 예약 받기</b>를 켜세요.
                 </p>
                 <MerchantReservations storeId={storeId} onToast={showToast} />
@@ -299,7 +299,7 @@ export function MerchantDashboard({ storeId, storeName }: { storeId: string; sto
             {section === "ads" && (
               <div>
                 <h2 className="mb-2 text-sm font-bold">성과형 광고 (CPA)</h2>
-                <p className="mb-3 text-xs text-gray-400">
+                <p className="mb-3 text-xs text-ink-3">
                   구독과 별개로, 손님이 갈래요·길찾기를 누를 때만 건당 과금되는 광고예요.
                 </p>
                 <MerchantAdCampaign storeId={storeId} onToast={showToast} />
@@ -310,7 +310,7 @@ export function MerchantDashboard({ storeId, storeName }: { storeId: string; sto
               <div>
                 <h2 className="mb-2 text-sm font-bold">가게 사진</h2>
                 <BannerEditor detail={detail} onToast={showToast} refresh={refresh} />
-                <p className="mb-1 mt-4 text-xs font-semibold text-gray-500">갤러리 (여러 장)</p>
+                <p className="mb-1 mt-4 text-xs font-semibold text-ink-3">갤러리 (여러 장)</p>
                 <GalleryStrip detail={detail} storeId={storeId} onToast={showToast} refresh={refresh} />
               </div>
             )}
@@ -385,7 +385,7 @@ function BannerEditor({
 
   return (
     <div>
-      <p className="mb-1 text-xs font-semibold text-gray-500">메인 사진</p>
+      <p className="mb-1 text-xs font-semibold text-ink-3">메인 사진</p>
       {detail.bannerUrl ? (
         <div className="relative overflow-hidden rounded-xl">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -408,7 +408,7 @@ function BannerEditor({
           type="button"
           disabled={busy}
           onClick={() => ref.current?.click()}
-          className="flex h-28 w-full items-center justify-center rounded-xl bg-gray-100 text-sm text-gray-400 disabled:opacity-50"
+          className="flex h-28 w-full items-center justify-center rounded-xl bg-surface-2 text-sm text-ink-3 disabled:opacity-50"
         >
           {busy ? "업로드 중…" : "＋ 메인 사진 추가"}
         </button>
@@ -498,7 +498,7 @@ function SubscriptionPanel({
         <div className="rounded-xl border border-indigo-200 bg-indigo-50/50 p-4 text-center">
           <p className="text-2xl">👑</p>
           <p className="mt-1 text-sm font-semibold">아직 구독 중이 아니에요</p>
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-ink-3">
             라이트(알림·단골·답글)·스폰서(노출 부스트)·프로(전체)로 가게를 키워보세요.
           </p>
           <Link
@@ -538,11 +538,11 @@ function SubscriptionPanel({
           <p className="font-semibold text-amber-800">👑 {PLAN_LABEL[current]} 플랜</p>
           <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-amber-700">{statusLabel}</span>
         </div>
-        <p className="mt-1 text-xs text-gray-500">
+        <p className="mt-1 text-xs text-ink-3">
           다음 결제 예정일 {new Date(sub.nextBillingAt).toLocaleDateString("ko-KR")} ·{" "}
           {currentPrice.toLocaleString("ko-KR")}원/월
         </p>
-        <p className="mt-0.5 text-[11px] text-gray-400">{PLAN_BENEFIT[current]}</p>
+        <p className="mt-0.5 text-[11px] text-ink-3">{PLAN_BENEFIT[current]}</p>
 
         {/* 3-way 플랜 변경 */}
         <div className="mt-3 flex flex-col gap-1.5">
@@ -558,14 +558,14 @@ function SubscriptionPanel({
                   "rounded-lg border px-3 py-2 text-left text-xs disabled:opacity-50",
                   up
                     ? "border-indigo-200 bg-white hover:bg-indigo-50"
-                    : "border-gray-200 bg-white hover:bg-gray-50",
+                    : "border-line bg-white hover:bg-surface-2",
                 ].join(" ")}
               >
-                <span className={`font-bold ${up ? "text-indigo-700" : "text-gray-600"}`}>
+                <span className={`font-bold ${up ? "text-indigo-700" : "text-ink-2"}`}>
                   {up ? "⬆ " : "⬇ "}
                   {PLAN_LABEL[target]}로 변경 ({PLAN_PRICE_KRW[target].toLocaleString("ko-KR")}원/월)
                 </span>
-                <span className="mt-0.5 block text-[10px] text-gray-400">{PLAN_BENEFIT[target]}</span>
+                <span className="mt-0.5 block text-[10px] text-ink-3">{PLAN_BENEFIT[target]}</span>
               </button>
             );
           })}
@@ -576,7 +576,7 @@ function SubscriptionPanel({
             type="button"
             disabled={busy}
             onClick={cancel}
-            className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-500 hover:bg-gray-100 disabled:opacity-50"
+            className="rounded-lg border border-line px-3 py-1.5 text-xs font-medium text-ink-3 hover:bg-surface-2 disabled:opacity-50"
           >
             구독 해지
           </button>

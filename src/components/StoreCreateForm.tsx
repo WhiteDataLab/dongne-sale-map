@@ -73,15 +73,15 @@ export function StoreCreateForm() {
   };
 
   const inputClass =
-    "w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500";
+    "w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand";
 
   return (
     <div className="mx-auto flex max-w-sm flex-col gap-3 p-5">
-      <Link href="/" className="text-sm text-gray-400">
+      <Link href="/" className="text-sm text-ink-3">
         ← 지도로
       </Link>
       <h1 className="text-xl font-bold">가게 등록</h1>
-      <p className="text-xs text-gray-500">
+      <p className="text-xs text-ink-3">
         동네 가게를 등록해 주세요. 등록한 가게는 검토 후 인증돼요. (사장님은 추후 직접 인증
         가능)
       </p>
@@ -102,8 +102,8 @@ export function StoreCreateForm() {
             className={[
               "rounded-lg border px-3 py-2 text-sm transition-colors",
               category === c
-                ? "border-blue-600 bg-blue-600 text-white"
-                : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50",
+                ? "border-brand bg-brand text-white"
+                : "border-line bg-white text-ink-2 hover:bg-surface-2",
             ].join(" ")}
           >
             {CATEGORY_META[c].icon} {CATEGORY_META[c].label}
@@ -120,7 +120,7 @@ export function StoreCreateForm() {
       <button
         type="button"
         onClick={() => setShowMap((v) => !v)}
-        className="rounded-lg border border-gray-300 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+        className="rounded-lg border border-line py-2 text-sm font-medium text-ink-2 transition-colors hover:bg-surface-2"
       >
         🗺️ {showMap ? "지도 닫기" : "지도에서 위치 선택"}
       </button>
@@ -157,15 +157,15 @@ export function StoreCreateForm() {
         type="button"
         onClick={submit}
         disabled={busy}
-        className="rounded-lg bg-blue-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 active:bg-blue-800 disabled:bg-gray-300"
+        className="rounded-lg bg-brand py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-ink active:bg-blue-800 disabled:bg-gray-300"
       >
         {busy ? "등록 중…" : "가게 등록"}
       </button>
 
       {needLogin && (
-        <p className="text-center text-sm text-gray-500">
+        <p className="text-center text-sm text-ink-3">
           로그인이 필요해요.{" "}
-          <Link href="/login" className="font-medium text-blue-600">
+          <Link href="/login" className="font-medium text-brand">
             로그인하러 가기
           </Link>
         </p>

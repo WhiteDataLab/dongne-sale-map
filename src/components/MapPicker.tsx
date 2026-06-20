@@ -76,26 +76,26 @@ export function MapPicker({
 
   if (error) {
     return (
-      <div className="flex h-56 items-center justify-center rounded-lg bg-gray-100 p-4 text-center text-xs text-gray-500">
+      <div className="flex h-56 items-center justify-center rounded-lg bg-surface-2 p-4 text-center text-xs text-ink-3">
         지도를 불러올 수 없어요. ({error})
       </div>
     );
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-gray-200">
+    <div className="overflow-hidden rounded-lg border border-line">
       <div className="relative">
-        <div ref={el} className="h-56 w-full bg-gray-100" />
+        <div ref={el} className="h-56 w-full bg-surface-2" />
         <button
           type="button"
           onClick={goToMyLocation}
           aria-label="현재 위치"
-          className="absolute right-2 top-2 z-10 flex size-10 items-center justify-center rounded-full bg-white text-lg shadow-md active:bg-gray-100"
+          className="absolute right-2 top-2 z-10 flex size-10 items-center justify-center rounded-full bg-white text-lg shadow-md active:bg-surface-2"
         >
           📍
         </button>
       </div>
-      <p className="bg-gray-50 px-3 py-1.5 text-xs text-gray-400">
+      <p className="bg-surface-2 px-3 py-1.5 text-xs text-ink-3">
         지도를 눌러 가게 위치를 선택하거나, 📍로 현재 위치를 찾으세요. 주소는 자동으로 채워져요.
       </p>
     </div>

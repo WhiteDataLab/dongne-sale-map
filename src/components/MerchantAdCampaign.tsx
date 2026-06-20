@@ -18,9 +18,9 @@ type Campaign = {
 
 const STATUS_LABEL: Record<Campaign["status"], { txt: string; cls: string }> = {
   active: { txt: "집행 중", cls: "bg-green-100 text-green-700" },
-  paused: { txt: "일시중지", cls: "bg-gray-200 text-gray-600" },
+  paused: { txt: "일시중지", cls: "bg-gray-200 text-ink-2" },
   depleted: { txt: "예산 소진", cls: "bg-amber-100 text-amber-700" },
-  canceled: { txt: "종료", cls: "bg-gray-100 text-gray-400" },
+  canceled: { txt: "종료", cls: "bg-surface-2 text-ink-3" },
 };
 
 /**
@@ -91,7 +91,7 @@ export function MerchantAdCampaign({ storeId, onToast }: { storeId: string; onTo
     }
   };
 
-  if (!loaded) return <p className="py-8 text-center text-sm text-gray-400">불러오는 중…</p>;
+  if (!loaded) return <p className="py-8 text-center text-sm text-ink-3">불러오는 중…</p>;
 
   if (campaign) {
     const pct = campaign.budgetKrw > 0 ? Math.min(100, Math.round((campaign.spentKrw / campaign.budgetKrw) * 100)) : 0;
@@ -99,39 +99,39 @@ export function MerchantAdCampaign({ storeId, onToast }: { storeId: string; onTo
     const s = STATUS_LABEL[campaign.status];
     return (
       <div className="flex flex-col gap-3">
-        <div className="rounded-xl border border-gray-200 p-3">
+        <div className="rounded-xl border border-line p-3">
           <div className="flex items-center justify-between">
             <p className="text-sm font-bold">{campaign.actionLabel} 광고</p>
             <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${s.cls}`}>{s.txt}</span>
           </div>
-          <p className="mt-0.5 text-xs text-gray-500">건당 {campaign.bidKrw.toLocaleString("ko-KR")}원 과금</p>
+          <p className="mt-0.5 text-xs text-ink-3">건당 {campaign.bidKrw.toLocaleString("ko-KR")}원 과금</p>
 
-          <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-gray-100">
+          <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-surface-2">
             <div className="h-full bg-indigo-500" style={{ width: `${pct}%` }} />
           </div>
-          <div className="mt-1 flex items-center justify-between text-[11px] text-gray-500">
+          <div className="mt-1 flex items-center justify-between text-[11px] text-ink-3">
             <span>집행 {campaign.spentKrw.toLocaleString("ko-KR")}원</span>
             <span>예산 {campaign.budgetKrw.toLocaleString("ko-KR")}원</span>
           </div>
 
           <div className="mt-2 grid grid-cols-3 gap-1.5 text-center">
-            <div className="rounded-lg bg-gray-50 px-2 py-1.5">
-              <p className="text-[10px] text-gray-400">과금 액션</p>
+            <div className="rounded-lg bg-surface-2 px-2 py-1.5">
+              <p className="text-[10px] text-ink-3">과금 액션</p>
               <p className="text-sm font-bold">{campaign.chargedCount}</p>
             </div>
-            <div className="rounded-lg bg-gray-50 px-2 py-1.5">
-              <p className="text-[10px] text-gray-400">잔여 예산</p>
+            <div className="rounded-lg bg-surface-2 px-2 py-1.5">
+              <p className="text-[10px] text-ink-3">잔여 예산</p>
               <p className="text-sm font-bold">{campaign.remainingKrw.toLocaleString("ko-KR")}</p>
             </div>
-            <div className="rounded-lg bg-gray-50 px-2 py-1.5">
-              <p className="text-[10px] text-gray-400">평균 단가</p>
+            <div className="rounded-lg bg-surface-2 px-2 py-1.5">
+              <p className="text-[10px] text-ink-3">평균 단가</p>
               <p className="text-sm font-bold">{cpc.toLocaleString("ko-KR")}</p>
             </div>
           </div>
 
           <div className="mt-3 flex flex-wrap gap-2">
             {campaign.status === "active" && (
-              <button type="button" disabled={busy} onClick={() => op("pause")} className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs text-gray-600 disabled:opacity-50">
+              <button type="button" disabled={busy} onClick={() => op("pause")} className="rounded-lg border border-line px-3 py-1.5 text-xs text-ink-2 disabled:opacity-50">
                 일시중지
               </button>
             )}
@@ -149,13 +149,13 @@ export function MerchantAdCampaign({ storeId, onToast }: { storeId: string; onTo
               onClick={() => {
                 if (window.confirm("이 광고를 종료할까요? 집행된 비용은 청구돼요.")) op("cancel");
               }}
-              className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs text-gray-500 disabled:opacity-50"
+              className="rounded-lg border border-line px-3 py-1.5 text-xs text-ink-3 disabled:opacity-50"
             >
               종료
             </button>
           </div>
         </div>
-        <p className="text-[11px] text-gray-400">
+        <p className="text-[11px] text-ink-3">
           ※ 집행 비용은 월말에 정산·청구돼요(현재 스캐폴드). 같은 손님이 같은 날 여러 번 눌러도 1회만 과금돼요(어뷰징 방어).
         </p>
       </div>
@@ -168,11 +168,11 @@ export function MerchantAdCampaign({ storeId, onToast }: { storeId: string; onTo
     <div className="flex flex-col gap-3">
       <div className="rounded-xl border border-indigo-200 bg-indigo-50/40 p-3">
         <p className="text-sm font-bold text-indigo-700">🚀 결과당 과금 광고</p>
-        <p className="mt-0.5 text-xs text-gray-500">
+        <p className="mt-0.5 text-xs text-ink-3">
           정액 구독이 부담되면, <b>손님이 실제로 움직일 때만</b> 비용을 내세요. 갈래요·길찾기 1건당 입찰가만큼만 차감돼요.
         </p>
 
-        <label className="mt-3 block text-xs font-medium text-gray-500">과금 대상</label>
+        <label className="mt-3 block text-xs font-medium text-ink-3">과금 대상</label>
         <div className="mt-1 flex gap-1.5">
           {(
             [
@@ -186,7 +186,7 @@ export function MerchantAdCampaign({ storeId, onToast }: { storeId: string; onTo
               onClick={() => setAction(v)}
               className={[
                 "flex-1 rounded-lg px-2 py-2 text-xs font-medium transition",
-                action === v ? "bg-indigo-600 text-white" : "bg-white text-gray-500 border border-gray-200",
+                action === v ? "bg-indigo-600 text-white" : "bg-white text-ink-3 border border-line",
               ].join(" ")}
             >
               {label}
@@ -194,7 +194,7 @@ export function MerchantAdCampaign({ storeId, onToast }: { storeId: string; onTo
           ))}
         </div>
 
-        <label className="mt-3 block text-xs font-medium text-gray-500">건당 입찰가</label>
+        <label className="mt-3 block text-xs font-medium text-ink-3">건당 입찰가</label>
         <div className="mt-1 flex gap-1.5">
           {[200, 300, 500, 1000].map((b) => (
             <button
@@ -203,7 +203,7 @@ export function MerchantAdCampaign({ storeId, onToast }: { storeId: string; onTo
               onClick={() => setBid(b)}
               className={[
                 "flex-1 rounded-lg px-2 py-1.5 text-xs font-medium transition",
-                bid === b ? "bg-gray-900 text-white" : "bg-white text-gray-500 border border-gray-200",
+                bid === b ? "bg-gray-900 text-white" : "bg-white text-ink-3 border border-line",
               ].join(" ")}
             >
               {b.toLocaleString("ko-KR")}원
@@ -211,7 +211,7 @@ export function MerchantAdCampaign({ storeId, onToast }: { storeId: string; onTo
           ))}
         </div>
 
-        <label className="mt-3 block text-xs font-medium text-gray-500">예산</label>
+        <label className="mt-3 block text-xs font-medium text-ink-3">예산</label>
         <div className="mt-1 flex gap-1.5">
           {[10000, 30000, 50000, 100000].map((b) => (
             <button
@@ -220,7 +220,7 @@ export function MerchantAdCampaign({ storeId, onToast }: { storeId: string; onTo
               onClick={() => setBudget(b)}
               className={[
                 "flex-1 rounded-lg px-2 py-1.5 text-xs font-medium transition",
-                budget === b ? "bg-gray-900 text-white" : "bg-white text-gray-500 border border-gray-200",
+                budget === b ? "bg-gray-900 text-white" : "bg-white text-ink-3 border border-line",
               ].join(" ")}
             >
               {(b / 10000).toLocaleString("ko-KR")}만
@@ -228,7 +228,7 @@ export function MerchantAdCampaign({ storeId, onToast }: { storeId: string; onTo
           ))}
         </div>
 
-        <p className="mt-2 text-[11px] text-gray-400">예산 소진까지 최대 약 {estActions.toLocaleString("ko-KR")}건 과금</p>
+        <p className="mt-2 text-[11px] text-ink-3">예산 소진까지 최대 약 {estActions.toLocaleString("ko-KR")}건 과금</p>
 
         <button
           type="button"

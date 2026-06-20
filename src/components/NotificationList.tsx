@@ -28,7 +28,7 @@ export function NotificationList({ items }: { items: NotificationItem[] }) {
 
   if (items.length === 0) {
     return (
-      <p className="rounded-xl border border-dashed border-gray-200 p-6 text-center text-sm text-gray-400">
+      <p className="rounded-xl border border-dashed border-line p-6 text-center text-sm text-ink-3">
         새로운 알림이 없어요.
       </p>
     );
@@ -43,8 +43,8 @@ export function NotificationList({ items }: { items: NotificationItem[] }) {
             <Link
               href={n.href}
               className={[
-                "flex gap-3 rounded-xl border p-3 transition-colors hover:bg-gray-50",
-                isNew ? "border-blue-200 bg-blue-50/40" : "border-gray-200",
+                "flex gap-3 rounded-xl border p-3 transition-colors hover:bg-surface-2",
+                isNew ? "border-brand/40 bg-brand-wash/40" : "border-line",
               ].join(" ")}
             >
               <span className="text-xl" aria-hidden>
@@ -52,11 +52,11 @@ export function NotificationList({ items }: { items: NotificationItem[] }) {
               </span>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
-                  <p className="truncate text-sm font-medium text-gray-800">{n.title}</p>
+                  <p className="truncate text-sm font-medium text-ink">{n.title}</p>
                   {isNew && <span className="size-1.5 shrink-0 rounded-full bg-blue-500" />}
                 </div>
-                <p className="line-clamp-2 text-sm text-gray-500">{n.body}</p>
-                <p className="mt-0.5 text-xs text-gray-400">{reviewDateLabel(n.createdAt)}</p>
+                <p className="line-clamp-2 text-sm text-ink-3">{n.body}</p>
+                <p className="mt-0.5 text-xs text-ink-3">{reviewDateLabel(n.createdAt)}</p>
               </div>
             </Link>
           </li>

@@ -134,7 +134,7 @@ export function StoreRegisterForm({
   };
 
   const inputClass =
-    "w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500";
+    "w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-brand";
 
   return (
     <div
@@ -163,12 +163,12 @@ export function StoreRegisterForm({
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-lg border border-gray-200 px-2.5 py-1 text-sm text-gray-500 hover:bg-gray-50"
+            className="rounded-lg border border-line px-2.5 py-1 text-sm text-ink-3 hover:bg-surface-2"
           >
             취소
           </button>
         </div>
-        <p className="mt-1 text-xs text-gray-400">
+        <p className="mt-1 text-xs text-ink-3">
           선택한 좌표: {point.lat.toFixed(5)}, {point.lng.toFixed(5)} · 위치를 바꾸려면 지도를 다시 누르세요.
         </p>
       </div>
@@ -189,8 +189,8 @@ export function StoreRegisterForm({
               className={[
                 "rounded-lg border px-3 py-2 text-sm transition-colors",
                 category === c
-                  ? "border-blue-600 bg-blue-600 text-white"
-                  : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50",
+                  ? "border-brand bg-brand text-white"
+                  : "border-line bg-white text-ink-2 hover:bg-surface-2",
               ].join(" ")}
             >
               {CATEGORY_META[c].icon} {CATEGORY_META[c].label}
@@ -221,14 +221,14 @@ export function StoreRegisterForm({
           type="button"
           onClick={submit}
           disabled={busy}
-          className="rounded-lg bg-blue-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 active:bg-blue-800 disabled:bg-gray-300"
+          className="rounded-lg bg-brand py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-ink active:bg-blue-800 disabled:bg-gray-300"
         >
           {busy ? "등록 중…" : "가게 등록"}
         </button>
         {needLogin && (
-          <p className="text-center text-sm text-gray-500">
+          <p className="text-center text-sm text-ink-3">
             로그인이 필요해요.{" "}
-            <Link href="/login" className="font-medium text-blue-600">
+            <Link href="/login" className="font-medium text-brand">
               로그인하러 가기
             </Link>
           </p>

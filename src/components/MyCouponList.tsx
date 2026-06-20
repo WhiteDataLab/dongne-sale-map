@@ -12,7 +12,7 @@ export function MyCouponList({ initial }: { initial: MyCouponDTO[] }) {
 
   if (initial.length === 0) {
     return (
-      <p className="rounded-xl border border-dashed border-gray-200 p-6 text-center text-sm text-gray-400">
+      <p className="rounded-xl border border-dashed border-line p-6 text-center text-sm text-ink-3">
         아직 받은 쿠폰이 없어요.
         <br />
         지도에서 가게를 열고 ‘쿠폰’ 탭에서 받아보세요 🎟️
@@ -39,7 +39,7 @@ export function MyCouponList({ initial }: { initial: MyCouponDTO[] }) {
       )}
       {done.length > 0 && (
         <section className="flex flex-col gap-2">
-          <h2 className="text-sm font-semibold text-gray-400">지난 쿠폰 ({done.length})</h2>
+          <h2 className="text-sm font-semibold text-ink-3">지난 쿠폰 ({done.length})</h2>
           {done.map((c) => (
             <MyCouponCard key={c.claimId} coupon={c} onToast={setToast} />
           ))}
@@ -86,36 +86,36 @@ function MyCouponCard({
   };
 
   return (
-    <div className={`overflow-hidden rounded-xl border ${dim ? "border-gray-200" : "border-rose-200"}`}>
+    <div className={`overflow-hidden rounded-xl border ${dim ? "border-line" : "border-rose-200"}`}>
       <div className="flex items-stretch">
         <div className={`w-2 ${dim ? "bg-gray-300" : "bg-rose-500"}`} aria-hidden />
         <div className={`min-w-0 flex-1 p-3 ${dim ? "opacity-60" : ""}`}>
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <p className="truncate text-sm font-bold text-gray-900">🎟️ {coupon.title}</p>
+              <p className="truncate text-sm font-bold text-ink">🎟️ {coupon.title}</p>
               <Link
                 href={`/?store=${coupon.storeId}`}
-                className="mt-0.5 inline-block truncate text-xs text-gray-500 hover:underline"
+                className="mt-0.5 inline-block truncate text-xs text-ink-3 hover:underline"
               >
                 {CATEGORY_META[coupon.category].icon} {coupon.storeName}
               </Link>
               {coupon.condition && (
-                <p className="mt-0.5 truncate text-xs text-gray-400">{coupon.condition}</p>
+                <p className="mt-0.5 truncate text-xs text-ink-3">{coupon.condition}</p>
               )}
             </div>
             {coupon.status === "used" ? (
-              <span className="shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-[11px] font-bold text-gray-400">
+              <span className="shrink-0 rounded bg-surface-2 px-1.5 py-0.5 text-[11px] font-bold text-ink-3">
                 사용완료
               </span>
             ) : coupon.expired ? (
-              <span className="shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-[11px] font-bold text-gray-400">
+              <span className="shrink-0 rounded bg-surface-2 px-1.5 py-0.5 text-[11px] font-bold text-ink-3">
                 만료
               </span>
             ) : null}
           </div>
 
           <div className="mt-1.5 flex items-center justify-between gap-2">
-            <p className="text-[11px] text-gray-400">
+            <p className="text-[11px] text-ink-3">
               {coupon.status === "used" && coupon.usedAt
                 ? `${dateLabel(coupon.usedAt)} 사용`
                 : `~${dateLabel(coupon.expiresAt)}까지`}
@@ -134,7 +134,7 @@ function MyCouponCard({
                   <button
                     type="button"
                     onClick={() => setConfirmUse(false)}
-                    className="rounded-lg border border-gray-300 px-2 py-1 text-[11px] text-gray-500"
+                    className="rounded-lg border border-line px-2 py-1 text-[11px] text-ink-3"
                   >
                     취소
                   </button>

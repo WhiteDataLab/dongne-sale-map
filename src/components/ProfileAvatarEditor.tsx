@@ -60,7 +60,7 @@ export function ProfileAvatarEditor({
         type="button"
         onClick={() => fileRef.current?.click()}
         disabled={busy}
-        className="group relative size-20 shrink-0 overflow-hidden rounded-full bg-gray-100 ring-1 ring-gray-200"
+        className="group relative size-20 shrink-0 overflow-hidden rounded-full bg-surface-2 ring-1 ring-gray-200"
         aria-label="프로필 사진 변경"
       >
         {currentUrl ? (
@@ -76,18 +76,18 @@ export function ProfileAvatarEditor({
 
       <div className="min-w-0">
         <p className="truncate font-medium">{nickname}님</p>
-        <p className="mt-0.5 text-xs text-gray-400">프로필 사진을 눌러 변경할 수 있어요.</p>
+        <p className="mt-0.5 text-xs text-ink-3">프로필 사진을 눌러 변경할 수 있어요.</p>
         <div className="mt-1 flex gap-3 text-xs">
-          <button type="button" onClick={() => fileRef.current?.click()} className="font-medium text-blue-600">
+          <button type="button" onClick={() => fileRef.current?.click()} className="font-medium text-brand">
             사진 변경
           </button>
           {currentUrl && (
-            <button type="button" onClick={remove} className="text-gray-400">
+            <button type="button" onClick={remove} className="text-ink-3">
               기본으로
             </button>
           )}
         </div>
-        {msg && <p className="mt-1 text-xs text-gray-500">{msg}</p>}
+        {msg && <p className="mt-1 text-xs text-ink-3">{msg}</p>}
       </div>
 
       <input

@@ -169,7 +169,7 @@ export function CircleCropper({
           type="button"
           onClick={save}
           disabled={busy || !img}
-          className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white disabled:bg-gray-500"
+          className="rounded-lg bg-brand px-5 py-2 text-sm font-semibold text-white disabled:bg-gray-500"
         >
           {busy ? "처리 중…" : "이 사진으로"}
         </button>

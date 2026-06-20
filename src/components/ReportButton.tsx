@@ -61,7 +61,7 @@ export function ReportButton({
         onClick={() => setOpen(true)}
         aria-label={label}
         title={label}
-        className="inline-flex items-center text-gray-400 transition-colors hover:text-red-500"
+        className="inline-flex items-center text-ink-3 transition-colors hover:text-red-500"
       >
         {/* 신고 아이콘 (깃발) */}
         <svg viewBox="0 0 24 24" fill="none" className="size-4" aria-hidden>
@@ -83,7 +83,7 @@ export function ReportButton({
         value={reason}
         onChange={(e) => setReason(e.target.value)}
         placeholder="신고 사유"
-        className="min-w-0 flex-1 rounded border border-gray-200 px-2 py-1 text-xs"
+        className="min-w-0 flex-1 rounded border border-line px-2 py-1 text-xs"
         autoFocus
       />
       <button
@@ -97,7 +97,7 @@ export function ReportButton({
       <button
         type="button"
         onClick={() => setOpen(false)}
-        className="shrink-0 text-xs text-gray-400"
+        className="shrink-0 text-xs text-ink-3"
       >
         취소
       </button>

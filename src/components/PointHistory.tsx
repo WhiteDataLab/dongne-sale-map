@@ -14,7 +14,7 @@ export function PointHistory({ items }: { items: Item[] }) {
 
   if (items.length === 0) {
     return (
-      <p className="rounded-xl border border-dashed border-gray-200 p-4 text-center text-sm text-gray-400">
+      <p className="rounded-xl border border-dashed border-line p-4 text-center text-sm text-ink-3">
         최근 2년간 적립 내역이 없어요.
       </p>
     );
@@ -25,14 +25,14 @@ export function PointHistory({ items }: { items: Item[] }) {
 
   return (
     <div>
-      <ul className="flex flex-col divide-y divide-gray-100 rounded-xl border border-gray-200">
+      <ul className="flex flex-col divide-y divide-line-2 rounded-xl border border-line">
         {shown.map((h) => (
           <li key={h.id} className="flex items-center justify-between gap-2 px-3 py-2.5">
             <div className="min-w-0">
               <p className="truncate text-sm">{h.reason}</p>
-              <p className="text-xs text-gray-400">{h.date}</p>
+              <p className="text-xs text-ink-3">{h.date}</p>
             </div>
-            <span className={`shrink-0 text-sm font-semibold ${h.amount < 0 ? "text-red-500" : "text-blue-600"}`}>
+            <span className={`shrink-0 text-sm font-semibold ${h.amount < 0 ? "text-red-500" : "text-brand"}`}>
               {h.amount > 0 ? "+" : ""}
               {h.amount}P
             </span>
@@ -47,7 +47,7 @@ export function PointHistory({ items }: { items: Item[] }) {
             setExpanded(true);
             setPage(0);
           }}
-          className="mt-2 w-full rounded-lg border border-gray-300 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
+          className="mt-2 w-full rounded-lg border border-line py-2 text-sm font-medium text-ink-2 hover:bg-surface-2"
         >
           펼쳐서 보기 (전체 {items.length}건)
         </button>
@@ -61,7 +61,7 @@ export function PointHistory({ items }: { items: Item[] }) {
               setExpanded(false);
               setPage(0);
             }}
-            className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-500 hover:bg-gray-50"
+            className="rounded-lg border border-line px-3 py-1.5 text-xs font-medium text-ink-3 hover:bg-surface-2"
           >
             접기
           </button>
@@ -72,18 +72,18 @@ export function PointHistory({ items }: { items: Item[] }) {
                 type="button"
                 onClick={() => setPage((p) => Math.max(0, p - 1))}
                 disabled={page === 0}
-                className="rounded-lg border border-gray-300 px-2.5 py-1 font-medium text-gray-600 disabled:text-gray-300 hover:enabled:bg-gray-50"
+                className="rounded-lg border border-line px-2.5 py-1 font-medium text-ink-2 disabled:text-ink-4 hover:enabled:bg-surface-2"
               >
                 이전
               </button>
-              <span className="tabular-nums text-gray-500">
+              <span className="tabular-nums text-ink-3">
                 {page + 1} / {totalPages}
               </span>
               <button
                 type="button"
                 onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
                 disabled={page >= totalPages - 1}
-                className="rounded-lg border border-gray-300 px-2.5 py-1 font-medium text-gray-600 disabled:text-gray-300 hover:enabled:bg-gray-50"
+                className="rounded-lg border border-line px-2.5 py-1 font-medium text-ink-2 disabled:text-ink-4 hover:enabled:bg-surface-2"
               >
                 다음
               </button>

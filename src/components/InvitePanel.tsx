@@ -57,14 +57,14 @@ export function InvitePanel({
   return (
     <div className="flex flex-col gap-4">
       {/* 내 코드 */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-4 text-center">
-        <p className="text-xs text-gray-400">내 추천 코드</p>
-        <p className="mt-1 text-2xl font-extrabold tracking-widest text-blue-600">{code}</p>
+      <div className="rounded-2xl border border-line bg-white p-4 text-center">
+        <p className="text-xs text-ink-3">내 추천 코드</p>
+        <p className="mt-1 text-2xl font-extrabold tracking-widest text-brand">{code}</p>
         <div className="mt-3 flex gap-2">
           <button
             type="button"
             onClick={copyCode}
-            className="flex-1 rounded-lg border border-gray-300 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            className="flex-1 rounded-lg border border-line py-2 text-sm font-medium text-ink-2 hover:bg-surface-2"
           >
             {copied ? "✅ 링크 복사됨" : "🔗 초대 링크 복사"}
           </button>
@@ -72,13 +72,13 @@ export function InvitePanel({
             path={sharePath}
             title="동네 세일 지도 초대"
             text="내 추천 코드로 가입하면 둘 다 +50P! 동네 세일 지도에서 만나요"
-            className="flex-1 rounded-lg bg-blue-600 py-2 text-sm font-semibold text-white"
+            className="flex-1 rounded-lg bg-brand py-2 text-sm font-semibold text-white"
           >
             친구 초대하기
           </ShareButton>
         </div>
-        <p className="mt-2 text-xs text-gray-400">
-          친구가 이 링크로 가입하면 <b className="text-blue-600">나와 친구 각각 +50P</b>!
+        <p className="mt-2 text-xs text-ink-3">
+          친구가 이 링크로 가입하면 <b className="text-brand">나와 친구 각각 +50P</b>!
         </p>
       </div>
 

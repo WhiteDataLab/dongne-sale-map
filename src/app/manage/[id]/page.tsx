@@ -19,9 +19,9 @@ export default async function ManageStorePage({ params }: { params: Promise<{ id
   if (!store || store.status !== "active") notFound();
   if (!user || !canManageStore(store, user)) {
     return (
-      <div className="h-full overflow-y-auto p-6 text-center text-sm text-gray-500">
+      <div className="h-full overflow-y-auto p-6 text-center text-sm text-ink-3">
         <p className="mt-10">이 가게의 <b>사장님(소유자)</b>만 관리할 수 있어요.</p>
-        <Link href="/" className="mt-4 inline-block text-blue-600">← 지도로</Link>
+        <Link href="/" className="mt-4 inline-block text-brand">← 지도로</Link>
       </div>
     );
   }

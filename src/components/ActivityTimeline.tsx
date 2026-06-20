@@ -27,13 +27,13 @@ export function ActivityTimeline({ items }: { items: ActivityItem[] }) {
 
   return (
     <div>
-      <ul className="flex flex-col divide-y divide-gray-100 rounded-xl border border-gray-200">
+      <ul className="flex flex-col divide-y divide-line-2 rounded-xl border border-line">
         {shown.map((t) => (
           <li key={t.id}>
-            <Link href={t.href} className="flex items-center gap-2 px-3 py-2.5 hover:bg-gray-50">
+            <Link href={t.href} className="flex items-center gap-2 px-3 py-2.5 hover:bg-surface-2">
               <span aria-hidden>{t.icon}</span>
-              <span className="min-w-0 flex-1 truncate text-sm text-gray-700">{t.text}</span>
-              <span className="shrink-0 text-xs text-gray-400">{ymd(t.date)}</span>
+              <span className="min-w-0 flex-1 truncate text-sm text-ink-2">{t.text}</span>
+              <span className="shrink-0 text-xs text-ink-3">{ymd(t.date)}</span>
             </Link>
           </li>
         ))}
@@ -46,7 +46,7 @@ export function ActivityTimeline({ items }: { items: ActivityItem[] }) {
             setExpanded(true);
             setPage(0);
           }}
-          className="mt-2 w-full rounded-lg border border-gray-300 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
+          className="mt-2 w-full rounded-lg border border-line py-2 text-sm font-medium text-ink-2 hover:bg-surface-2"
         >
           펼쳐서 보기 (전체 {items.length}건)
         </button>
@@ -60,7 +60,7 @@ export function ActivityTimeline({ items }: { items: ActivityItem[] }) {
               setExpanded(false);
               setPage(0);
             }}
-            className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-500 hover:bg-gray-50"
+            className="rounded-lg border border-line px-3 py-1.5 text-xs font-medium text-ink-3 hover:bg-surface-2"
           >
             접기
           </button>
@@ -70,18 +70,18 @@ export function ActivityTimeline({ items }: { items: ActivityItem[] }) {
                 type="button"
                 onClick={() => setPage((p) => Math.max(0, p - 1))}
                 disabled={page === 0}
-                className="rounded-lg border border-gray-300 px-2.5 py-1 font-medium text-gray-600 disabled:text-gray-300 hover:enabled:bg-gray-50"
+                className="rounded-lg border border-line px-2.5 py-1 font-medium text-ink-2 disabled:text-ink-4 hover:enabled:bg-surface-2"
               >
                 이전
               </button>
-              <span className="tabular-nums text-gray-500">
+              <span className="tabular-nums text-ink-3">
                 {page + 1} / {totalPages}
               </span>
               <button
                 type="button"
                 onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
                 disabled={page >= totalPages - 1}
-                className="rounded-lg border border-gray-300 px-2.5 py-1 font-medium text-gray-600 disabled:text-gray-300 hover:enabled:bg-gray-50"
+                className="rounded-lg border border-line px-2.5 py-1 font-medium text-ink-2 disabled:text-ink-4 hover:enabled:bg-surface-2"
               >
                 다음
               </button>

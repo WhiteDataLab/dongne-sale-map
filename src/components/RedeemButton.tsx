@@ -59,8 +59,8 @@ export function RedeemButton({
         className={[
           "w-full rounded-lg py-2 text-sm font-semibold transition-colors",
           affordable
-            ? "bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-300"
-            : "cursor-not-allowed bg-gray-100 text-gray-400",
+            ? "bg-brand text-white hover:bg-brand-ink disabled:bg-gray-300"
+            : "cursor-not-allowed bg-surface-2 text-ink-3",
         ].join(" ")}
       >
         {busy ? "처리 중…" : affordable ? "교환하기" : "포인트 부족"}

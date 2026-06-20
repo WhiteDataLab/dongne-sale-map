@@ -54,14 +54,14 @@ export function MerchantReservations({
     }
   }
 
-  if (rows === null) return <p className="text-sm text-gray-400">불러오는 중…</p>;
+  if (rows === null) return <p className="text-sm text-ink-3">불러오는 중…</p>;
 
   const waiting = rows.filter((r) => r.status === "reserved");
   const done = rows.filter((r) => r.status !== "reserved");
 
   if (rows.length === 0) {
     return (
-      <p className="rounded-xl border border-dashed border-gray-200 p-6 text-center text-sm text-gray-400">
+      <p className="rounded-xl border border-dashed border-line p-6 text-center text-sm text-ink-3">
         아직 들어온 예약이 없어요.
         <br />
         세일/행사 탭에서 마감임박 떨이에 <b>픽업 예약 받기</b>를 켜보세요 🏃
@@ -79,16 +79,16 @@ export function MerchantReservations({
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium">{r.saleTitle}</p>
-                  <p className="text-xs text-gray-500">
-                    {won(r.unitPriceKrw)} × {r.qty}개 = <b className="text-gray-900">{won(r.amountKrw)}</b>
-                    <span className="ml-1 text-gray-400">(수수료 {won(r.feeKrw)})</span>
+                  <p className="text-xs text-ink-3">
+                    {won(r.unitPriceKrw)} × {r.qty}개 = <b className="text-ink">{won(r.amountKrw)}</b>
+                    <span className="ml-1 text-ink-3">(수수료 {won(r.feeKrw)})</span>
                   </p>
                   <p className="mt-0.5 text-xs">
                     <Countdown to={r.expiresAt} className="font-medium text-orange-600" /> 까지 픽업
                   </p>
                 </div>
                 <div className="shrink-0 text-right">
-                  <span className="text-[11px] text-gray-400">예약번호</span>
+                  <span className="text-[11px] text-ink-3">예약번호</span>
                   <p className="font-mono text-lg font-bold tracking-widest">{r.pickupCode}</p>
                 </div>
               </div>
@@ -105,7 +105,7 @@ export function MerchantReservations({
                   type="button"
                   onClick={() => act(r.id, "noshow", "노쇼")}
                   disabled={busy === r.id}
-                  className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs text-gray-600 disabled:opacity-50"
+                  className="rounded-lg border border-line px-3 py-1.5 text-xs text-ink-2 disabled:opacity-50"
                 >
                   노쇼
                 </button>
@@ -113,7 +113,7 @@ export function MerchantReservations({
                   type="button"
                   onClick={() => act(r.id, "cancel", "취소")}
                   disabled={busy === r.id}
-                  className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs text-gray-600 disabled:opacity-50"
+                  className="rounded-lg border border-line px-3 py-1.5 text-xs text-ink-2 disabled:opacity-50"
                 >
                   취소
                 </button>
@@ -124,11 +124,11 @@ export function MerchantReservations({
       )}
       {done.length > 0 && (
         <section className="flex flex-col gap-2">
-          <h3 className="text-sm font-semibold text-gray-400">지난 예약 ({done.length})</h3>
+          <h3 className="text-sm font-semibold text-ink-3">지난 예약 ({done.length})</h3>
           {done.map((r) => (
-            <div key={r.id} className="flex items-center justify-between gap-2 rounded-lg border border-gray-100 px-3 py-2 text-xs">
+            <div key={r.id} className="flex items-center justify-between gap-2 rounded-lg border border-line-2 px-3 py-2 text-xs">
               <span className="truncate">{r.saleTitle}</span>
-              <span className="shrink-0 text-gray-500">
+              <span className="shrink-0 text-ink-3">
                 {r.qty}개 · {STATUS_TEXT[r.status]}
               </span>
             </div>

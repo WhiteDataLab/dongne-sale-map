@@ -45,7 +45,7 @@ export function MyReviewItem({ review }: { review: MyReview }) {
 
   if (editing) {
     return (
-      <li className="rounded-xl border border-gray-200 p-3">
+      <li className="rounded-xl border border-line p-3">
         <p className="mb-2 truncate text-sm font-medium">🏪 {review.storeName}</p>
         <ReviewForm
           storeId={review.storeId}
@@ -63,7 +63,7 @@ export function MyReviewItem({ review }: { review: MyReview }) {
   }
 
   return (
-    <li className="rounded-xl border border-gray-200 p-3">
+    <li className="rounded-xl border border-line p-3">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="truncate text-sm font-medium">🏪 {review.storeName}</p>
@@ -73,7 +73,7 @@ export function MyReviewItem({ review }: { review: MyReview }) {
           <button
             type="button"
             onClick={() => setEditing(true)}
-            className="rounded-lg border border-gray-300 px-2.5 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50"
+            className="rounded-lg border border-line px-2.5 py-1 text-xs font-medium text-brand hover:bg-brand-wash"
           >
             수정
           </button>
@@ -90,7 +90,7 @@ export function MyReviewItem({ review }: { review: MyReview }) {
       {review.photoUrls.length > 0 && (
         <div className="mt-1.5 flex gap-1.5 overflow-x-auto">
           {review.photoUrls.map((u, i) => (
-            <div key={i} className="zoomable size-16 shrink-0 overflow-hidden rounded-lg bg-gray-100">
+            <div key={i} className="zoomable size-16 shrink-0 overflow-hidden rounded-lg bg-surface-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={u} alt="" className="size-full object-cover" />
             </div>
@@ -98,12 +98,12 @@ export function MyReviewItem({ review }: { review: MyReview }) {
         </div>
       )}
       {review.reply && (
-        <div className="mt-2 rounded-lg border border-gray-100 bg-gray-50 p-2">
+        <div className="mt-2 rounded-lg border border-line-2 bg-surface-2 p-2">
           <p className="text-xs font-semibold text-indigo-700">🏪 사장님 답글</p>
-          <p className="mt-0.5 whitespace-pre-wrap text-sm text-gray-700">{review.reply.body}</p>
+          <p className="mt-0.5 whitespace-pre-wrap text-sm text-ink-2">{review.reply.body}</p>
         </div>
       )}
-      <p className="mt-1 text-xs text-gray-400">
+      <p className="mt-1 text-xs text-ink-3">
         {ymd(review.createdAt)}
         {!review.scored && " · 별점·포인트 미반영"}
       </p>

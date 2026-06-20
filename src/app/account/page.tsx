@@ -20,9 +20,9 @@ const REDEMPTION_LABEL: Record<string, string> = {
 function activityBadge(score: number): { emoji: string; label: string; color: string } {
   if (score >= 100) return { emoji: "🌟", label: "동네 스타", color: "bg-amber-100 text-amber-700" };
   if (score >= 50) return { emoji: "🏅", label: "동네 지킴이", color: "bg-purple-100 text-purple-700" };
-  if (score >= 20) return { emoji: "💪", label: "단골 이웃", color: "bg-blue-100 text-blue-700" };
+  if (score >= 20) return { emoji: "💪", label: "단골 이웃", color: "bg-brand-wash text-brand-ink" };
   if (score >= 5) return { emoji: "🌱", label: "새싹 이웃", color: "bg-green-100 text-green-700" };
-  return { emoji: "👋", label: "새내기", color: "bg-gray-100 text-gray-600" };
+  return { emoji: "👋", label: "새내기", color: "bg-surface-2 text-ink-2" };
 }
 
 type TimelineItem = { id: string; icon: string; text: string; href: string; date: Date };
@@ -40,7 +40,7 @@ export default async function AccountPage() {
 
   if (!session?.user) {
     return (
-      <div className="h-full overflow-y-auto p-6 text-center text-sm text-gray-500">
+      <div className="h-full overflow-y-auto p-6 text-center text-sm text-ink-3">
         <p className="mt-10">로그인이 필요해요.</p>
         <form
           action={async () => {
@@ -52,7 +52,7 @@ export default async function AccountPage() {
             네이버 로그인
           </button>
         </form>
-        <Link href="/" className="mt-4 inline-block text-blue-600">
+        <Link href="/" className="mt-4 inline-block text-brand">
           ← 지도로
         </Link>
       </div>
@@ -230,28 +230,28 @@ export default async function AccountPage() {
     <div className="h-full overflow-y-auto">
       <div className="mx-auto flex max-w-lg flex-col gap-5 p-5">
         <div className="flex items-center justify-between">
-          <Link href="/" className="text-sm text-gray-400">
+          <Link href="/" className="text-sm text-ink-3">
             ← 지도로
           </Link>
           <div className="flex gap-3 text-sm">
-            <Link href="/notifications" className="text-gray-500 hover:text-gray-800">🔔 알림</Link>
-            <Link href="/settings" className="text-gray-500 hover:text-gray-800">⚙️ 설정</Link>
+            <Link href="/notifications" className="text-ink-3 hover:text-ink">🔔 알림</Link>
+            <Link href="/settings" className="text-ink-3 hover:text-ink">⚙️ 설정</Link>
           </div>
         </div>
 
         <section>
           <h1 className="text-xl font-bold">마이페이지</h1>
-          <div className="mt-3 rounded-xl border border-gray-200 p-4">
+          <div className="mt-3 rounded-xl border border-line p-4">
             <ProfileAvatarEditor currentUrl={profileImg} nickname={nickname} />
             <form action={updateNickname} className="mt-3 flex gap-2">
               <input
                 name="nickname"
                 defaultValue={nickname}
                 maxLength={20}
-                className="min-w-0 flex-1 rounded-lg border border-gray-200 px-3 py-1.5 text-sm outline-none focus:border-blue-500"
+                className="min-w-0 flex-1 rounded-lg border border-line px-3 py-1.5 text-sm outline-none focus:border-brand"
                 aria-label="닉네임"
               />
-              <button className="shrink-0 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 active:bg-gray-200">
+              <button className="shrink-0 rounded-lg border border-line px-3 py-1.5 text-sm font-medium text-ink-2 transition-colors hover:bg-surface-2 active:bg-gray-200">
                 닉네임 저장
               </button>
             </form>
@@ -259,15 +259,15 @@ export default async function AccountPage() {
               <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${badge.color}`}>
                 {badge.emoji} {badge.label}
               </span>
-              <span className="text-xs text-gray-400">활동점수 {activityScore}</span>
+              <span className="text-xs text-ink-3">활동점수 {activityScore}</span>
             </div>
-            <p className="mt-2 text-sm text-gray-500">
+            <p className="mt-2 text-sm text-ink-3">
               적립 포인트{" "}
-              <span className="font-semibold text-gray-800">{balance}P</span>
+              <span className="font-semibold text-ink">{balance}P</span>
             </p>
             <Link
               href="/shop"
-              className="mt-2 inline-block rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white"
+              className="mt-2 inline-block rounded-lg bg-brand px-3 py-1.5 text-sm font-semibold text-white"
             >
               🎁 포인트샵 (기프티콘 교환)
             </Link>
@@ -276,9 +276,9 @@ export default async function AccountPage() {
 
         {/* 기프티콘 수령 연락처 (SMS 인증) */}
         <section id="contact">
-          <h2 className="mb-2 text-sm font-semibold text-gray-700">기프티콘 수령 연락처</h2>
-          <div className="rounded-xl border border-gray-200 p-4">
-            <p className="mb-2 text-xs text-gray-400">
+          <h2 className="mb-2 text-sm font-semibold text-ink-2">기프티콘 수령 연락처</h2>
+          <div className="rounded-xl border border-line p-4">
+            <p className="mb-2 text-xs text-ink-3">
               포인트로 기프티콘을 교환하면 이 연락처(문자)로 보내드려요. 추천 보상은 <b>SMS 인증된 연락처</b>에만 지급돼요.
             </p>
             <ContactVerifyForm current={contactPhone} />
@@ -287,7 +287,7 @@ export default async function AccountPage() {
 
         {/* 내가 쓴 리뷰 */}
         <section>
-          <h2 className="mb-2 text-sm font-semibold text-gray-700">내가 쓴 리뷰 ({myReviews.length})</h2>
+          <h2 className="mb-2 text-sm font-semibold text-ink-2">내가 쓴 리뷰 ({myReviews.length})</h2>
           <MyReviewList
             reviews={myReviews.map((r) => ({
               id: r.id,
@@ -319,7 +319,7 @@ export default async function AccountPage() {
         {/* 내 활동 타임라인 */}
         {timeline.length > 0 && (
           <section>
-            <h2 className="mb-2 text-sm font-semibold text-gray-700">내 활동</h2>
+            <h2 className="mb-2 text-sm font-semibold text-ink-2">내 활동</h2>
             <ActivityTimeline
               items={timeline.map((t) => ({
                 id: t.id,
@@ -335,13 +335,13 @@ export default async function AccountPage() {
         {/* 기프티콘 교환 내역 */}
         {redemptions.length > 0 && (
           <section>
-            <h2 className="mb-2 text-sm font-semibold text-gray-700">기프티콘 교환 내역</h2>
-            <ul className="flex flex-col divide-y divide-gray-100 rounded-xl border border-gray-200">
+            <h2 className="mb-2 text-sm font-semibold text-ink-2">기프티콘 교환 내역</h2>
+            <ul className="flex flex-col divide-y divide-line-2 rounded-xl border border-line">
               {redemptions.map((r) => (
                 <li key={r.id} className="flex items-center justify-between gap-2 px-3 py-2.5">
                   <div className="min-w-0">
                     <p className="truncate text-sm">🎁 {r.itemName}</p>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-ink-3">
                       {new Date(r.createdAt).toLocaleDateString("ko-KR")} ·{" "}
                       {REDEMPTION_LABEL[r.status] ?? r.status}
                     </p>
@@ -354,7 +354,7 @@ export default async function AccountPage() {
         )}
 
         <section>
-          <h2 className="mb-2 text-sm font-semibold text-gray-700">포인트 내역</h2>
+          <h2 className="mb-2 text-sm font-semibold text-ink-2">포인트 내역</h2>
           <PointHistory
             items={history.map((h) => ({
               id: h.id,
@@ -363,14 +363,14 @@ export default async function AccountPage() {
               date: new Date(h.createdAt).toLocaleDateString("ko-KR"),
             }))}
           />
-          <p className="mt-1.5 text-xs text-gray-400">
+          <p className="mt-1.5 text-xs text-ink-3">
             내역은 최근 {POINT_HISTORY_YEARS}년까지 표시되며, 적립 후 {POINT_EXPIRY_YEARS}년이 지난
             포인트는 소멸돼요.
           </p>
         </section>
 
         <section>
-          <h2 className="mb-2 text-sm font-semibold text-gray-700">연결된 로그인 수단</h2>
+          <h2 className="mb-2 text-sm font-semibold text-ink-2">연결된 로그인 수단</h2>
           {linkResult && LINK_RESULT_MSG[linkResult] && (
             <p
               className={`mb-2 rounded-lg px-3 py-2 text-xs ${
@@ -390,7 +390,7 @@ export default async function AccountPage() {
             ].map((p) => (
               <li
                 key={p.key}
-                className="flex items-center justify-between rounded-xl border border-gray-200 px-3 py-2.5 text-sm"
+                className="flex items-center justify-between rounded-xl border border-line px-3 py-2.5 text-sm"
               >
                 <span className="font-medium">{p.label}</span>
                 {connected.has(p.key) ? (
@@ -399,12 +399,12 @@ export default async function AccountPage() {
                   </span>
                 ) : p.enabled && p.action ? (
                   <form action={p.action}>
-                    <button className="rounded-full border border-gray-300 px-3 py-1 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100 active:bg-gray-200">
+                    <button className="rounded-full border border-line px-3 py-1 text-xs font-medium text-ink-2 transition-colors hover:bg-surface-2 active:bg-gray-200">
                       연결하기
                     </button>
                   </form>
                 ) : (
-                  <span className="text-xs text-gray-300">미연결</span>
+                  <span className="text-xs text-ink-4">미연결</span>
                 )}
               </li>
             ))}
@@ -413,30 +413,30 @@ export default async function AccountPage() {
 
         <Link
           href="/favorites"
-          className="flex items-center justify-between rounded-xl border border-gray-200 p-4 transition-colors hover:bg-gray-50"
+          className="flex items-center justify-between rounded-xl border border-line p-4 transition-colors hover:bg-surface-2"
         >
           <span className="font-medium">♥ 즐겨찾기</span>
-          <span className="text-sm text-gray-400">보기 →</span>
+          <span className="text-sm text-ink-3">보기 →</span>
         </Link>
 
         <section className="flex gap-4 text-sm">
           <Link
             href="/terms"
-            className="text-gray-600 underline-offset-2 transition-colors hover:text-gray-900 hover:underline"
+            className="text-ink-2 underline-offset-2 transition-colors hover:text-ink hover:underline"
           >
             이용약관
           </Link>
           <Link
             href="/privacy"
-            className="text-gray-600 underline-offset-2 transition-colors hover:text-gray-900 hover:underline"
+            className="text-ink-2 underline-offset-2 transition-colors hover:text-ink hover:underline"
           >
             개인정보처리방침
           </Link>
         </section>
 
-        <section className="mt-4 border-t border-gray-100 pt-4">
-          <h2 className="text-sm font-semibold text-gray-700">회원 탈퇴</h2>
-          <p className="mt-1 text-xs text-gray-500">
+        <section className="mt-4 border-t border-line-2 pt-4">
+          <h2 className="text-sm font-semibold text-ink-2">회원 탈퇴</h2>
+          <p className="mt-1 text-xs text-ink-3">
             탈퇴 시 개인정보(닉네임·프로필·소셜 식별자)는 즉시 삭제돼요. 작성하신 가게·세일은
             ‘탈퇴한 사용자’로 익명 처리되고, 리뷰·즐겨찾기·포인트 기록은 함께 삭제돼요. 되돌릴 수
             없어요.

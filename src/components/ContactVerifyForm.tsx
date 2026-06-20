@@ -64,8 +64,8 @@ export function ContactVerifyForm({ current }: { current: string | null }) {
     }
   };
 
-  const cls = "min-w-0 flex-1 rounded-lg border border-gray-200 px-3 py-1.5 text-sm outline-none focus:border-blue-500";
-  const btn = "shrink-0 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-100";
+  const cls = "min-w-0 flex-1 rounded-lg border border-line px-3 py-1.5 text-sm outline-none focus:border-brand";
+  const btn = "shrink-0 rounded-lg border border-line px-3 py-1.5 text-sm font-medium text-ink-2 hover:bg-surface-2";
 
   if (current && !editing) {
     return (
@@ -75,7 +75,7 @@ export function ContactVerifyForm({ current }: { current: string | null }) {
           <span className="ml-1 rounded-full bg-green-100 px-1.5 py-0.5 text-xs text-green-700">인증됨</span>
         </p>
         <div className="mt-2 flex gap-3 text-xs">
-          <button type="button" onClick={() => setEditing(true)} className="font-medium text-blue-600">
+          <button type="button" onClick={() => setEditing(true)} className="font-medium text-brand">
             번호 변경
           </button>
           <button
@@ -84,7 +84,7 @@ export function ContactVerifyForm({ current }: { current: string | null }) {
               await removeContact();
               router.refresh();
             }}
-            className="text-gray-400"
+            className="text-ink-3"
           >
             삭제
           </button>
@@ -117,18 +117,18 @@ export function ContactVerifyForm({ current }: { current: string | null }) {
             placeholder="인증번호 6자리"
             className={cls}
           />
-          <button type="button" onClick={verify} disabled={busy} className="shrink-0 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white disabled:bg-gray-300">
+          <button type="button" onClick={verify} disabled={busy} className="shrink-0 rounded-lg bg-brand px-3 py-1.5 text-sm font-semibold text-white disabled:bg-gray-300">
             확인
           </button>
         </div>
       )}
       {devCode && <p className="text-xs text-amber-600">개발용 인증번호: {devCode}</p>}
       {current && (
-        <button type="button" onClick={() => setEditing(false)} className="self-start text-xs text-gray-400">
+        <button type="button" onClick={() => setEditing(false)} className="self-start text-xs text-ink-3">
           취소
         </button>
       )}
-      {msg && <p className="text-xs text-gray-500">{msg}</p>}
+      {msg && <p className="text-xs text-ink-3">{msg}</p>}
     </div>
   );
 }

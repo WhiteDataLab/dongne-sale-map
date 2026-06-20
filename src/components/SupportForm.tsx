@@ -58,10 +58,10 @@ export function SupportForm({ defaultNickname }: { defaultNickname: string }) {
     }
   };
 
-  const cls = "w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-blue-500";
+  const cls = "w-full rounded-lg border border-line px-3 py-2 text-sm outline-none focus:border-brand";
 
   return (
-    <div className="flex flex-col gap-2 rounded-2xl border border-gray-200 bg-white p-4">
+    <div className="flex flex-col gap-2 rounded-2xl border border-line bg-white p-4">
       <h2 className="text-sm font-bold">문의하기</h2>
       <div className="flex gap-2">
         <input value={nickname} onChange={(e) => setNickname(e.target.value)} placeholder="닉네임" className={cls} />
@@ -87,7 +87,7 @@ export function SupportForm({ defaultNickname }: { defaultNickname: string }) {
           </button>
         </div>
       ) : (
-        <button type="button" onClick={() => fileRef.current?.click()} className="self-start rounded-lg border border-dashed border-gray-300 px-3 py-1.5 text-xs text-gray-500">
+        <button type="button" onClick={() => fileRef.current?.click()} className="self-start rounded-lg border border-dashed border-line px-3 py-1.5 text-xs text-ink-3">
           📎 파일 첨부 (이미지, 선택)
         </button>
       )}
@@ -106,10 +106,10 @@ export function SupportForm({ defaultNickname }: { defaultNickname: string }) {
         }}
       />
 
-      <button type="button" onClick={submit} disabled={busy} className="mt-1 rounded-lg bg-blue-600 py-2.5 text-sm font-semibold text-white disabled:bg-gray-300">
+      <button type="button" onClick={submit} disabled={busy} className="mt-1 rounded-lg bg-brand py-2.5 text-sm font-semibold text-white disabled:bg-gray-300">
         {busy ? "접수 중…" : "작성하기"}
       </button>
-      {msg && <p className="text-center text-xs text-gray-500">{msg}</p>}
+      {msg && <p className="text-center text-xs text-ink-3">{msg}</p>}
     </div>
   );
 }

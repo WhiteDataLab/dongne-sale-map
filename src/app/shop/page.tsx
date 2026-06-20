@@ -13,7 +13,7 @@ export default async function ShopPage() {
   const session = await auth();
   if (!session?.user) {
     return (
-      <div className="h-full overflow-y-auto p-6 text-center text-sm text-gray-500">
+      <div className="h-full overflow-y-auto p-6 text-center text-sm text-ink-3">
         <p className="mt-10">포인트샵은 로그인 후 이용할 수 있어요.</p>
         <form
           action={async () => {
@@ -21,11 +21,11 @@ export default async function ShopPage() {
             await signIn(undefined, { redirectTo: "/shop" });
           }}
         >
-          <button className="mt-3 rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white">
+          <button className="mt-3 rounded-full bg-brand px-4 py-2 text-sm font-medium text-white">
             로그인하기
           </button>
         </form>
-        <Link href="/" className="mt-4 inline-block text-blue-600">
+        <Link href="/" className="mt-4 inline-block text-brand">
           ← 지도로
         </Link>
       </div>
@@ -50,9 +50,9 @@ export default async function ShopPage() {
   }
 
   return (
-    <div className="h-full overflow-y-auto bg-gray-50">
+    <div className="h-full overflow-y-auto bg-surface-2">
       <div className="mx-auto flex max-w-md flex-col gap-4 p-5">
-        <Link href="/" className="text-sm text-gray-400">
+        <Link href="/" className="text-sm text-ink-3">
           ← 지도로
         </Link>
 
@@ -84,7 +84,7 @@ export default async function ShopPage() {
               const affordable = balance >= g.points && !!contact;
               const sponsorBrand = sponsoredMap.get(g.id);
               return (
-                <div key={g.id} className="relative flex flex-col rounded-2xl border border-gray-100 bg-white p-3 shadow-sm">
+                <div key={g.id} className="relative flex flex-col rounded-2xl border border-line-2 bg-white p-3 shadow-sm">
                   {sponsorBrand && (
                     <span className="absolute right-2 top-2 z-10 rounded-full bg-indigo-600 px-2 py-0.5 text-[10px] font-bold text-white shadow">
                       {sponsorBrand} 후원
@@ -101,9 +101,9 @@ export default async function ShopPage() {
                       g.emoji
                     )}
                   </div>
-                  <p className="text-xs text-gray-400">{g.brand}</p>
+                  <p className="text-xs text-ink-3">{g.brand}</p>
                   <p className="truncate text-sm font-semibold">{g.name}</p>
-                  <p className="mb-2 mt-0.5 font-bold text-blue-600">{g.points.toLocaleString("ko-KR")}P</p>
+                  <p className="mb-2 mt-0.5 font-bold text-brand">{g.points.toLocaleString("ko-KR")}P</p>
                   <div className="mt-auto">
                     <RedeemButton itemId={g.id} points={g.points} affordable={affordable} />
                   </div>
@@ -113,8 +113,8 @@ export default async function ShopPage() {
           </div>
         </section>
 
-        <section className="rounded-2xl bg-white p-4 text-xs text-gray-500 shadow-sm">
-          <h2 className="mb-1 text-sm font-semibold text-gray-700">이용 안내</h2>
+        <section className="rounded-2xl bg-white p-4 text-xs text-ink-3 shadow-sm">
+          <h2 className="mb-1 text-sm font-semibold text-ink-2">이용 안내</h2>
           <ul className="flex flex-col gap-1">
             <li>· 포인트 1P = 1원 상당으로 교환돼요.</li>
             <li>· 교환 시 포인트가 차감되고, 영업일 기준 순차적으로 <b>등록한 연락처(문자)</b>로 기프티콘을 보내드려요.</li>

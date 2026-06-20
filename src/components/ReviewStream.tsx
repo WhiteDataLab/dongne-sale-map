@@ -36,12 +36,12 @@ export function ReviewStream({ reviews }: { reviews: FeedReview[] }) {
             key={`${r.id}-${i}`}
             className="w-fit max-w-full rounded-2xl bg-white/80 px-2 py-1 text-[10px] leading-tight shadow-sm backdrop-blur-sm sm:px-3 sm:py-1.5 sm:text-xs"
           >
-            <span className="font-semibold text-gray-900">{r.storeName}</span>
+            <span className="font-semibold text-ink">{r.storeName}</span>
             <span className="ml-1 text-[9px] text-amber-500 sm:text-[10px]">{starString(r.rating)}</span>
-            <span className="ml-1 text-gray-600">
+            <span className="ml-1 text-ink-2">
               {r.content.length > 20 ? `${r.content.slice(0, 20)}…` : r.content}
             </span>
-            <span className="ml-1 text-gray-400">- {r.nickname}</span>
+            <span className="ml-1 text-ink-3">- {r.nickname}</span>
           </div>
         ))}
       </div>

@@ -13,7 +13,7 @@ export default async function InvitePage() {
   const session = await auth();
   if (!session?.user) {
     return (
-      <div className="h-full overflow-y-auto p-6 text-center text-sm text-gray-500">
+      <div className="h-full overflow-y-auto p-6 text-center text-sm text-ink-3">
         <p className="mt-10">친구 초대는 로그인 후 이용할 수 있어요.</p>
         <form
           action={async () => {
@@ -21,11 +21,11 @@ export default async function InvitePage() {
             await signIn(undefined, { redirectTo: "/invite" });
           }}
         >
-          <button className="mt-3 rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white">
+          <button className="mt-3 rounded-full bg-brand px-4 py-2 text-sm font-medium text-white">
             로그인하기
           </button>
         </form>
-        <Link href="/" className="mt-4 inline-block text-blue-600">
+        <Link href="/" className="mt-4 inline-block text-brand">
           ← 지도로
         </Link>
       </div>
@@ -64,9 +64,9 @@ export default async function InvitePage() {
   }
 
   return (
-    <div className="h-full overflow-y-auto bg-gray-50">
+    <div className="h-full overflow-y-auto bg-surface-2">
       <div className="mx-auto flex max-w-md flex-col gap-4 p-5">
-        <Link href="/" className="text-sm text-gray-400">
+        <Link href="/" className="text-sm text-ink-3">
           ← 지도로
         </Link>
 
@@ -101,16 +101,16 @@ export default async function InvitePage() {
         {code ? (
           <InvitePanel code={code} canEnter={canEnter} />
         ) : (
-          <p className="text-center text-sm text-gray-400">추천 코드를 불러오지 못했어요.</p>
+          <p className="text-center text-sm text-ink-3">추천 코드를 불러오지 못했어요.</p>
         )}
 
-        <section className="rounded-2xl bg-white p-4 text-xs text-gray-500 shadow-sm">
-          <h2 className="mb-1 text-sm font-semibold text-gray-700">이용 안내</h2>
+        <section className="rounded-2xl bg-white p-4 text-xs text-ink-3 shadow-sm">
+          <h2 className="mb-1 text-sm font-semibold text-ink-2">이용 안내</h2>
           <ul className="flex flex-col gap-1">
             <li>· 친구가 초대 링크로 <b>카카오·네이버·전화번호 가입</b>을 완료하면 둘 다 +{REFERRAL_POINT}P.</li>
             <li>· 링크 없이 가입한 친구는 가입 {GRACE_DAYS}일 이내에 코드를 직접 입력하면 돼요.</li>
             <li>· 추천인 등록은 1인당 1회예요. 본인 코드는 사용할 수 없어요.</li>
-            <li className="text-gray-400">· 포인트는 적립 대기(표시용)예요.</li>
+            <li className="text-ink-3">· 포인트는 적립 대기(표시용)예요.</li>
           </ul>
         </section>
       </div>

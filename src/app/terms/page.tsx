@@ -6,12 +6,12 @@ export const metadata = { title: "이용약관 — 동네 세일 지도" };
 export default function TermsPage() {
   return (
     <div className="h-full overflow-y-auto">
-      <article className="mx-auto max-w-2xl space-y-4 p-5 text-sm leading-relaxed text-gray-700">
-        <Link href="/" className="text-gray-400">
+      <article className="mx-auto max-w-2xl space-y-4 p-5 text-sm leading-relaxed text-ink-2">
+        <Link href="/" className="text-ink-3">
           ← 지도로
         </Link>
-        <h1 className="text-xl font-bold text-gray-900">이용약관</h1>
-        <p className="text-xs text-gray-400">
+        <h1 className="text-xl font-bold text-ink">이용약관</h1>
+        <p className="text-xs text-ink-3">
           본 약관은 MVP 단계의 초안이며, 정식 운영 전 법률 검토가 필요합니다.
         </p>
 

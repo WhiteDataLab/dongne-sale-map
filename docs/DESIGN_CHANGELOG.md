@@ -139,4 +139,11 @@
 - **변화 형태**: 공개 페이지 모션 일관 + 운영 화면까지 토큰 단일화(앱 전체 톤 수렴).
 - 검증: tsc·lint·프로덕션 빌드 통과, `/admin`·`/s/[id]` 200 렌더 확인.
 
-**남은 후속(선택, 낮음)**: 개별 admin 본문의 의미색 미세 정리(현재 보존), 정적 안내 페이지(/faq·/policy 등) 모션 — 한계효용 낮음.
+### P2-8. 앱 전역 토큰 정비 (소비자 화면 전체)
+파일: `src/components/**` + `src/app/**`(admin 제외) — `/account`·`/shop`·`/coupons`·`/reservations`·`/notifications`·`/checkin`·`/invite`·`/support`·`Header`·`SideNav`·`StoreSheet`·정적 안내 페이지 등 **71개 파일**
+- **AS-IS**: 브리프 지목 컴포넌트 외 다수 소비자 화면이 레거시 `gray-*`/`blue-600`/`blue-50`·`focus:ring-blue-*`를 직접 사용 → P0~P2로 만든 토큰과 혼재.
+- **TO-BE**: 검증된 코드모드로 **873건 일괄 토큰화** — `gray-* → ink/line/surface-2`, `blue-600/700 → brand/brand-ink`, `bg-blue-50/100 → brand-wash`, `focus:ring/border-blue-* → brand`, `border-blue-200 → border-brand/40`. **의미색(red/green/amber/emerald/indigo/rose) 보존**. SideNav/Header/정적 페이지까지 톤 수렴.
+- **변화 형태**: 토큰 시스템의 **앱 전역 채택 완료** — 디자인 토큰이 진짜 단일 출처가 됨.
+- 검증: tsc·lint·프로덕션 빌드 통과, 홈·SideNav 드로어 실렌더 스크린샷 확인(그룹 라벨/링크/CTA 토큰 일관). 잔여 비매핑 클래스(다크 배경·`bg-gray-200` 활성·PhotoEditor 캔버스 UI 등)는 적절한 컨텍스트라 보존.
+
+**남은 후속(선택, 매우 낮음)**: 잔여 비매핑 색 미세정리, 정적 안내 페이지 모션. 디자인 시스템 채택은 사실상 완결.

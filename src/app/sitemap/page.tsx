@@ -58,19 +58,19 @@ export default function SitemapPage() {
   return (
     <div className="h-full overflow-y-auto">
       <div className="mx-auto max-w-2xl space-y-5 p-5">
-        <Link href="/" className="text-sm text-gray-400">
+        <Link href="/" className="text-sm text-ink-3">
           ← 지도로
         </Link>
-        <h1 className="text-xl font-bold text-gray-900">사이트맵</h1>
+        <h1 className="text-xl font-bold text-ink">사이트맵</h1>
 
         <div className="grid grid-cols-2 gap-5 sm:grid-cols-3">
           {GROUPS.map((g) => (
             <section key={g.title}>
-              <h2 className="mb-1.5 text-sm font-semibold text-gray-700">{g.title}</h2>
+              <h2 className="mb-1.5 text-sm font-semibold text-ink-2">{g.title}</h2>
               <ul className="flex flex-col gap-1">
                 {g.links.map((l) => (
                   <li key={l.href}>
-                    <Link href={l.href} className="text-sm text-blue-600 hover:underline">
+                    <Link href={l.href} className="text-sm text-brand hover:underline">
                       {l.label}
                     </Link>
                   </li>

@@ -19,10 +19,10 @@ export default async function SponsorFailPage({
       <div className="mx-auto max-w-md p-5 text-center">
         <p className="mt-10 text-2xl">🙇</p>
         <p className="mt-2 font-semibold">카드 등록이 완료되지 않았어요</p>
-        <p className="mt-1 text-xs text-gray-400">{message}</p>
+        <p className="mt-1 text-xs text-ink-3">{message}</p>
         <div className="mt-4 flex justify-center gap-3">
-          <Link href={`/stores/${id}/sponsor`} className="text-blue-600">다시 시도</Link>
-          <Link href="/" className="text-gray-400">지도로</Link>
+          <Link href={`/stores/${id}/sponsor`} className="text-brand">다시 시도</Link>
+          <Link href="/" className="text-ink-3">지도로</Link>
         </div>
       </div>
     </div>

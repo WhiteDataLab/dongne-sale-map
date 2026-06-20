@@ -40,9 +40,9 @@ export function IntroVideoUploader({ current }: { current: string | null }) {
   };
 
   return (
-    <div className="rounded-xl border border-gray-200 p-4">
+    <div className="rounded-xl border border-line p-4">
       <p className="font-medium">소개 페이지 영상</p>
-      <p className="mt-0.5 text-xs text-gray-400">/about 상단에 표시될 영상 (mp4·webm·mov, 50MB 이하)</p>
+      <p className="mt-0.5 text-xs text-ink-3">/about 상단에 표시될 영상 (mp4·webm·mov, 50MB 이하)</p>
 
       {current && (
         <video src={current} controls playsInline className="mt-3 aspect-video w-full rounded-lg bg-black" />
@@ -53,7 +53,7 @@ export function IntroVideoUploader({ current }: { current: string | null }) {
           type="button"
           onClick={() => ref.current?.click()}
           disabled={busy}
-          className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white disabled:bg-gray-300"
+          className="rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-white disabled:bg-gray-300"
         >
           {busy ? "처리 중…" : current ? "영상 교체" : "영상 업로드"}
         </button>
@@ -62,7 +62,7 @@ export function IntroVideoUploader({ current }: { current: string | null }) {
             type="button"
             onClick={remove}
             disabled={busy}
-            className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600"
+            className="rounded-lg border border-line px-3 py-1.5 text-xs font-medium text-ink-2"
           >
             삭제
           </button>
@@ -79,7 +79,7 @@ export function IntroVideoUploader({ current }: { current: string | null }) {
           e.target.value = "";
         }}
       />
-      {msg && <p className="mt-2 text-xs text-gray-500">{msg}</p>}
+      {msg && <p className="mt-2 text-xs text-ink-3">{msg}</p>}
     </div>
   );
 }

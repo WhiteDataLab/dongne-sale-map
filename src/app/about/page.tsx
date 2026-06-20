@@ -87,10 +87,10 @@ export default async function AboutPage() {
             { icon: "🛡️", t: "신뢰 기반", d: "신고가 쌓이면 자동 숨김 + 관리자 검토로 깨끗하게." },
           ].map((v, i) => (
             <Reveal key={v.t} delay={i * 120}>
-              <div className="rounded-3xl border border-gray-100 bg-gray-50 p-8 text-center transition-transform duration-500 hover:scale-[1.03]">
+              <div className="rounded-3xl border border-line-2 bg-surface-2 p-8 text-center transition-transform duration-500 hover:scale-[1.03]">
                 <div className="text-4xl">{v.icon}</div>
                 <h3 className="mt-4 text-lg font-semibold">{v.t}</h3>
-                <p className="mt-2 text-sm text-gray-500">{v.d}</p>
+                <p className="mt-2 text-sm text-ink-3">{v.d}</p>
               </div>
             </Reveal>
           ))}
@@ -127,7 +127,7 @@ function Section({ block }: { block: AboutBlock }) {
         <h2 className="text-balance text-4xl font-bold tracking-tight sm:text-5xl">{title}</h2>
       </Reveal>
       <Reveal delay={120}>
-        <p className={`mx-auto mt-5 max-w-xl text-balance text-lg ${dark ? "text-white/65" : "text-gray-500"}`}>
+        <p className={`mx-auto mt-5 max-w-xl text-balance text-lg ${dark ? "text-white/65" : "text-ink-3"}`}>
           {desc}
         </p>
       </Reveal>

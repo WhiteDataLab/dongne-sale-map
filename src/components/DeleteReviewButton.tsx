@@ -30,7 +30,7 @@ export function DeleteReviewButton({ reviewId }: { reviewId: string }) {
       type="button"
       onClick={del}
       disabled={busy}
-      className="shrink-0 rounded-lg border border-gray-300 px-2.5 py-1 text-xs font-medium text-red-500 hover:bg-red-50 disabled:text-gray-300"
+      className="shrink-0 rounded-lg border border-line px-2.5 py-1 text-xs font-medium text-red-500 hover:bg-red-50 disabled:text-ink-4"
     >
       {busy ? "삭제 중…" : "삭제"}
     </button>

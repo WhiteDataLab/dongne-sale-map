@@ -80,7 +80,7 @@ export function ReviewReplyBox({
           rows={2}
           maxLength={500}
           placeholder="고객님께 답글을 남겨보세요"
-          className="w-full resize-none rounded-md border border-gray-200 p-2 text-sm focus:border-indigo-400 focus:outline-none"
+          className="w-full resize-none rounded-md border border-line p-2 text-sm focus:border-indigo-400 focus:outline-none"
         />
         <div className="mt-1.5 flex items-center justify-end gap-2">
           <button
@@ -89,7 +89,7 @@ export function ReviewReplyBox({
               setEditing(false);
               setText(reply?.body ?? "");
             }}
-            className="text-xs text-gray-500"
+            className="text-xs text-ink-3"
           >
             취소
           </button>
@@ -109,7 +109,7 @@ export function ReviewReplyBox({
   // 답글 있음 → 박스 + (관리자) 수정/삭제
   if (reply) {
     return (
-      <div className="mt-2 rounded-lg border border-gray-100 bg-gray-50 p-2">
+      <div className="mt-2 rounded-lg border border-line-2 bg-surface-2 p-2">
         <div className="flex items-start justify-between gap-2">
           <p className="text-xs font-semibold text-indigo-700">🏪 사장님 답글</p>
           {/* 소비자는 답글 신고 가능(사장님 본인은 제외) */}
@@ -117,10 +117,10 @@ export function ReviewReplyBox({
             <ReportButton targetType="reply" targetId={reply.id} onToast={onToast} onChanged={onChanged} />
           )}
         </div>
-        <p className="mt-0.5 whitespace-pre-wrap text-sm text-gray-700">{reply.body}</p>
+        <p className="mt-0.5 whitespace-pre-wrap text-sm text-ink-2">{reply.body}</p>
         {canManage && (
           <div className="mt-1 flex items-center gap-3">
-            <button type="button" onClick={() => setEditing(true)} className="text-xs text-blue-600">
+            <button type="button" onClick={() => setEditing(true)} className="text-xs text-brand">
               수정
             </button>
             <button type="button" onClick={remove} disabled={busy} className="text-xs text-red-500">
@@ -136,7 +136,7 @@ export function ReviewReplyBox({
   if (!canManage) return null;
   if (!liteOk) {
     return (
-      <a href={`/stores/${storeId}/sponsor`} className="mt-1.5 inline-block text-xs text-gray-400 hover:text-indigo-600">
+      <a href={`/stores/${storeId}/sponsor`} className="mt-1.5 inline-block text-xs text-ink-3 hover:text-indigo-600">
         💬 리뷰 답글은 <b>라이트 플랜</b>부터 — 업그레이드
       </a>
     );

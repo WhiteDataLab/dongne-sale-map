@@ -205,13 +205,13 @@ export function ReviewForm({
   };
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-gray-50 p-3">
+    <div className="flex flex-col gap-3 rounded-xl border border-line bg-surface-2 p-3">
       <div className="flex items-center justify-between">
         <h4 className="font-semibold">{isEdit ? "리뷰 수정" : "리뷰 쓰기"}</h4>
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-lg border border-gray-200 px-2.5 py-1 text-sm text-gray-500 hover:bg-gray-50"
+          className="rounded-lg border border-line px-2.5 py-1 text-sm text-ink-3 hover:bg-surface-2"
         >
           닫기
         </button>
@@ -221,7 +221,7 @@ export function ReviewForm({
       <div>
         <p className="mb-1.5 text-sm font-medium">
           어떤 걸 구매하셨나요? <span className="text-red-500">*</span>
-          <span className="ml-1 text-xs font-normal text-gray-400">여러 개 선택 가능</span>
+          <span className="ml-1 text-xs font-normal text-ink-3">여러 개 선택 가능</span>
         </p>
         <div className="flex flex-wrap gap-2">
           {products.map((p) => {
@@ -237,8 +237,8 @@ export function ReviewForm({
                 className={[
                   "rounded-full border px-3 py-1.5 text-sm transition-colors",
                   on
-                    ? "border-blue-600 bg-blue-600 text-white"
-                    : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50",
+                    ? "border-brand bg-brand text-white"
+                    : "border-line bg-white text-ink-2 hover:bg-surface-2",
                 ].join(" ")}
               >
                 {on ? "✓ " : ""}
@@ -254,7 +254,7 @@ export function ReviewForm({
                 "rounded-full border px-3 py-1.5 text-sm transition-colors",
                 notInMenu
                   ? "border-amber-600 bg-amber-600 text-white"
-                  : "border-dashed border-gray-300 bg-white text-gray-500 hover:bg-gray-50",
+                  : "border-dashed border-line bg-white text-ink-3 hover:bg-surface-2",
               ].join(" ")}
             >
               메뉴에 없어요
@@ -262,7 +262,7 @@ export function ReviewForm({
           )}
         </div>
         {products.length === 0 && !notInMenu && (
-          <p className="mt-1 text-xs text-gray-400">
+          <p className="mt-1 text-xs text-ink-3">
             아직 등록된 메뉴가 없어요. 구매하신 메뉴를 먼저 등록해 주세요.
           </p>
         )}
@@ -292,7 +292,7 @@ export function ReviewForm({
             type="button"
             aria-label={`${n}점`}
             onClick={() => setRating(n)}
-            className={n <= rating ? "text-amber-500" : "text-gray-300"}
+            className={n <= rating ? "text-amber-500" : "text-ink-4"}
           >
             ★
           </button>
@@ -311,8 +311,8 @@ export function ReviewForm({
               className={[
                 "rounded-full border px-3 py-1.5 text-sm transition-colors",
                 on
-                  ? "border-blue-600 bg-blue-600 text-white"
-                  : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50",
+                  ? "border-brand bg-brand text-white"
+                  : "border-line bg-white text-ink-2 hover:bg-surface-2",
               ].join(" ")}
             >
               {tag}
@@ -326,7 +326,7 @@ export function ReviewForm({
             "rounded-full border px-3 py-1.5 text-sm transition-colors",
             showCustom
               ? "border-gray-800 bg-gray-800 text-white"
-              : "border-dashed border-gray-300 bg-white text-gray-500 hover:bg-gray-50",
+              : "border-dashed border-line bg-white text-ink-3 hover:bg-surface-2",
           ].join(" ")}
         >
           ✏️ 기타
@@ -340,7 +340,7 @@ export function ReviewForm({
           rows={2}
           autoFocus
           placeholder="직접 남기고 싶은 후기를 적어 주세요."
-          className="resize-none rounded-lg border border-gray-200 px-3 py-2 text-sm"
+          className="resize-none rounded-lg border border-line px-3 py-2 text-sm"
         />
       )}
 
@@ -348,7 +348,7 @@ export function ReviewForm({
       <div className="grid grid-cols-4 gap-2">
         {/* 기존 사진(수정 모드): 삭제만 가능 */}
         {keptUrls.map((url) => (
-          <div key={url} className="relative aspect-square overflow-hidden rounded-lg bg-gray-100">
+          <div key={url} className="relative aspect-square overflow-hidden rounded-lg bg-surface-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={url} alt="" className="h-full w-full object-cover" />
             <button
@@ -362,7 +362,7 @@ export function ReviewForm({
           </div>
         ))}
         {previews.map((src, i) => (
-          <div key={src} className="relative aspect-square overflow-hidden rounded-lg bg-gray-100">
+          <div key={src} className="relative aspect-square overflow-hidden rounded-lg bg-surface-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={src} alt="" className="h-full w-full object-cover" />
             <button
@@ -386,7 +386,7 @@ export function ReviewForm({
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
-            className="flex aspect-square flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-white text-[10px] text-gray-400"
+            className="flex aspect-square flex-col items-center justify-center rounded-lg border-2 border-dashed border-line bg-white text-[10px] text-ink-3"
           >
             <span className="text-lg">📷</span>
             사진
@@ -406,31 +406,31 @@ export function ReviewForm({
       />
 
       {/* 영수증 인증 (선택) — 비공개 보관, 배지로만 표시 */}
-      <div className="rounded-lg border border-gray-200 bg-white p-2.5">
+      <div className="rounded-lg border border-line bg-white p-2.5">
         <div className="flex items-center justify-between gap-2">
           <div className="min-w-0">
             <p className="text-sm font-medium">
-              🧾 영수증 인증 <span className="text-xs font-normal text-gray-400">(선택)</span>
+              🧾 영수증 인증 <span className="text-xs font-normal text-ink-3">(선택)</span>
             </p>
-            <p className="text-xs text-gray-400">올리면 ‘영수증 인증’ 배지가 붙어요. 이미지는 비공개로 보관돼요.</p>
+            <p className="text-xs text-ink-3">올리면 ‘영수증 인증’ 배지가 붙어요. 이미지는 비공개로 보관돼요.</p>
           </div>
           <button
             type="button"
             onClick={() => receiptRef.current?.click()}
             disabled={receiptBusy}
-            className="shrink-0 rounded-lg border border-gray-300 px-2.5 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:text-gray-300"
+            className="shrink-0 rounded-lg border border-line px-2.5 py-1 text-xs font-medium text-ink-2 hover:bg-surface-2 disabled:text-ink-4"
           >
             {receiptBusy ? "업로드 중…" : receiptPath ? "다시 선택" : "영수증 올리기"}
           </button>
         </div>
         {(receiptPath || (isEdit && review?.receiptVerified)) && (
-          <p className="mt-1 text-xs font-medium text-blue-600">
+          <p className="mt-1 text-xs font-medium text-brand">
             ✓ {receiptPath ? "영수증 인증 추가됨" : "기존 영수증 인증됨"}
           </p>
         )}
         {receiptPreview && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={receiptPreview} alt="" className="mt-2 h-20 rounded border border-gray-200 object-cover" />
+          <img src={receiptPreview} alt="" className="mt-2 h-20 rounded border border-line object-cover" />
         )}
         <input
           ref={receiptRef}
@@ -446,7 +446,7 @@ export function ReviewForm({
       </div>
 
       {!isEdit && (
-        <p className="rounded-lg bg-blue-50 px-3 py-2 text-xs text-blue-700">
+        <p className="rounded-lg bg-brand-wash px-3 py-2 text-xs text-brand-ink">
           💡 첫 리뷰는 글만 써도 10P! 그 다음부터는 <b>사진과 함께</b> 작성하면 10P를 받아요. (같은 날 같은 가게 재작성은 별점·포인트 미반영)
         </p>
       )}
@@ -455,7 +455,7 @@ export function ReviewForm({
         type="button"
         onClick={submit}
         disabled={submitting}
-        className="rounded-lg bg-blue-600 py-2.5 text-sm font-semibold text-white disabled:bg-gray-300"
+        className="rounded-lg bg-brand py-2.5 text-sm font-semibold text-white disabled:bg-gray-300"
       >
         {submitting ? (isEdit ? "수정 중…" : "등록 중…") : isEdit ? "수정 완료" : "리뷰 등록"}
       </button>

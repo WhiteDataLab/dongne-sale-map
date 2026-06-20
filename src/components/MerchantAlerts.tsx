@@ -85,7 +85,7 @@ export function MerchantAlerts({
     }
   };
 
-  if (!info) return <p className="py-8 text-center text-sm text-gray-400">불러오는 중…</p>;
+  if (!info) return <p className="py-8 text-center text-sm text-ink-3">불러오는 중…</p>;
 
   // 라이트 미만 → 업그레이드 유도
   if (!info.canSend) {
@@ -93,7 +93,7 @@ export function MerchantAlerts({
       <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-4 text-center">
         <p className="text-2xl">🔔</p>
         <p className="mt-1 text-sm font-semibold">세일 알림 발송은 라이트 플랜부터예요</p>
-        <p className="mt-1 text-xs text-gray-500">
+        <p className="mt-1 text-xs text-ink-3">
           우리 가게를 즐겨찾기한 단골에게 세일·소식을 바로 알릴 수 있어요. 손님이 찾아오길 기다리지 말고 <b>먼저 손을 뻗어보세요.</b>
         </p>
         <Link
@@ -113,17 +113,17 @@ export function MerchantAlerts({
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between rounded-lg bg-emerald-50 px-3 py-2 text-xs">
         <span className="text-emerald-700">📨 발송 가능: <b>{remainingLabel}</b></span>
-        <span className="text-gray-500">즐겨찾기 손님 {info.favoriteCount}명</span>
+        <span className="text-ink-3">즐겨찾기 손님 {info.favoriteCount}명</span>
       </div>
 
-      <div className="rounded-xl border border-gray-200 p-3">
-        <p className="mb-1.5 text-xs font-semibold text-gray-500">알림 보내기</p>
+      <div className="rounded-xl border border-line p-3">
+        <p className="mb-1.5 text-xs font-semibold text-ink-3">알림 보내기</p>
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           maxLength={60}
           placeholder="제목 (예: 오늘 저녁 떨이 시작!)"
-          className="w-full rounded-md border border-gray-200 px-2.5 py-2 text-sm focus:border-emerald-400 focus:outline-none"
+          className="w-full rounded-md border border-line px-2.5 py-2 text-sm focus:border-emerald-400 focus:outline-none"
         />
         <textarea
           value={body}
@@ -131,13 +131,13 @@ export function MerchantAlerts({
           rows={2}
           maxLength={200}
           placeholder="내용 (예: 삼겹살 1근 9,900원, 선착순이에요)"
-          className="mt-1.5 w-full resize-none rounded-md border border-gray-200 px-2.5 py-2 text-sm focus:border-emerald-400 focus:outline-none"
+          className="mt-1.5 w-full resize-none rounded-md border border-line px-2.5 py-2 text-sm focus:border-emerald-400 focus:outline-none"
         />
         {sales.length > 0 && (
           <select
             value={saleId}
             onChange={(e) => setSaleId(e.target.value)}
-            className="mt-1.5 w-full rounded-md border border-gray-200 px-2 py-2 text-sm text-gray-600 focus:border-emerald-400 focus:outline-none"
+            className="mt-1.5 w-full rounded-md border border-line px-2 py-2 text-sm text-ink-2 focus:border-emerald-400 focus:outline-none"
           >
             <option value="">세일 연동 안 함 (일반 소식)</option>
             {sales.map((s) => (
@@ -159,17 +159,17 @@ export function MerchantAlerts({
 
       {info.alerts.length > 0 && (
         <div>
-          <p className="mb-1.5 text-xs font-semibold text-gray-500">보낸 알림</p>
+          <p className="mb-1.5 text-xs font-semibold text-ink-3">보낸 알림</p>
           <ul className="flex flex-col gap-1.5">
             {info.alerts.map((a) => (
-              <li key={a.id} className="rounded-lg border border-gray-100 bg-gray-50 p-2">
+              <li key={a.id} className="rounded-lg border border-line-2 bg-surface-2 p-2">
                 <div className="flex items-center justify-between">
-                  <p className="truncate text-sm font-medium text-gray-800">
+                  <p className="truncate text-sm font-medium text-ink">
                     {a.kind === "sale" ? "🔥" : "📣"} {a.title}
                   </p>
-                  <span className="shrink-0 text-[11px] text-gray-400">{reviewDateLabel(a.createdAt)}</span>
+                  <span className="shrink-0 text-[11px] text-ink-3">{reviewDateLabel(a.createdAt)}</span>
                 </div>
-                <p className="mt-0.5 line-clamp-2 text-xs text-gray-500">{a.body}</p>
+                <p className="mt-0.5 line-clamp-2 text-xs text-ink-3">{a.body}</p>
               </li>
             ))}
           </ul>

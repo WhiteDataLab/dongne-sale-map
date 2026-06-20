@@ -6,12 +6,12 @@ export const metadata = { title: "포인트·기프티콘 교환/환불 정책 �
 export default function RefundPage() {
   return (
     <div className="h-full overflow-y-auto">
-      <article className="mx-auto max-w-2xl space-y-4 p-5 text-sm leading-relaxed text-gray-700">
-        <Link href="/" className="text-gray-400">
+      <article className="mx-auto max-w-2xl space-y-4 p-5 text-sm leading-relaxed text-ink-2">
+        <Link href="/" className="text-ink-3">
           ← 지도로
         </Link>
-        <h1 className="text-xl font-bold text-gray-900">포인트 · 기프티콘 교환/환불 정책</h1>
-        <p className="text-xs text-gray-400">
+        <h1 className="text-xl font-bold text-ink">포인트 · 기프티콘 교환/환불 정책</h1>
+        <p className="text-xs text-ink-3">
           본 정책은 MVP 단계의 초안이며, 정식 운영 전 법률 검토가 필요합니다.
         </p>
 
@@ -52,7 +52,7 @@ export default function RefundPage() {
         <section>
           <h2 className="font-semibold">5. 문의</h2>
           <p>
-            교환/환불 관련 문의는 <Link href="/support" className="text-blue-600">고객센터</Link>로
+            교환/환불 관련 문의는 <Link href="/support" className="text-brand">고객센터</Link>로
             접수해 주세요.
           </p>
         </section>

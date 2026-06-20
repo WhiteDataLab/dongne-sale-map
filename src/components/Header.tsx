@@ -22,7 +22,7 @@ export async function Header() {
   }
 
   return (
-    <header className="z-20 flex items-center gap-2 border-b border-gray-200 bg-white px-3 py-3">
+    <header className="z-20 flex items-center gap-2 border-b border-line bg-white px-3 py-3">
       <SideNav user={user} logoutAction={logoutAction} />
       <h1 className="text-lg font-bold tracking-tight">동네 세일 지도</h1>
 
@@ -30,7 +30,7 @@ export async function Header() {
         {!user && (
           <Link
             href="/login"
-            className="rounded-full bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 active:bg-blue-800"
+            className="rounded-full bg-brand px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-brand-ink active:bg-blue-800"
           >
             로그인
           </Link>

@@ -6,12 +6,12 @@ export const metadata = { title: "개인정보처리방침 — 동네 세일 지
 export default function PrivacyPage() {
   return (
     <div className="h-full overflow-y-auto">
-      <article className="mx-auto max-w-2xl space-y-4 p-5 text-sm leading-relaxed text-gray-700">
-        <Link href="/" className="text-gray-400">
+      <article className="mx-auto max-w-2xl space-y-4 p-5 text-sm leading-relaxed text-ink-2">
+        <Link href="/" className="text-ink-3">
           ← 지도로
         </Link>
-        <h1 className="text-xl font-bold text-gray-900">개인정보처리방침</h1>
-        <p className="text-xs text-gray-400">
+        <h1 className="text-xl font-bold text-ink">개인정보처리방침</h1>
+        <p className="text-xs text-ink-3">
           본 문서는 MVP 단계의 초안이며, 정식 운영 전 법률 검토가 필요합니다.
         </p>
 
@@ -51,7 +51,7 @@ export default function PrivacyPage() {
           <h2 className="font-semibold">5. 이용자 권리</h2>
           <p>
             언제든지 본인 정보 열람·삭제를 요청할 수 있으며, 회원 탈퇴는{" "}
-            <Link href="/account" className="text-blue-600">
+            <Link href="/account" className="text-brand">
               내 계정
             </Link>{" "}
             에서 가능합니다.

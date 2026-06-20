@@ -23,9 +23,9 @@ export function SearchBar({
         const q = value.trim();
         if (q) onSearch(q);
       }}
-      className="pointer-events-auto flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 shadow-md"
+      className="pointer-events-auto flex items-center gap-2 rounded-full border border-line bg-white px-4 py-2 shadow-md"
     >
-      <span aria-hidden className="text-gray-400">
+      <span aria-hidden className="text-ink-3">
         🔍
       </span>
       <input
@@ -34,13 +34,13 @@ export function SearchBar({
         value={value}
         onChange={(e) => setValue(e.target.value)}
         placeholder="동네·아파트·지번으로 검색 (예: 이문동)"
-        className="w-full bg-transparent text-sm outline-none placeholder:text-gray-400"
+        className="w-full bg-transparent text-sm outline-none placeholder:text-ink-3"
         aria-label="장소 검색"
       />
       <button
         type="submit"
         disabled={pending}
-        className="shrink-0 text-sm font-medium text-blue-600 disabled:text-gray-300"
+        className="shrink-0 text-sm font-medium text-brand disabled:text-ink-4"
       >
         {pending ? "검색중" : "이동"}
       </button>

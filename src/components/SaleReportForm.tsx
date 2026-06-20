@@ -197,13 +197,13 @@ export function SaleReportForm({
   };
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-gray-50 p-3">
+    <div className="flex flex-col gap-3 rounded-xl border border-line bg-surface-2 p-3">
       <div className="flex items-center justify-between">
         <h4 className="font-semibold">세일 제보하기</h4>
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-lg border border-gray-200 px-2.5 py-1 text-sm text-gray-500 hover:bg-gray-50"
+          className="rounded-lg border border-line px-2.5 py-1 text-sm text-ink-3 hover:bg-surface-2"
         >
           닫기
         </button>
@@ -212,7 +212,7 @@ export function SaleReportForm({
       {/* 사진들 (최대 10장) */}
       <div className="grid grid-cols-3 gap-2">
         {previews.map((src, i) => (
-          <div key={src} className="relative aspect-square overflow-hidden rounded-lg bg-gray-100">
+          <div key={src} className="relative aspect-square overflow-hidden rounded-lg bg-surface-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={src} alt="" className="h-full w-full object-cover" />
             <button
@@ -236,7 +236,7 @@ export function SaleReportForm({
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
-            className="flex aspect-square flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-white text-xs text-gray-400"
+            className="flex aspect-square flex-col items-center justify-center rounded-lg border-2 border-dashed border-line bg-white text-xs text-ink-3"
           >
             <span className="text-lg">📷</span>
             {files.length === 0 ? "사진 추가" : `${files.length}/${MAX_PHOTOS}`}
@@ -259,7 +259,7 @@ export function SaleReportForm({
         <select
           value={productId}
           onChange={(e) => setProductId(e.target.value)}
-          className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
+          className="rounded-lg border border-line bg-white px-3 py-2 text-sm"
         >
           <option value="">상품 연결 안 함</option>
           {products.map((p) => (
@@ -274,7 +274,7 @@ export function SaleReportForm({
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         placeholder={hasQty ? "세일 내용 (예: 딸기 1박스 떨이)" : "세일/행사 내용 (예: 이번 주 펌 20% 할인)"}
-        className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
+        className="rounded-lg border border-line px-3 py-2 text-sm"
       />
       <div className="flex gap-2">
         <input
@@ -282,14 +282,14 @@ export function SaleReportForm({
           onChange={(e) => setSalePrice(e.target.value)}
           inputMode="numeric"
           placeholder="세일가(원)"
-          className={`${hasQty ? "w-1/2" : "w-full"} rounded-lg border border-gray-200 px-3 py-2 text-sm`}
+          className={`${hasQty ? "w-1/2" : "w-full"} rounded-lg border border-line px-3 py-2 text-sm`}
         />
         {hasQty && (
           <input
             value={qty}
             onChange={(e) => setQty(e.target.value)}
             placeholder="수량 (예: 1박스)"
-            className="w-1/2 rounded-lg border border-gray-200 px-3 py-2 text-sm"
+            className="w-1/2 rounded-lg border border-line px-3 py-2 text-sm"
           />
         )}
       </div>
@@ -304,8 +304,8 @@ export function SaleReportForm({
             className={[
               "rounded-lg border px-3 py-2",
               expires === o
-                ? "border-blue-600 bg-blue-600 text-white"
-                : "border-gray-200 bg-white text-gray-600",
+                ? "border-brand bg-brand text-white"
+                : "border-line bg-white text-ink-2",
             ].join(" ")}
           >
             {o === "1h" ? "1시간" : o === "2h" ? "2시간" : o === "close" ? "마감까지" : "직접 설정"}
@@ -313,15 +313,15 @@ export function SaleReportForm({
         ))}
       </div>
       {expires === "custom" && (
-        <label className="flex items-center gap-2 text-sm text-gray-600">
+        <label className="flex items-center gap-2 text-sm text-ink-2">
           마감 시각
           <input
             type="time"
             value={customTime}
             onChange={(e) => setCustomTime(e.target.value)}
-            className="rounded-lg border border-gray-200 px-3 py-2"
+            className="rounded-lg border border-line px-3 py-2"
           />
-          <span className="text-xs text-gray-400">까지</span>
+          <span className="text-xs text-ink-3">까지</span>
         </label>
       )}
 
@@ -354,7 +354,7 @@ export function SaleReportForm({
             type="button"
             onClick={submit}
             disabled={submitting}
-            className="rounded-lg bg-blue-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 active:bg-blue-800 disabled:bg-gray-300"
+            className="rounded-lg bg-brand py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-ink active:bg-blue-800 disabled:bg-gray-300"
           >
             {submitting ? "등록 중…" : "세일 제보 등록"}
           </button>
