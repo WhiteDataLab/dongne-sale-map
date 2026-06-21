@@ -70,6 +70,7 @@ export function PhotoEditor({
   const [penW, setPenW] = useState(PEN_WIDTHS[1]);
   const [ready, setReady] = useState(false);
   const [histLen, setHistLen] = useState(0);
+  const [futLen, setFutLen] = useState(0);
   const [ratioKey, setRatioKey] = useState<string>("free");
   const [frame, setFrame] = useState<Rect | null>(null);
 
@@ -88,7 +89,10 @@ export function PhotoEditor({
   const dragHandle = useRef<Handle | null>(null);
   const dragStartFrame = useRef<Rect | null>(null);
   const dragStartPt = useRef<{ x: number; y: number } | null>(null);
-  const history = useRef<{ base: HTMLCanvasElement; annot: HTMLCanvasElement }[]>([]);
+  type Snap = { base: HTMLCanvasElement; annot: HTMLCanvasElement };
+  const history = useRef<Snap[]>([]); // 되돌리기 스택(액션 직전 상태)
+  const future = useRef<Snap[]>([]); // 다시 실행 스택
+  const original = useRef<Snap | null>(null); // 최초(원본) — '원본으로' 복원용
 
   const [viewH, setViewH] = useState<number | null>(null);
   useEffect(() => {
@@ -167,11 +171,24 @@ export function PhotoEditor({
     return a && b ? a / b : null;
   };
 
+  const snapshot = (): Snap => ({ base: clone(baseRef.current!), annot: clone(annotRef.current!) });
+  const restore = (snap: Snap) => {
+    baseRef.current = clone(snap.base);
+    annotRef.current = clone(snap.annot);
+    relayout();
+  };
+  const syncLens = () => {
+    setHistLen(history.current.length);
+    setFutLen(future.current.length);
+  };
+
+  // 모든 메뉴 액션(자르기·펜·지우개·모자이크·회전·반전) 직전에 호출 → 되돌리기 한 단계.
   const pushHistory = () => {
     if (!baseRef.current || !annotRef.current) return;
-    history.current.push({ base: clone(baseRef.current), annot: clone(annotRef.current) });
+    history.current.push(snapshot());
     if (history.current.length > MAX_HISTORY) history.current.shift();
-    setHistLen(history.current.length);
+    future.current = []; // 새 액션이 생기면 '다시 실행' 무효화
+    syncLens();
   };
 
   const relayout = () => {
@@ -180,13 +197,29 @@ export function PhotoEditor({
     setFrame(toolRef.current === "crop" ? frameForAspect(aspectRef.current) : null);
   };
 
+  // 되돌리기: 현재 상태를 다시실행 스택에 넣고 직전 상태로 복원.
   const undo = () => {
-    const snap = history.current.pop();
-    if (!snap) return;
-    baseRef.current = clone(snap.base);
-    annotRef.current = clone(snap.annot);
-    setHistLen(history.current.length);
-    relayout();
+    if (!history.current.length) return;
+    future.current.push(snapshot());
+    restore(history.current.pop()!);
+    syncLens();
+  };
+  // 다시 실행: 되돌렸던 상태로 복귀.
+  const redo = () => {
+    if (!future.current.length) return;
+    history.current.push(snapshot());
+    restore(future.current.pop()!);
+    syncLens();
+  };
+  // 원본으로: 최초 불러온 상태로(되돌리기 가능하게 현재를 스택에 남김).
+  const resetAll = () => {
+    if (!original.current || !baseRef.current) return;
+    history.current.push(snapshot());
+    if (history.current.length > MAX_HISTORY) history.current.shift();
+    future.current = [];
+    aspectRef.current = aspectOf(ratioKey);
+    restore(original.current);
+    syncLens();
   };
 
   useEffect(() => {
@@ -214,6 +247,11 @@ export function PhotoEditor({
       annot.height = h;
       baseRef.current = base;
       annotRef.current = annot;
+      original.current = { base: clone(base), annot: clone(annot) }; // 원본 스냅샷
+      history.current = [];
+      future.current = [];
+      setHistLen(0);
+      setFutLen(0);
       fitContain();
       render();
       setFrame(frameForAspect(null)); // 기본 자유 비율, 전체 프레임
@@ -579,17 +617,38 @@ export function PhotoEditor({
       className="fixed inset-x-0 top-0 z-[60] flex flex-col overflow-hidden bg-black/95"
       style={{ height: viewH ? `${viewH}px` : "100vh" }}
     >
-      <div className="flex shrink-0 items-center justify-between p-3 text-sm text-white">
-        <button type="button" onClick={onCancel}>취소</button>
-        <button
-          type="button"
-          onClick={undo}
-          disabled={histLen === 0}
-          className={`rounded-lg px-3 py-1 ${histLen === 0 ? "text-white/30" : "bg-white/15"}`}
-        >
-          ↩ 되돌리기
-        </button>
-        <button type="button" onClick={save} className="font-semibold text-blue-300">저장</button>
+      <div className="flex shrink-0 items-center justify-between gap-2 p-3 text-sm text-white">
+        <button type="button" onClick={onCancel} className="shrink-0">취소</button>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={undo}
+            disabled={histLen === 0}
+            aria-label="되돌리기"
+            className={`rounded-lg px-3 py-1.5 font-medium ${histLen === 0 ? "text-white/30" : "bg-white/15 text-white"}`}
+          >
+            ↩ 되돌리기
+          </button>
+          <button
+            type="button"
+            onClick={redo}
+            disabled={futLen === 0}
+            aria-label="다시 실행"
+            className={`rounded-lg px-2.5 py-1.5 font-medium ${futLen === 0 ? "text-white/30" : "bg-white/15 text-white"}`}
+          >
+            ↪ 다시
+          </button>
+          <button
+            type="button"
+            onClick={resetAll}
+            disabled={histLen === 0 && futLen === 0}
+            aria-label="원본으로"
+            className={`rounded-lg px-2.5 py-1.5 font-medium ${histLen === 0 && futLen === 0 ? "text-white/30" : "bg-white/15 text-white"}`}
+          >
+            ⟲ 원본
+          </button>
+        </div>
+        <button type="button" onClick={save} className="shrink-0 font-semibold text-blue-300">저장</button>
       </div>
 
       <div ref={wrapRef} className="relative min-h-0 flex-1 overflow-hidden">
