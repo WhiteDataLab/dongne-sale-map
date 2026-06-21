@@ -120,33 +120,8 @@ export function PhotoEditor({
     ctx.setTransform(1, 0, 0, 1, 0, 0);
   };
 
-  const coverScale = () => {
-    const v = viewRef.current!;
-    const base = baseRef.current!;
-    return Math.max(v.width / base.width, v.height / base.height);
-  };
-
-  // 펜/지우개/모자이크용: 여백 없이 화면을 꽉 채우도록 스케일/이동 보정
-  const clamp = () => {
-    const v = viewRef.current!;
-    const base = baseRef.current!;
-    const minS = coverScale();
-    if (s.current < minS) s.current = minS;
-    if (s.current > minS * 8) s.current = minS * 8;
-    const sw = base.width * s.current;
-    const sh = base.height * s.current;
-    tx.current = Math.min(0, Math.max(v.width - sw, tx.current));
-    ty.current = Math.min(0, Math.max(v.height - sh, ty.current));
-  };
-  const cover = () => {
-    const v = viewRef.current!;
-    const base = baseRef.current!;
-    s.current = coverScale();
-    tx.current = (v.width - base.width * s.current) / 2;
-    ty.current = (v.height - base.height * s.current) / 2;
-  };
-
-  // 자르기용: 이미지 전체가 보이도록(contain) 가운데 정렬
+  // 모든 도구 공통: 이미지 전체가 보이도록(contain) 가운데 정렬.
+  // (펜/지우개/모자이크도 동일 프레이밍 → 도구 전환 시 강제 확대·업스케일 화질 저하 없음)
   const fitContain = () => {
     const v = viewRef.current!;
     const base = baseRef.current!;
@@ -200,16 +175,9 @@ export function PhotoEditor({
   };
 
   const relayout = () => {
-    if (toolRef.current === "crop") {
-      fitContain();
-      render();
-      setFrame(frameForAspect(aspectRef.current));
-    } else {
-      cover();
-      clamp();
-      render();
-      setFrame(null);
-    }
+    fitContain();
+    render();
+    setFrame(toolRef.current === "crop" ? frameForAspect(aspectRef.current) : null);
   };
 
   const undo = () => {
@@ -422,8 +390,11 @@ export function PhotoEditor({
     }
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pointers.current.size > 1) return;
-    pushHistory();
     const p = toImg(e.clientX, e.clientY);
+    // contain 여백(이미지 바깥) 터치는 무시 — 빈 되돌리기 기록 방지
+    const base = baseRef.current!;
+    if (p.x < 0 || p.y < 0 || p.x > base.width || p.y > base.height) return;
+    pushHistory();
     last.current = p;
     if (t === "blur") mosaic(p.x, p.y);
     else drawStroke(p, p, t === "eraser");
