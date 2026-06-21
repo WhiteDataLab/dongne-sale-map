@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { chargeBilling, isTossConfigured, TossError } from "@/lib/toss";
+import { getLaunchFlags } from "@/lib/launchFlags";
 import {
   PLAN_ORDER_NAME,
   asSubPlan,
@@ -28,6 +29,10 @@ export async function GET(req: NextRequest) {
   }
   if (!isTossConfigured()) {
     return NextResponse.json({ ok: true, skipped: "toss_not_configured" });
+  }
+  // 무료 오픈 모드: 결제 비활성 — 청구하지 않음(기존 구독이 있어도 과금 정지).
+  if (!(await getLaunchFlags()).monetization) {
+    return NextResponse.json({ ok: true, skipped: "free_mode" });
   }
 
   const now = new Date();

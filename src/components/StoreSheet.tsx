@@ -733,14 +733,14 @@ export function GalleryStrip({
               {busy ? "업로드 중…" : `＋ 갤러리 사진 추가 (프로 · ${gallery.length}/${GALLERY_MAX})`}
             </button>
           )
-        ) : (
+        ) : detail.launch.monetization ? (
           <Link
             href={`/stores/${storeId}/sponsor`}
             className="mt-1 inline-block rounded-lg border border-dashed border-line px-3 py-1 text-xs text-ink-3"
           >
             🖼️ 프로 플랜에서 사진 갤러리를 추가할 수 있어요 →
           </Link>
-        ))}
+        ) : null)}
       <input
         ref={fileRef}
         type="file"
@@ -1198,11 +1198,13 @@ export function SalesTab({
                 onChanged={onDone}
               />
             </div>
-            {detail.canManageStore ? (
-              <SaleReserveSettings sale={s} onToast={onToast} onDone={onDone} />
-            ) : (
-              s.reservation && <SaleReserveBox sale={s} onToast={onToast} onDone={onDone} />
-            )}
+            {/* 픽업 예약(무료 오픈 모드에선 숨김 — 소비자 박스는 reservation=null 이라 자동 미노출) */}
+            {detail.launch.reservations &&
+              (detail.canManageStore ? (
+                <SaleReserveSettings sale={s} onToast={onToast} onDone={onDone} />
+              ) : (
+                s.reservation && <SaleReserveBox sale={s} onToast={onToast} onDone={onDone} />
+              ))}
           </div>
             </li>
           ))}

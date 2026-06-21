@@ -31,7 +31,15 @@ const SEG_META: Record<Segment, { label: string; cls: string }> = {
  * M10 — 사장님 단골 CRM(라이트+). 단골 식별·세그먼트 + (프로) 컴백 쿠폰 캠페인.
  * 개인정보: 닉네임·활동 신호만 표시(연락처 미노출).
  */
-export function MerchantRegulars({ storeId, onToast }: { storeId: string; onToast: (m: string) => void }) {
+export function MerchantRegulars({
+  storeId,
+  onToast,
+  monetization = true,
+}: {
+  storeId: string;
+  onToast: (m: string) => void;
+  monetization?: boolean;
+}) {
   const [info, setInfo] = useState<Info | null>(null);
   const [gate, setGate] = useState(false);
   const [filter, setFilter] = useState<Segment | "all">("all");
@@ -96,15 +104,15 @@ export function MerchantRegulars({ storeId, onToast }: { storeId: string; onToas
         전체 단골 {info.summary.total}명 · 최근 120일 활동 기준 · 점수 = 쿠폰사용·리뷰·방문의향·길찾기·상세열람 가중합
       </p>
 
-      {/* 프로 전용 컴백 캠페인 */}
+      {/* 프로 전용 컴백 캠페인 (무료 오픈 모드에선 업그레이드 업셀 숨김) */}
       {info.canCampaign ? (
         <CampaignBox storeId={storeId} summary={info.summary} onToast={onToast} onDone={load} />
-      ) : (
-        <div className="rounded-lg bg-indigo-50 p-2.5 text-center text-xs text-indigo-600">
+      ) : monetization ? (
+        <div className="rounded-lg bg-brand-wash p-2.5 text-center text-xs text-brand-ink">
           ⭐ 프로 플랜이면 <b>이탈 단골에게 컴백 쿠폰</b>을 한 번에 보낼 수 있어요.{" "}
           <Link href={`/stores/${storeId}/sponsor`} className="font-bold underline">업그레이드</Link>
         </div>
-      )}
+      ) : null}
 
       {/* 단골 리스트 */}
       {rows.length === 0 ? (

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { liveSponsorFilter } from "@/lib/sponsors";
+import { getLaunchFlags } from "@/lib/launchFlags";
 
 /**
  * M4(수익화) — 프로 플랜 게이팅.
@@ -31,8 +32,21 @@ export function couponLimitForTier(t: StoreTier): number {
   return t === "pro" ? PRO_COUPON_ACTIVE_LIMIT : t === "lite" ? LITE_COUPON_ACTIVE_LIMIT : FREE_COUPON_ACTIVE_LIMIT;
 }
 
-/** 단일 가게의 현재 기능 티어. 활성(체험 포함) 구독의 plan 으로 판정. */
+/**
+ * 단일 가게의 현재 기능 티어. 활성(체험 포함) 구독의 plan 으로 판정.
+ * 단, **무료 오픈 모드**([[launchFlags]] monetization=off)에서는 인증 사장님 가게를
+ * lite 로 취급해 관계 기능(리뷰 답글·세일 알림·단골 식별·공식 배지)을 무료 개방한다.
+ * (프로 전용 혜택은 isStorePro/getProStoreIds 로 별도 판정 → 무료 모드에서도 잠긴 채 유지.)
+ */
 export async function storeTier(storeId: string): Promise<StoreTier> {
+  const { monetization } = await getLaunchFlags();
+  if (!monetization) {
+    const store = await prisma.store.findUnique({
+      where: { id: storeId },
+      select: { verified: true, ownerId: true },
+    });
+    return store?.verified && store.ownerId ? "lite" : "free";
+  }
   const sub = await prisma.subscription.findFirst({
     where: { storeId, status: { in: ["trialing", "active"] } },
     orderBy: { createdAt: "desc" },

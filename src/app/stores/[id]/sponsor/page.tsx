@@ -12,6 +12,7 @@ import {
   getActiveSubscriptionForStore,
 } from "@/lib/sponsors";
 import { isTossConfigured, tossClientKey } from "@/lib/toss";
+import { getLaunchFlags } from "@/lib/launchFlags";
 import { SponsorSubscribeButton } from "@/components/SponsorSubscribeButton";
 
 /** M2·M4 — 사장님 셀프 구독: 스폰서/프로 플랜 카드 등록(빌링키) → 14일 무료 후 월 자동결제. */
@@ -39,6 +40,23 @@ export default async function SponsorSubscribePage({
   );
 
   if (!store) return shell(<p className="mt-10 text-center text-sm text-ink-3">가게를 찾을 수 없어요.</p>);
+
+  // 무료 오픈 모드: 사장님 유료 구독은 아직 비공개. 진입해도 안내만 노출.
+  const { monetization } = await getLaunchFlags();
+  if (!monetization) {
+    return shell(
+      <div className="mt-10 text-center">
+        <p className="text-2xl">🌱</p>
+        <p className="mt-2 font-semibold text-ink">지금은 모든 기능이 무료예요</p>
+        <p className="mx-auto mt-1 max-w-xs text-sm text-ink-3">
+          유료 홍보 구독은 준비 중이에요. 그동안 메뉴·세일·쿠폰·리뷰 답글·단골 알림을 무료로 쓰실 수
+          있어요.
+        </p>
+        <Link href="/" className="mt-4 inline-block font-bold text-brand">← 지도로 돌아가기</Link>
+      </div>,
+    );
+  }
+
   if (!canManageStore(store, user)) {
     return shell(
       <p className="mt-10 text-center text-sm text-ink-3">

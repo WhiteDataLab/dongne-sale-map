@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { auth, signOut } from "@/auth";
+import { getLaunchFlags } from "@/lib/launchFlags";
 import { SideNav } from "./SideNav";
 
 /**
@@ -8,6 +9,7 @@ import { SideNav } from "./SideNav";
  */
 export async function Header() {
   const session = await auth();
+  const flags = await getLaunchFlags();
   const user = session?.user
     ? {
         name: session.user.name ?? "이웃",
@@ -23,7 +25,7 @@ export async function Header() {
 
   return (
     <header className="z-20 flex items-center gap-2 border-b border-line bg-white px-3 py-3">
-      <SideNav user={user} logoutAction={logoutAction} />
+      <SideNav user={user} logoutAction={logoutAction} showReservations={flags.reservations} />
       <h1 className="text-lg font-bold tracking-tight">동네 세일 지도</h1>
 
       <div className="ml-auto">

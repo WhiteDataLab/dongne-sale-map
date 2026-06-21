@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 import { canManageStore } from "@/lib/menu";
+import { getLaunchFlags } from "@/lib/launchFlags";
 import {
   getActiveAdCampaign,
   isBillableAction,
@@ -43,6 +44,11 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   const { id } = await ctx.params;
   const auth = await authorize(id);
   if ("error" in auth) return auth.error;
+
+  // 무료 오픈 모드: 유료 광고 비공개.
+  if (!(await getLaunchFlags()).monetization) {
+    return NextResponse.json({ error: "광고 기능은 준비 중이에요.", code: "disabled" }, { status: 403 });
+  }
 
   // 이미 진행/일시중지/소진 캠페인이 있으면 1개 제한(취소된 건 새로 가능).
   const existing = await prisma.adCampaign.findFirst({

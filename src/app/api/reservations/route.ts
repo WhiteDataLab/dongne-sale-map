@@ -7,6 +7,7 @@ import {
   makePickupCode,
   activeReservationFilter,
 } from "@/lib/reservations";
+import { getLaunchFlags } from "@/lib/launchFlags";
 
 /**
  * M7(L2) — 떨이 픽업 예약 생성(선점).
@@ -19,6 +20,10 @@ const RATE_WINDOW_MS = 60_000;
 const RATE_MAX = 5;
 
 export async function POST(req: NextRequest) {
+  // 무료 오픈 모드: 픽업 예약 비공개.
+  if (!(await getLaunchFlags()).reservations) {
+    return NextResponse.json({ error: "예약 기능은 준비 중이에요.", code: "disabled" }, { status: 403 });
+  }
   const userId = await getCurrentUserId();
   if (!userId) return NextResponse.json({ error: "login_required" }, { status: 401 });
 

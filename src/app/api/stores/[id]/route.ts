@@ -9,6 +9,7 @@ import { liveSponsorFilter, getActiveSubscriptionForStore } from "@/lib/sponsors
 import { getStoreCoupons } from "@/lib/coupons";
 import { reservedQtyMap } from "@/lib/reservations";
 import { isStorePro, storeTier, PRO_GALLERY_MAX } from "@/lib/pro";
+import { getLaunchFlags } from "@/lib/launchFlags";
 import type { Category } from "@/lib/constants";
 import type { StoreDetailDTO, StoreSource, PriceTrend } from "@/lib/types";
 
@@ -99,6 +100,8 @@ export async function GET(
     const coupons = await getStoreCoupons(id, userId, now);
     // M8: 가게 기능 티어(공식 배지·리뷰 답글 게이팅 표시용).
     const tier = await storeTier(id);
+    // 운영 무료 오픈 모드: 사장님 유료(구독·CPA) / 픽업 예약 UI 노출 여부.
+    const launch = await getLaunchFlags();
 
     // M7(L2): 예약 가능 세일의 점유 수량 + 로그인 소비자의 진행중 예약.
     const reservableSaleIds = store.sales.filter((s) => s.reservable).map((s) => s.id);
@@ -193,6 +196,7 @@ export async function GET(
       hasCoupon: coupons.length > 0,
       coupons,
       tier,
+      launch,
       bannerUrl: store.bannerUrl,
       galleryUrls: store.galleryUrls,
       registeredBy: {
@@ -226,7 +230,8 @@ export async function GET(
         expiresAt: s.expiresAt.toISOString(),
         createdAt: s.createdAt.toISOString(),
         isMine: Boolean(userId && s.createdById === userId),
-        reservation: s.reservable
+        // 무료 오픈 모드(예약 OFF)에서는 예약 정보를 내보내지 않아 예약 UI 자체가 렌더되지 않게 한다.
+        reservation: launch.reservations && s.reservable
           ? (() => {
               const reserved = reservedMap.get(s.id) ?? 0;
               const remaining = s.stockTotal != null ? Math.max(0, s.stockTotal - reserved) : null;

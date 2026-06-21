@@ -132,14 +132,19 @@ export function MerchantDashboard({ storeId, storeName }: { storeId: string; sto
         {/* 섹션 네비 */}
         <nav className="sticky top-0 z-10 -mx-4 mb-3 border-b border-line bg-surface-2/95 px-4 py-1.5 backdrop-blur">
           <div className="flex gap-1 overflow-x-auto">
-            {SECTIONS.map((s) => (
+            {SECTIONS.filter((s) => {
+              // 무료 오픈 모드: 사장님 유료(구독·CPA)·픽업 예약 탭 숨김.
+              if (s.key === "subscription" || s.key === "ads") return detail?.launch.monetization ?? false;
+              if (s.key === "reservations") return detail?.launch.reservations ?? false;
+              return true;
+            }).map((s) => (
               <button
                 key={s.key}
                 type="button"
                 onClick={() => setSection(s.key)}
                 className={[
                   "shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition",
-                  section === s.key ? "bg-gray-900 text-white" : "text-ink-3 hover:bg-surface-2",
+                  section === s.key ? "bg-ink text-white" : "text-ink-3 hover:bg-surface-2",
                 ].join(" ")}
               >
                 {s.label}
@@ -191,8 +196,8 @@ export function MerchantDashboard({ storeId, storeName }: { storeId: string; sto
                     </div>
                     <p className="mt-1.5 text-xs text-ink-3">최근 7일 합계</p>
 
-                    {/* 잠금 업셀: 값을 보여준 뒤 자물쇠 (무료 티어 → 라이트 유도) */}
-                    {detail.tier === "free" && (
+                    {/* 잠금 업셀: 값을 보여준 뒤 자물쇠 (무료 티어 → 라이트 유도). 무료 오픈 모드에선 숨김. */}
+                    {detail.launch.monetization && detail.tier === "free" && (
                       <button
                         type="button"
                         onClick={() => setSection("subscription")}
@@ -216,10 +221,10 @@ export function MerchantDashboard({ storeId, storeName }: { storeId: string; sto
                       </button>
                     )}
 
-                    {/* 프로: 확장 통계 / (라이트) 프로 업셀 */}
+                    {/* 프로: 확장 통계 / (라이트) 프로 업셀. 무료 오픈 모드에선 업셀 숨김. */}
                     {stats.pro ? (
                       <ProStats stats={stats} />
-                    ) : detail.tier !== "free" ? (
+                    ) : detail.launch.monetization && detail.tier !== "free" ? (
                       <p className="mt-3 rounded-xl bg-brand-wash p-2.5 text-center text-xs font-semibold text-brand-ink">
                         ⭐ 프로 플랜이면 30·90일 추이와 요일별 분석을 볼 수 있어요.{" "}
                         <button
@@ -276,7 +281,7 @@ export function MerchantDashboard({ storeId, storeName }: { storeId: string; sto
                 <p className="mb-3 text-xs text-ink-3">
                   누가 우리 단골이고 요즘 안 오는 손님이 누군지 보고, (프로) 이탈 단골에게 컴백 쿠폰을 보내요.
                 </p>
-                <MerchantRegulars storeId={storeId} onToast={showToast} />
+                <MerchantRegulars storeId={storeId} onToast={showToast} monetization={detail.launch.monetization} />
               </div>
             )}
 

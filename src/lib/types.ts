@@ -3,6 +3,7 @@ import type { StoreHours, OpenStatus } from "@/lib/businessHours";
 import type { CouponDTO } from "@/lib/coupons";
 import type { SaleReservationInfo } from "@/lib/reservations";
 import type { StoreTier } from "@/lib/pro";
+import type { LaunchFlags } from "@/lib/launchFlags";
 
 /** 가게 등록 출처: 소비자(주민) vs 사장님. */
 export type StoreSource = "user" | "merchant";
@@ -147,6 +148,8 @@ export type StoreDetailDTO = StoreDTO & {
   coupons: CouponDTO[];
   // M8: 가게 기능 티어(free|lite|pro) — 공식 배지·리뷰 답글 게이팅 표시용.
   tier: StoreTier;
+  // 운영 무료 오픈 모드 플래그 — 사장님 유료(구독·CPA) / 픽업 예약 UI 노출 여부.
+  launch: LaunchFlags;
 };
 
 /** 지오코딩 결과 (검색어 → 좌표). */

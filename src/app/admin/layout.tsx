@@ -98,6 +98,10 @@ export default async function AdminLayout({
                 ["/admin/notices", "공지 · 이벤트"],
               ]}
             />
+            <AdminGroup
+              label="운영"
+              links={[["/admin/launch", "운영 모드"]]}
+            />
           </div>
         </header>
         {children}

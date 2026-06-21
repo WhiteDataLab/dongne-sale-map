@@ -10,11 +10,22 @@ import {
   trialEndDate,
   extendPaidDate,
 } from "@/lib/sponsors";
+import { setLaunchFlag, type LaunchFlags } from "@/lib/launchFlags";
 
 /** 모든 관리 액션은 호출 시 관리자 권한을 재확인한다(폼에서 직접 호출될 수 있으므로). */
 async function ensureAdmin() {
   const session = await getAdminSession();
   if (!session) throw new Error("forbidden");
+}
+
+/** 운영 무료 오픈 모드 플래그 토글(monetization / reservations). */
+export async function toggleLaunchFlag(formData: FormData) {
+  await ensureAdmin();
+  const key = String(formData.get("key")) as keyof LaunchFlags;
+  if (key !== "monetization" && key !== "reservations") throw new Error("bad_key");
+  const on = String(formData.get("on")) === "1";
+  await setLaunchFlag(key, on);
+  revalidatePath("/admin/launch");
 }
 
 export async function resolveReport(formData: FormData) {

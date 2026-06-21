@@ -11,6 +11,7 @@ import {
   createTrialSubscription,
 } from "@/lib/sponsors";
 import { issueBillingKey } from "@/lib/toss";
+import { getLaunchFlags } from "@/lib/launchFlags";
 
 /**
  * M2 — 토스 카드 인증 성공 콜백.
@@ -48,6 +49,16 @@ export default async function SponsorSuccessPage({
     return (
       <Shell>
         <p className="mt-10 text-sm text-ink-3">권한이 없거나 가게를 찾을 수 없어요.</p>
+        <Link href="/" className="mt-4 inline-block text-brand">← 지도로</Link>
+      </Shell>
+    );
+  }
+
+  // 무료 오픈 모드: 구독 비공개 — 콜백이 들어와도 구독 생성하지 않음(방어).
+  if (!(await getLaunchFlags()).monetization) {
+    return (
+      <Shell>
+        <p className="mt-10 text-sm text-ink-3">지금은 모든 기능이 무료라 구독이 필요 없어요.</p>
         <Link href="/" className="mt-4 inline-block text-brand">← 지도로</Link>
       </Shell>
     );
