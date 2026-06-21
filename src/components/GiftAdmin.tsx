@@ -2,11 +2,13 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { GIFT_CATEGORIES } from "@/lib/gifts";
 
 type Gift = {
   id: string;
   brand: string;
   name: string;
+  category: string | null;
   points: number;
   imageUrl: string | null;
   emoji: string;
@@ -33,6 +35,7 @@ function GiftRow({ item }: { item: Gift }) {
   const ref = useRef<HTMLInputElement>(null);
   const [brand, setBrand] = useState(item.brand);
   const [name, setName] = useState(item.name);
+  const [category, setCategory] = useState(item.category ?? "");
   const [points, setPoints] = useState(String(item.points));
   const [emoji, setEmoji] = useState(item.emoji);
   const [color, setColor] = useState(item.color);
@@ -54,6 +57,7 @@ function GiftRow({ item }: { item: Gift }) {
       body: JSON.stringify({
         brand,
         name,
+        category: category.trim() || null,
         points: Number(points),
         emoji,
         color,
@@ -104,6 +108,7 @@ function GiftRow({ item }: { item: Gift }) {
         <div className="grid flex-1 grid-cols-2 gap-1.5">
           <input value={brand} onChange={(e) => setBrand(e.target.value)} placeholder="브랜드" className={inputCls} />
           <input value={name} onChange={(e) => setName(e.target.value)} placeholder="상품명" className={inputCls} />
+          <input list="gift-categories" value={category} onChange={(e) => setCategory(e.target.value)} placeholder="분류(예: 커피·음료)" className={`${inputCls} col-span-2`} />
           <input value={points} onChange={(e) => setPoints(e.target.value)} inputMode="numeric" placeholder="포인트" className={inputCls} />
           <div className="flex gap-1.5">
             <input value={emoji} onChange={(e) => setEmoji(e.target.value)} placeholder="이모지" className={`${inputCls} w-14`} />
@@ -160,6 +165,7 @@ function AddGift() {
   const router = useRouter();
   const [brand, setBrand] = useState("");
   const [name, setName] = useState("");
+  const [category, setCategory] = useState("");
   const [points, setPoints] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -170,12 +176,13 @@ function AddGift() {
     const res = await fetch("/api/admin/gifts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ brand, name, points: Number(points) }),
+      body: JSON.stringify({ brand, name, category: category.trim() || null, points: Number(points) }),
     });
     setBusy(false);
     if (res.ok) {
       setBrand("");
       setName("");
+      setCategory("");
       setPoints("");
       setMsg(null);
       router.refresh();
@@ -188,10 +195,12 @@ function AddGift() {
   return (
     <div className="rounded-xl border border-dashed border-blue-300 p-3">
       <p className="mb-2 text-sm font-semibold text-brand-ink">＋ 상품 추가</p>
-      <div className="grid grid-cols-3 gap-1.5">
-        <input value={brand} onChange={(e) => setBrand(e.target.value)} placeholder="브랜드" className={inputCls} />
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="상품명" className={inputCls} />
-        <input value={points} onChange={(e) => setPoints(e.target.value)} inputMode="numeric" placeholder="포인트" className={inputCls} />
+      <p className="mb-2 text-xs text-ink-3">커피뿐 아니라 올리브영·아웃백·디저트 등 어떤 기프티콘이든 추가할 수 있어요. 분류를 정하면 포인트샵에서 그룹으로 묶여 보여요.</p>
+      <div className="grid grid-cols-2 gap-1.5">
+        <input value={brand} onChange={(e) => setBrand(e.target.value)} placeholder="브랜드(예: 올리브영)" className={inputCls} />
+        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="상품명(예: 1만원권)" className={inputCls} />
+        <input list="gift-categories" value={category} onChange={(e) => setCategory(e.target.value)} placeholder="분류(예: 뷰티·드럭스토어)" className={inputCls} />
+        <input value={points} onChange={(e) => setPoints(e.target.value)} inputMode="numeric" placeholder="포인트(=원)" className={inputCls} />
       </div>
       <div className="mt-2 flex items-center justify-end gap-2">
         {msg && <span className="text-xs text-red-500">{msg}</span>}
@@ -206,6 +215,12 @@ function AddGift() {
 export function GiftAdmin({ items }: { items: Gift[] }) {
   return (
     <div className="flex flex-col gap-3">
+      {/* 분류 프리셋 — 입력칸에서 선택하거나 직접 입력 */}
+      <datalist id="gift-categories">
+        {GIFT_CATEGORIES.map((c) => (
+          <option key={c} value={c} />
+        ))}
+      </datalist>
       <AddGift />
       {items.map((g) => (
         <GiftRow key={g.id} item={g} />

@@ -18,6 +18,7 @@ export async function POST(req: NextRequest) {
   let b: {
     brand?: string;
     name?: string;
+    category?: string | null;
     points?: number;
     imageUrl?: string | null;
     emoji?: string;
@@ -45,6 +46,7 @@ export async function POST(req: NextRequest) {
     data: {
       brand: b.brand.trim(),
       name: b.name.trim(),
+      category: b.category?.trim() || null,
       points: b.points,
       imageUrl: b.imageUrl || null,
       emoji: b.emoji?.trim() || "🎁",

@@ -308,6 +308,7 @@ model GiftItem {
   id        String   @id @default(cuid())
   brand     String
   name      String
+  category  String? // 분류(커피·음료/베이커리·디저트/외식·식당/편의점/뷰티·드럭스토어/기타). null=기타
   points    Int
   imageUrl  String? // 업로드 이미지(없으면 이모지+색)
   emoji     String   @default("🎁")

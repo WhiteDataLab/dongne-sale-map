@@ -14,6 +14,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   let b: {
     brand?: string;
     name?: string;
+    category?: string | null;
     points?: number;
     imageUrl?: string | null;
     emoji?: string;
@@ -33,6 +34,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   const data: Record<string, unknown> = {};
   if (b.brand !== undefined) data.brand = b.brand.trim();
   if (b.name !== undefined) data.name = b.name.trim();
+  if (b.category !== undefined) data.category = b.category?.trim() || null;
   if (b.points !== undefined) {
     if (!Number.isInteger(b.points) || b.points <= 0) {
       return NextResponse.json({ error: "포인트(가격)를 확인해 주세요." }, { status: 400 });

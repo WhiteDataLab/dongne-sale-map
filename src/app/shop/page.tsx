@@ -2,12 +2,12 @@ import Link from "next/link";
 import { auth, signIn } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getPointBalance } from "@/lib/points";
-import { getActiveGifts, type GiftItem } from "@/lib/gifts";
+import { getActiveGifts, giftCategoryLabel, GIFT_CATEGORIES, type GiftItem } from "@/lib/gifts";
 import { getSponsoredBrandMap } from "@/lib/brands";
 import { getLaunchFlags } from "@/lib/launchFlags";
 import { RedeemButton } from "@/components/RedeemButton";
 
-/** 포인트샵: 포인트로 커피 기프티콘 교환. (5000P = 5000원 상당) */
+/** 포인트샵: 포인트로 기프티콘 교환(커피·디저트·외식·뷰티 등 분류별). 1P = 1원 상당. */
 export const dynamic = "force-dynamic";
 
 export default async function ShopPage() {
@@ -53,6 +53,22 @@ export default async function ShopPage() {
     // DB 미연결
   }
 
+  // 분류별 그룹핑(프리셋 순서 우선, 미등록 분류는 '기타' 위치로). gifts 는 이미 정렬됨.
+  const catRank = (c: string) => {
+    const i = (GIFT_CATEGORIES as readonly string[]).indexOf(c);
+    return i === -1 ? GIFT_CATEGORIES.length - 1 : i;
+  };
+  const groupMap = new Map<string, GiftItem[]>();
+  for (const g of gifts) {
+    const cat = giftCategoryLabel(g.category);
+    const arr = groupMap.get(cat);
+    if (arr) arr.push(g);
+    else groupMap.set(cat, [g]);
+  }
+  const giftGroups = [...groupMap.entries()].sort((a, b) => catRank(a[0]) - catRank(b[0]));
+  // 그룹이 하나뿐이고 '기타'면 분류 헤딩이 어색하므로 일반 라벨을 쓴다.
+  const singleUnlabeled = giftGroups.length === 1 && giftGroups[0][0] === "기타";
+
   return (
     <div className="h-full overflow-y-auto bg-surface-2">
       <div className="mx-auto flex max-w-md flex-col gap-4 p-5">
@@ -92,48 +108,50 @@ export default async function ShopPage() {
           </div>
         )}
 
-        {/* 카탈로그 */}
-        <section>
-          <h1 className="mb-2 text-lg font-bold">커피 기프티콘</h1>
-          <div className="grid grid-cols-2 gap-3">
-            {gifts.map((g) => {
-              const affordable = balance >= g.points && !!contact;
-              const sponsorBrand = sponsoredMap.get(g.id);
-              return (
-                <div key={g.id} className="relative flex flex-col rounded-2xl border border-line-2 bg-white p-3 shadow-sm">
-                  {sponsorBrand && (
-                    <span className="absolute right-2 top-2 z-10 rounded-full bg-indigo-600 px-2 py-0.5 text-[10px] font-bold text-white shadow">
-                      {sponsorBrand} 후원
-                    </span>
-                  )}
-                  <div
-                    className="mb-2 flex h-20 items-center justify-center overflow-hidden rounded-xl text-4xl"
-                    style={{ background: `${g.color}1a` }}
-                  >
-                    {g.imageUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={g.imageUrl} alt="" className="h-full w-full object-cover" />
-                    ) : (
-                      g.emoji
+        {/* 카탈로그 — 분류별 그룹 */}
+        {giftGroups.map(([cat, list]) => (
+          <section key={cat}>
+            <h2 className="mb-2 text-base font-bold text-ink">{singleUnlabeled ? "기프티콘" : cat}</h2>
+            <div className="grid grid-cols-2 gap-3">
+              {list.map((g) => {
+                const affordable = balance >= g.points && !!contact;
+                const sponsorBrand = sponsoredMap.get(g.id);
+                return (
+                  <div key={g.id} className="relative flex flex-col rounded-2xl border border-line-2 bg-white p-3 shadow-sm">
+                    {sponsorBrand && (
+                      <span className="absolute right-2 top-2 z-10 rounded-full bg-indigo-600 px-2 py-0.5 text-[10px] font-bold text-white shadow">
+                        {sponsorBrand} 후원
+                      </span>
                     )}
+                    <div
+                      className="mb-2 flex h-20 items-center justify-center overflow-hidden rounded-xl text-4xl"
+                      style={{ background: `${g.color}1a` }}
+                    >
+                      {g.imageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={g.imageUrl} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        g.emoji
+                      )}
+                    </div>
+                    <p className="text-xs text-ink-3">{g.brand}</p>
+                    <p className="truncate text-sm font-semibold">{g.name}</p>
+                    <p className="mb-2 mt-0.5 font-bold text-brand">{g.points.toLocaleString("ko-KR")}P</p>
+                    <div className="mt-auto">
+                      {locked ? (
+                        <div className="w-full rounded-lg bg-surface-2 py-2 text-center text-xs font-bold text-ink-3">
+                          🔒 곧 오픈
+                        </div>
+                      ) : (
+                        <RedeemButton itemId={g.id} points={g.points} affordable={affordable} />
+                      )}
+                    </div>
                   </div>
-                  <p className="text-xs text-ink-3">{g.brand}</p>
-                  <p className="truncate text-sm font-semibold">{g.name}</p>
-                  <p className="mb-2 mt-0.5 font-bold text-brand">{g.points.toLocaleString("ko-KR")}P</p>
-                  <div className="mt-auto">
-                    {locked ? (
-                      <div className="w-full rounded-lg bg-surface-2 py-2 text-center text-xs font-bold text-ink-3">
-                        🔒 곧 오픈
-                      </div>
-                    ) : (
-                      <RedeemButton itemId={g.id} points={g.points} affordable={affordable} />
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
+                );
+              })}
+            </div>
+          </section>
+        ))}
 
         <section className="rounded-2xl bg-white p-4 text-xs text-ink-3 shadow-sm">
           <h2 className="mb-1 text-sm font-semibold text-ink-2">이용 안내</h2>

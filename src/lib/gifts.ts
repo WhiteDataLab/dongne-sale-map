@@ -2,10 +2,27 @@ import { prisma } from "@/lib/prisma";
 
 // 포인트샵 기프티콘 카탈로그 — DB(GiftItem) 기반, 관리자 CRUD. 포인트 = 원.
 
+/** 기프티콘 분류 프리셋(관리자 선택 + 상점 그룹 정렬 순서). 자유 입력도 허용. */
+export const GIFT_CATEGORIES = [
+  "커피·음료",
+  "베이커리·디저트",
+  "외식·식당",
+  "편의점",
+  "뷰티·드럭스토어",
+  "기타",
+] as const;
+
+/** 빈 분류는 '기타'로 본다(상점 그룹핑·표시용). */
+export function giftCategoryLabel(category: string | null | undefined): string {
+  const c = category?.trim();
+  return c ? c : "기타";
+}
+
 export type GiftItem = {
   id: string;
   brand: string;
   name: string;
+  category: string | null;
   points: number;
   imageUrl: string | null;
   emoji: string;
@@ -26,6 +43,7 @@ const CONSUMER_SELECT = {
   id: true,
   brand: true,
   name: true,
+  category: true,
   points: true,
   imageUrl: true,
   emoji: true,
