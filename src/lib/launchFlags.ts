@@ -10,26 +10,31 @@ import { prisma } from "@/lib/prisma";
  *   OFF 면 인증 사장님은 관계 기능(리뷰 답글·세일 알림·단골 식별·공식 배지)을 **무료로** 쓴다
  *   ([[storeTier]] 가 무료모드에서 인증 사장님을 lite 로 취급).
  * - `reservations`: M7 픽업 예약(예약 받기/하기) 노출.
+ * - `pointshop`: 포인트샵 **교환(redeem)** 노출. OFF 면 적립은 계속하되 교환만 잠그고,
+ *   `/shop` 은 "곧 교환 오픈 · 지금 모아두세요" 티저(상품 노출 + 교환 버튼 잠금)로 보인다.
+ *   (포인트 적립=출석·제보·추천 은 플래그와 무관하게 항상 동작.)
  *
- * 기본값은 **둘 다 OFF**(SiteConfig 행 없음 → off). 즉 배포 즉시 무료 모드이며,
- * 관리자가 켜야 유료/예약이 열린다.
+ * 기본값은 **셋 다 OFF**(SiteConfig 행 없음 → off). 즉 배포 즉시 무료 모드이며,
+ * 관리자가 켜야 유료/예약/교환이 열린다.
  */
-export type LaunchFlags = { monetization: boolean; reservations: boolean };
+export type LaunchFlags = { monetization: boolean; reservations: boolean; pointshop: boolean };
 
 export const FLAG_KEYS = {
   monetization: "flag_monetization",
   reservations: "flag_reservations",
+  pointshop: "flag_pointshop",
 } as const;
 
 /** 현재 런치 플래그. SiteConfig 미설정 키는 off(false) 로 본다(무료 모드 기본). */
 export async function getLaunchFlags(): Promise<LaunchFlags> {
   const rows = await prisma.siteConfig
-    .findMany({ where: { key: { in: [FLAG_KEYS.monetization, FLAG_KEYS.reservations] } } })
+    .findMany({ where: { key: { in: Object.values(FLAG_KEYS) } } })
     .catch(() => [] as { key: string; value: string }[]);
   const v = new Map(rows.map((r) => [r.key, r.value]));
   return {
     monetization: v.get(FLAG_KEYS.monetization) === "on",
     reservations: v.get(FLAG_KEYS.reservations) === "on",
+    pointshop: v.get(FLAG_KEYS.pointshop) === "on",
   };
 }
 

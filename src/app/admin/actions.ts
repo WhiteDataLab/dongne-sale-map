@@ -22,7 +22,9 @@ async function ensureAdmin() {
 export async function toggleLaunchFlag(formData: FormData) {
   await ensureAdmin();
   const key = String(formData.get("key")) as keyof LaunchFlags;
-  if (key !== "monetization" && key !== "reservations") throw new Error("bad_key");
+  if (key !== "monetization" && key !== "reservations" && key !== "pointshop") {
+    throw new Error("bad_key");
+  }
   const on = String(formData.get("on")) === "1";
   await setLaunchFlag(key, on);
   revalidatePath("/admin/launch");

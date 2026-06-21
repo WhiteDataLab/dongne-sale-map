@@ -5,6 +5,7 @@ import { getCurrentUserId } from "@/lib/session";
 import { getGiftItem } from "@/lib/gifts";
 import { accrueBrandReward } from "@/lib/brands";
 import { POINT_EXPIRY_YEARS, yearsAgo } from "@/lib/points";
+import { getLaunchFlags } from "@/lib/launchFlags";
 
 /**
  * 포인트 → 기프티콘 교환 신청.
@@ -15,6 +16,13 @@ import { POINT_EXPIRY_YEARS, yearsAgo } from "@/lib/points";
 export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
+  // 무료 오픈 모드: 포인트 적립은 계속하되 교환만 잠금.
+  if (!(await getLaunchFlags()).pointshop) {
+    return NextResponse.json(
+      { error: "교환은 곧 오픈돼요. 지금은 포인트를 모아두세요.", code: "disabled" },
+      { status: 403 },
+    );
+  }
   const userId = await getCurrentUserId();
   if (!userId) return NextResponse.json({ error: "login_required" }, { status: 401 });
 

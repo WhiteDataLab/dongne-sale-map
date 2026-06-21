@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "운영 모드 — 관리" };
 
 type Row = {
-  key: "monetization" | "reservations";
+  key: "monetization" | "reservations" | "pointshop";
   on: boolean;
   title: string;
   onDesc: string;
@@ -35,6 +35,14 @@ export default async function AdminLaunchPage() {
       title: "🏃 픽업 예약 (떨이 선점)",
       onDesc: "소비자가 마감임박 세일을 앱에서 선점·픽업할 수 있고, 사장님은 예약을 받습니다.",
       offDesc: "예약 받기/하기 UI가 전부 숨겨집니다. (메뉴·세일·리뷰 등 나머지는 그대로)",
+    },
+    {
+      key: "pointshop",
+      on: flags.pointshop,
+      title: "🎁 포인트샵 교환 (기프티콘)",
+      onDesc: "모은 포인트로 기프티콘을 교환할 수 있어요. 교환 시 실제 원가가 발생합니다.",
+      offDesc:
+        "적립은 계속되고 교환만 잠깁니다. /shop 은 '곧 교환 오픈 · 지금 모아두세요' 티저(상품 노출 + 교환 잠금)로 보여요.",
     },
   ];
 
