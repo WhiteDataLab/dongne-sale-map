@@ -192,6 +192,14 @@ export function PhotoEditor({
   };
 
   const relayout = () => {
+    // 캔버스 backing 을 현재 표시영역(wrap)에 맞춰 동기화 → 도구별 패널 높이 차이로 인한
+    // 미세한 사진 크기 변화/늘어짐 방지(표시=backing 1:1 유지).
+    const v = viewRef.current;
+    const wrap = wrapRef.current;
+    if (v && wrap && (v.width !== wrap.clientWidth || v.height !== wrap.clientHeight)) {
+      v.width = wrap.clientWidth;
+      v.height = wrap.clientHeight;
+    }
     fitContain();
     render();
     setFrame(toolRef.current === "crop" ? frameForAspect(aspectRef.current) : null);
@@ -707,52 +715,55 @@ export function PhotoEditor({
           <button type="button" onClick={() => setTool("blur")} className={chip(tool === "blur")}>🟦 모자이크</button>
         </div>
 
-        {tool === "crop" && (
-          <>
-            {/* 비율 프리셋 */}
-            <div className="flex gap-1.5 overflow-x-auto">
-              {RATIOS.map((r) => (
-                <button key={r.key} type="button" onClick={() => pickRatio(r.key)} className={chip(ratioKey === r.key)}>
-                  {r.label}
+        {/* 도구별 컨트롤 — 고정 높이로 감싸 도구를 바꿔도 위쪽 사진 영역 크기가 변하지 않게 한다 */}
+        <div className="flex h-[128px] flex-col gap-2 overflow-y-auto">
+          {tool === "crop" && (
+            <>
+              {/* 비율 프리셋 */}
+              <div className="flex gap-1.5 overflow-x-auto">
+                {RATIOS.map((r) => (
+                  <button key={r.key} type="button" onClick={() => pickRatio(r.key)} className={chip(ratioKey === r.key)}>
+                    {r.label}
+                  </button>
+                ))}
+              </div>
+              {/* 회전·반전·적용 */}
+              <div className="flex items-center gap-2 overflow-x-auto">
+                <button type="button" onClick={() => rotate(-1)} className={iconBtn} aria-label="왼쪽 90도 회전">↺ -90°</button>
+                <button type="button" onClick={() => rotate(1)} className={iconBtn} aria-label="오른쪽 90도 회전">↻ +90°</button>
+                <button type="button" onClick={() => flip("h")} className={iconBtn} aria-label="좌우반전">⇆ 좌우</button>
+                <button type="button" onClick={() => flip("v")} className={iconBtn} aria-label="상하반전">⇅ 상하</button>
+                <button type="button" onClick={() => pickRatio(ratioKey)} className={iconBtn} aria-label="프레임 초기화">⟳ 초기화</button>
+                <button
+                  type="button"
+                  onClick={applyCrop}
+                  className="ml-auto shrink-0 rounded-lg bg-blue-500 px-4 py-2 text-sm font-semibold text-white"
+                >
+                  잘라내기
+                </button>
+              </div>
+              <p className="text-xs text-white/60">가장자리·모서리를 끌어 자를 영역을 정하거나, 비율을 골라 자동으로 맞춰요. 안쪽을 끌면 이동.</p>
+            </>
+          )}
+
+          {tool === "pen" && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              {COLORS.map((c) => (
+                <button key={c} type="button" aria-label="색상" onClick={() => setColor(c)} style={{ background: c }}
+                  className={`size-6 rounded-full border-2 ${color === c ? "border-white" : "border-white/20"}`} />
+              ))}
+              <span className="mx-1 h-5 w-px bg-white/30" />
+              {PEN_WIDTHS.map((w) => (
+                <button key={w} type="button" aria-label="굵기" onClick={() => setPenW(w)}
+                  className={`flex size-7 items-center justify-center rounded-full ${penW === w ? "bg-white/30" : ""}`}>
+                  <span className="rounded-full bg-white" style={{ width: w, height: w }} />
                 </button>
               ))}
             </div>
-            {/* 회전·반전·적용 */}
-            <div className="flex items-center gap-2 overflow-x-auto">
-              <button type="button" onClick={() => rotate(-1)} className={iconBtn} aria-label="왼쪽 90도 회전">↺ -90°</button>
-              <button type="button" onClick={() => rotate(1)} className={iconBtn} aria-label="오른쪽 90도 회전">↻ +90°</button>
-              <button type="button" onClick={() => flip("h")} className={iconBtn} aria-label="좌우반전">⇆ 좌우</button>
-              <button type="button" onClick={() => flip("v")} className={iconBtn} aria-label="상하반전">⇅ 상하</button>
-              <button type="button" onClick={() => pickRatio(ratioKey)} className={iconBtn} aria-label="프레임 초기화">⟳ 초기화</button>
-              <button
-                type="button"
-                onClick={applyCrop}
-                className="ml-auto shrink-0 rounded-lg bg-blue-500 px-4 py-2 text-sm font-semibold text-white"
-              >
-                잘라내기
-              </button>
-            </div>
-            <p className="text-xs text-white/60">가장자리·모서리를 끌어 자를 영역을 정하거나, 비율을 골라 자동으로 맞춰요. 안쪽을 끌면 이동.</p>
-          </>
-        )}
-
-        {tool === "pen" && (
-          <div className="flex flex-wrap items-center gap-1.5">
-            {COLORS.map((c) => (
-              <button key={c} type="button" aria-label="색상" onClick={() => setColor(c)} style={{ background: c }}
-                className={`size-6 rounded-full border-2 ${color === c ? "border-white" : "border-white/20"}`} />
-            ))}
-            <span className="mx-1 h-5 w-px bg-white/30" />
-            {PEN_WIDTHS.map((w) => (
-              <button key={w} type="button" aria-label="굵기" onClick={() => setPenW(w)}
-                className={`flex size-7 items-center justify-center rounded-full ${penW === w ? "bg-white/30" : ""}`}>
-                <span className="rounded-full bg-white" style={{ width: w, height: w }} />
-              </button>
-            ))}
-          </div>
-        )}
-        {tool === "blur" && <p className="text-xs text-white/60">가리고 싶은 부분을 문지르면 모자이크 처리돼요.</p>}
-        {tool === "eraser" && <p className="text-xs text-white/60">펜·모자이크 표시를 지웁니다(원본 사진은 유지).</p>}
+          )}
+          {tool === "blur" && <p className="text-xs text-white/60">가리고 싶은 부분을 문지르면 모자이크 처리돼요.</p>}
+          {tool === "eraser" && <p className="text-xs text-white/60">펜·모자이크 표시를 지웁니다(원본 사진은 유지).</p>}
+        </div>
       </div>
     </div>
   );
