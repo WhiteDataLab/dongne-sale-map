@@ -54,6 +54,7 @@ export default async function AdminLayout({
               label="현황"
               links={[
                 ["/admin/dashboard", "대시보드"],
+                ["/admin/segments", "회원 구성"],
                 ["/admin/activity", "활동 분석"],
                 ["/admin/insights", "물가 데이터"],
               ]}
