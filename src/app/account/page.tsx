@@ -2,7 +2,8 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { auth, signIn } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { POINT_EXPIRY_YEARS, POINT_HISTORY_YEARS, yearsAgo } from "@/lib/points";
+import { yearsAgo } from "@/lib/points";
+import { getSiteSettings } from "@/lib/siteSettings";
 import { deleteAccount, startLink, updateNickname } from "./actions";
 import { ProfileAvatarEditor } from "@/components/ProfileAvatarEditor";
 import { ContactVerifyForm } from "@/components/ContactVerifyForm";
@@ -164,16 +165,17 @@ export default async function AccountPage() {
     status: string;
     createdAt: Date;
   }[] = [];
+  const { pointExpiryYears, pointHistoryYears } = await getSiteSettings();
   try {
     const agg = await prisma.pointLog.aggregate({
       _sum: { amount: true },
-      where: { userId: session.user.id, createdAt: { gte: yearsAgo(POINT_EXPIRY_YEARS) } },
+      where: { userId: session.user.id, createdAt: { gte: yearsAgo(pointExpiryYears) } },
     });
     balance = Math.max(0, agg._sum.amount ?? 0);
     history = await prisma.pointLog.findMany({
-      where: { userId: session.user.id, createdAt: { gte: yearsAgo(POINT_HISTORY_YEARS) } },
+      where: { userId: session.user.id, createdAt: { gte: yearsAgo(pointHistoryYears) } },
       orderBy: { createdAt: "desc" },
-      take: 500, // 최대 2년치(페이지네이션으로 탐색)
+      take: 500, // 최대 조회기간치(페이지네이션으로 탐색)
       select: { id: true, amount: true, reason: true, status: true, createdAt: true },
     });
   } catch {
@@ -364,7 +366,7 @@ export default async function AccountPage() {
             }))}
           />
           <p className="mt-1.5 text-xs text-ink-3">
-            내역은 최근 {POINT_HISTORY_YEARS}년까지 표시되며, 적립 후 {POINT_EXPIRY_YEARS}년이 지난
+            내역은 최근 {pointHistoryYears}년까지 표시되며, 적립 후 {pointExpiryYears}년이 지난
             포인트는 소멸돼요.
           </p>
         </section>

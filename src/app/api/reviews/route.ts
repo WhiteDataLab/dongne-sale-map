@@ -4,6 +4,7 @@ import { getCurrentUserId } from "@/lib/session";
 import { isPublicStorageUrl, isReceiptPath } from "@/lib/supabaseStorage";
 import { kstTodayStart } from "@/lib/businessHours";
 import { getPointConfig } from "@/lib/pointConfig";
+import { getSiteSettings } from "@/lib/siteSettings";
 
 /**
  * 리뷰 작성 (스펙 Phase 3 + 리뷰 규칙 개편).
@@ -18,7 +19,6 @@ import { getPointConfig } from "@/lib/pointConfig";
 export const runtime = "nodejs";
 
 const RATE_WINDOW_MS = 60_000;
-const RATE_MAX = 3;
 const MAX_TAGS = 12;
 
 type Body = {
@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
     const recent = await prisma.review.count({
       where: { userId, createdAt: { gt: new Date(Date.now() - RATE_WINDOW_MS) } },
     });
-    if (recent >= RATE_MAX) {
+    if (recent >= (await getSiteSettings()).rateReview) {
       return NextResponse.json({ error: "잠시 후 다시 시도해 주세요." }, { status: 429 });
     }
 

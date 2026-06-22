@@ -3,14 +3,11 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 import { canManageStore } from "@/lib/menu";
 import {
-  SPONSOR_PRICE_KRW,
-  LITE_PRICE_KRW,
-  PRO_PRICE_KRW,
-  TRIAL_DAYS,
   PLAN_LABEL,
   asSubPlan,
   getActiveSubscriptionForStore,
 } from "@/lib/sponsors";
+import { getSiteSettings } from "@/lib/siteSettings";
 import { isTossConfigured, tossClientKey } from "@/lib/toss";
 import { getLaunchFlags } from "@/lib/launchFlags";
 import { SponsorSubscribeButton } from "@/components/SponsorSubscribeButton";
@@ -83,6 +80,7 @@ export default async function SponsorSubscribePage({
 
   const configured = isTossConfigured();
   const clientKey = tossClientKey();
+  const { priceSponsor, priceLite, pricePro, trialDays, couponLimitLite } = await getSiteSettings();
 
   return shell(
     <div className="mt-4 flex flex-col gap-3.5">
@@ -90,7 +88,7 @@ export default async function SponsorSubscribePage({
         <h1 className="text-xl font-extrabold tracking-tight text-ink">우리 가게 홍보 구독</h1>
         <p className="mt-1 text-sm font-medium text-ink-2">{store.name}</p>
         <p className="mt-2 inline-block rounded-full bg-deal-wash px-2.5 py-1 text-xs font-bold text-deal-ink">
-          🎁 유료 플랜 모두 {TRIAL_DAYS}일 무료체험 · 체험 중 해지하면 청구 없어요
+          🎁 유료 플랜 모두 {trialDays}일 무료체험 · 체험 중 해지하면 청구 없어요
         </p>
       </div>
 
@@ -112,7 +110,7 @@ export default async function SponsorSubscribePage({
         <div className="flex items-baseline justify-between">
           <p className="text-[13px] font-extrabold tracking-wide text-brand-ink">LITE</p>
           <p>
-            <b className="num text-2xl font-extrabold text-ink">{LITE_PRICE_KRW.toLocaleString("ko-KR")}</b>
+            <b className="num text-2xl font-extrabold text-ink">{priceLite.toLocaleString("ko-KR")}</b>
             <span className="text-xs font-bold text-ink-3"> 원/월</span>
           </p>
         </div>
@@ -121,7 +119,7 @@ export default async function SponsorSubscribePage({
           <li>🔔 <b className="font-bold text-ink">세일 알림 발송</b> (즐겨찾기 단골에게)</li>
           <li>🧑‍🤝‍🧑 <b className="font-bold text-ink">단골 식별</b> + ⭐ <b className="font-bold text-ink">리뷰 답글</b></li>
           <li>✅ <b className="font-bold text-ink">공식 배지</b> (소비자 신뢰)</li>
-          <li>🎟️ 쿠폰 활성 50개</li>
+          <li>🎟️ 쿠폰 활성 {couponLimitLite}개</li>
         </ul>
         <p className="mt-2 text-[11px] font-medium text-ink-3">※ 지도 노출 부스트(마퀴·금색핀)는 스폰서/프로에 포함돼요.</p>
         {configured && clientKey ? (
@@ -134,7 +132,7 @@ export default async function SponsorSubscribePage({
         <div className="flex items-baseline justify-between">
           <p className="text-[13px] font-extrabold tracking-wide text-ink-3">SPONSOR</p>
           <p>
-            <b className="num text-2xl font-extrabold text-ink">{SPONSOR_PRICE_KRW.toLocaleString("ko-KR")}</b>
+            <b className="num text-2xl font-extrabold text-ink">{priceSponsor.toLocaleString("ko-KR")}</b>
             <span className="text-xs font-bold text-ink-3"> 원/월</span>
           </p>
         </div>
@@ -156,7 +154,7 @@ export default async function SponsorSubscribePage({
         <div className="flex items-baseline justify-between">
           <p className="text-[13px] font-extrabold tracking-wide text-[#9DC2FF]">PRO</p>
           <p>
-            <b className="num text-2xl font-extrabold text-white">{PRO_PRICE_KRW.toLocaleString("ko-KR")}</b>
+            <b className="num text-2xl font-extrabold text-white">{pricePro.toLocaleString("ko-KR")}</b>
             <span className="text-xs font-bold text-[#7E9ECB]"> 원/월</span>
           </p>
         </div>
@@ -180,7 +178,7 @@ export default async function SponsorSubscribePage({
       )}
 
       <p className="text-xs leading-relaxed text-ink-3">
-        · 카드 등록 후 {TRIAL_DAYS}일간 무료로 노출돼요. 무료체험 종료 전 해지하면 청구되지 않아요.
+        · 카드 등록 후 {trialDays}일간 무료로 노출돼요. 무료체험 종료 전 해지하면 청구되지 않아요.
         <br />· 해지 시 다음 결제부터 중단되며, 이미 결제한 기간의 노출은 만료일까지 유지돼요(환불 없음).
         <br />· 카드 정보는 토스페이먼츠가 안전하게 보관하며, 본 서비스는 카드번호를 저장하지 않아요.
       </p>

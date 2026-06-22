@@ -32,10 +32,14 @@ export async function alertsSentThisMonth(storeId: string, now: Date = new Date(
   });
 }
 
-/** 티어별 이번 달 남은 발송 횟수(프로=Infinity). */
-export function remainingAlerts(tier: StoreTier, sentThisMonth: number): number {
+/** 티어별 이번 달 남은 발송 횟수(프로=Infinity). monthlyLimit 미지정 시 기본 상수. */
+export function remainingAlerts(
+  tier: StoreTier,
+  sentThisMonth: number,
+  monthlyLimit: number = LITE_ALERT_MONTHLY_LIMIT,
+): number {
   if (tier === "pro") return Infinity;
-  if (tier === "lite") return Math.max(0, LITE_ALERT_MONTHLY_LIMIT - sentThisMonth);
+  if (tier === "lite") return Math.max(0, monthlyLimit - sentThisMonth);
   return 0;
 }
 

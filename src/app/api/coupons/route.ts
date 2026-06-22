@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 import { canManageStore } from "@/lib/menu";
-import { liveCouponFilter, COUPON_TITLE_MAX, COUPON_TEXT_MAX, COUPON_MAX_DAYS } from "@/lib/coupons";
+import { liveCouponFilter, COUPON_TITLE_MAX, COUPON_TEXT_MAX } from "@/lib/coupons";
 import { storeTier, couponLimitForTier } from "@/lib/pro";
+import { getSiteSettings } from "@/lib/siteSettings";
 
 /**
  * M3(수익화) — 사장님 쿠폰 발행.
@@ -39,6 +40,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "가게·혜택 제목은 필수예요." }, { status: 400 });
   }
 
+  const settings = await getSiteSettings();
   // 만료 시각 검증
   const now = new Date();
   const t = body.expiresAt ? new Date(body.expiresAt) : null;
@@ -49,8 +51,8 @@ export async function POST(req: NextRequest) {
   if (ms <= 60_000) {
     return NextResponse.json({ error: "마감일은 현재 이후로 설정해 주세요." }, { status: 400 });
   }
-  if (ms > COUPON_MAX_DAYS * DAY_MS) {
-    return NextResponse.json({ error: `최대 ${COUPON_MAX_DAYS}일까지 설정할 수 있어요.` }, { status: 400 });
+  if (ms > settings.couponMaxDays * DAY_MS) {
+    return NextResponse.json({ error: `최대 ${settings.couponMaxDays}일까지 설정할 수 있어요.` }, { status: 400 });
   }
 
   // 발행 수량 한도(선택)
@@ -75,8 +77,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "사장님·관리자만 쿠폰을 발행할 수 있어요." }, { status: 403 });
     }
 
-    // M4/M8: 티어별 활성 쿠폰 상한(무료 20 / 라이트 50 / 프로 200).
-    const limit = couponLimitForTier(await storeTier(storeId));
+    // M4/M8: 티어별 활성 쿠폰 상한(관리자 설정).
+    const limit = couponLimitForTier(await storeTier(storeId), {
+      free: settings.couponLimitFree,
+      lite: settings.couponLimitLite,
+      pro: settings.couponLimitPro,
+    });
     const activeCount = await prisma.coupon.count({ where: { ...liveCouponFilter(now), storeId } });
     if (activeCount >= limit) {
       return NextResponse.json(

@@ -6,6 +6,7 @@ import { CATEGORIES, type Category } from "@/lib/constants";
 import { asStoreHours, isOpenNow, openStatusNow, kstTodayStart } from "@/lib/businessHours";
 import { getLiveSponsorStoreIds } from "@/lib/sponsors";
 import { getProStoreIds } from "@/lib/pro";
+import { getSiteSettings } from "@/lib/siteSettings";
 import { liveCouponFilter } from "@/lib/coupons";
 import type { StoreDTO, StoreSource } from "@/lib/types";
 
@@ -151,7 +152,6 @@ export async function GET(req: NextRequest) {
  * 관리자 승인은 /admin/stores. 사장님 직접 등록/인증은 후속 단계.
  */
 const RATE_WINDOW_MS = 10 * 60 * 1000;
-const RATE_MAX = 5;
 
 type CreateBody = {
   name?: string;
@@ -193,7 +193,7 @@ export async function POST(req: NextRequest) {
     const recent = await prisma.store.count({
       where: { createdById: userId, createdAt: { gt: new Date(Date.now() - RATE_WINDOW_MS) } },
     });
-    if (recent >= RATE_MAX) {
+    if (recent >= (await getSiteSettings()).rateStore) {
       return NextResponse.json(
         { error: "잠시 후 다시 시도해 주세요. (너무 많은 등록)" },
         { status: 429 },

@@ -1,11 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import {
-  getSponsorships,
-  SPONSOR_STATUS_LABEL,
-  SPONSOR_PRICE_KRW,
-  TRIAL_DAYS,
-} from "@/lib/sponsors";
+import { getSponsorships, SPONSOR_STATUS_LABEL } from "@/lib/sponsors";
+import { getSiteSettings } from "@/lib/siteSettings";
 import { CATEGORY_META, type Category } from "@/lib/constants";
 import {
   startSponsorTrial,
@@ -35,6 +31,7 @@ export default async function AdminSponsors({
 }) {
   const sp = await searchParams;
   const q = typeof sp.q === "string" ? sp.q.trim() : "";
+  const { priceSponsor, trialDays } = await getSiteSettings();
 
   let sponsors: Awaited<ReturnType<typeof getSponsorships>> = [];
   let matches: { id: string; name: string; category: Category; address: string }[] = [];
@@ -66,7 +63,7 @@ export default async function AdminSponsors({
       <div>
         <h2 className="text-lg font-bold">스폰서 광고</h2>
         <p className="text-xs text-ink-3">
-          묶음(마퀴 상단 고정 + 금색 핀) · 월 {SPONSOR_PRICE_KRW.toLocaleString("ko-KR")}원 · {TRIAL_DAYS}
+          묶음(마퀴 상단 고정 + 금색 핀) · 월 {priceSponsor.toLocaleString("ko-KR")}원 · {trialDays}
           일 무료체험. 결제(PG)는 M2 — 입금 확인 후 ‘결제확인’을 눌러 유료로 전환하세요.
         </p>
       </div>
@@ -119,7 +116,7 @@ export default async function AdminSponsors({
                       className="w-28 rounded-lg border border-line px-2 py-1 text-xs"
                     />
                     <button className="shrink-0 rounded-lg bg-amber-500 px-3 py-1 text-xs font-semibold text-white hover:bg-amber-600">
-                      🎁 {TRIAL_DAYS}일 체험 시작
+                      🎁 {trialDays}일 체험 시작
                     </button>
                   </form>
                 </li>

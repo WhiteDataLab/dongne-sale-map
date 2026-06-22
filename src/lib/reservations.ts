@@ -17,9 +17,9 @@ export const RESERVE_MAX_QTY = 10;
 /** 플랫폼 수수료율(take). 픽업 완료 시 확정되는 미수금(실 청구는 Phase 2 수동/스캐폴드). */
 export const PICKUP_FEE_RATE = 0.1;
 
-/** 거래액(amount)에 대한 플랫폼 수수료(원). 10원 단위 반올림. */
-export function computePickupFee(amount: number): number {
-  return Math.round((amount * PICKUP_FEE_RATE) / 10) * 10;
+/** 거래액(amount)에 대한 플랫폼 수수료(원). 10원 단위 반올림. feePct 는 퍼센트(기본 10%). */
+export function computePickupFee(amount: number, feePct: number = PICKUP_FEE_RATE * 100): number {
+  return Math.round((amount * (feePct / 100)) / 10) * 10;
 }
 
 /** 매장 확인용 4자리 픽업 코드. */

@@ -2,12 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/session";
 import {
-  RESERVE_MAX_QTY,
   computePickupFee,
   makePickupCode,
   activeReservationFilter,
 } from "@/lib/reservations";
 import { getLaunchFlags } from "@/lib/launchFlags";
+import { getSiteSettings } from "@/lib/siteSettings";
 
 /**
  * M7(L2) — 떨이 픽업 예약 생성(선점).
@@ -17,7 +17,6 @@ import { getLaunchFlags } from "@/lib/launchFlags";
 export const runtime = "nodejs";
 
 const RATE_WINDOW_MS = 60_000;
-const RATE_MAX = 5;
 
 export async function POST(req: NextRequest) {
   // 무료 오픈 모드: 픽업 예약 비공개.
@@ -34,11 +33,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "잘못된 요청이에요." }, { status: 400 });
   }
 
+  const settings = await getSiteSettings();
   const saleId = body.saleId;
   const qty = Number(body.qty ?? 1);
   if (!saleId) return NextResponse.json({ error: "세일을 찾을 수 없어요." }, { status: 400 });
-  if (!Number.isInteger(qty) || qty < 1 || qty > RESERVE_MAX_QTY) {
-    return NextResponse.json({ error: `수량은 1~${RESERVE_MAX_QTY}개로 선택해 주세요.` }, { status: 400 });
+  if (!Number.isInteger(qty) || qty < 1 || qty > settings.reserveMaxQty) {
+    return NextResponse.json({ error: `수량은 1~${settings.reserveMaxQty}개로 선택해 주세요.` }, { status: 400 });
   }
 
   try {
@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
     const recent = await prisma.reservation.count({
       where: { userId, createdAt: { gt: new Date(Date.now() - RATE_WINDOW_MS) } },
     });
-    if (recent >= RATE_MAX) {
+    if (recent >= settings.rateReservation) {
       return NextResponse.json({ error: "잠시 후 다시 시도해 주세요." }, { status: 429 });
     }
 
@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
           qty,
           unitPriceKrw: sale.salePrice,
           amountKrw,
-          feeKrw: computePickupFee(amountKrw),
+          feeKrw: computePickupFee(amountKrw, settings.pickupFeePct),
           pickupCode: makePickupCode(),
         },
         select: { id: true, pickupCode: true },

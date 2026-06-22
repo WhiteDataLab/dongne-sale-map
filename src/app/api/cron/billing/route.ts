@@ -6,10 +6,9 @@ import {
   PLAN_ORDER_NAME,
   asSubPlan,
   planHasExposure,
-  MAX_BILLING_FAILURES,
-  PAID_PERIOD_DAYS,
   extendPaidDate,
 } from "@/lib/sponsors";
+import { getSiteSettings } from "@/lib/siteSettings";
 
 /**
  * M2 — 정기결제 크론(매일 1회). nextBillingAt 가 도래한 구독을 빌링키로 청구한다.
@@ -35,6 +34,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ ok: true, skipped: "free_mode" });
   }
 
+  const { paidPeriodDays, maxBillingFailures } = await getSiteSettings();
   const now = new Date();
   const due = await prisma.subscription.findMany({
     where: {
@@ -68,7 +68,7 @@ export async function GET(req: NextRequest) {
             orderBy: { endsAt: "desc" },
           })
         : null;
-      const nextEnds = extendPaidDate(sponsorship?.endsAt ?? now, now);
+      const nextEnds = extendPaidDate(sponsorship?.endsAt ?? now, now, paidPeriodDays);
 
       await prisma.$transaction(async (tx) => {
         await tx.payment.create({
@@ -88,7 +88,7 @@ export async function GET(req: NextRequest) {
             status: "active",
             failCount: 0,
             lastPaymentAt: now,
-            nextBillingAt: extendPaidDate(sub.nextBillingAt, now),
+            nextBillingAt: extendPaidDate(sub.nextBillingAt, now, paidPeriodDays),
           },
         });
         if (sponsorship) {
@@ -116,7 +116,7 @@ export async function GET(req: NextRequest) {
       failed++;
       const reason = e instanceof TossError ? `${e.code}: ${e.message}` : "청구 오류";
       const nextFail = sub.failCount + 1;
-      const giveUp = nextFail >= MAX_BILLING_FAILURES;
+      const giveUp = nextFail >= maxBillingFailures;
       await prisma.$transaction(async (tx) => {
         await tx.payment.create({
           data: {
@@ -138,5 +138,5 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  return NextResponse.json({ ok: true, due: due.length, charged, failed, periodDays: PAID_PERIOD_DAYS });
+  return NextResponse.json({ ok: true, due: due.length, charged, failed, periodDays: paidPeriodDays });
 }

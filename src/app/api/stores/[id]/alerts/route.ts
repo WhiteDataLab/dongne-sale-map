@@ -10,10 +10,9 @@ import {
   getStoreAlerts,
   ALERT_TITLE_MAX,
   ALERT_BODY_MAX,
-  ALERT_DAILY_LIMIT,
-  LITE_ALERT_MONTHLY_LIMIT,
 } from "@/lib/alerts";
 import { kstTodayStart } from "@/lib/businessHours";
+import { getSiteSettings } from "@/lib/siteSettings";
 
 /**
  * M9(수익화) — 세일/소식 알림 발송.
@@ -44,17 +43,18 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
   if ("error" in auth) return auth.error;
 
   const now = new Date();
+  const { alertLiteMonthly } = await getSiteSettings();
   const [sentThisMonth, alerts, favoriteCount] = await Promise.all([
     alertsSentThisMonth(id, now),
     getStoreAlerts(id),
     prisma.favorite.count({ where: { storeId: id } }),
   ]);
-  const remaining = remainingAlerts(auth.tier, sentThisMonth);
+  const remaining = remainingAlerts(auth.tier, sentThisMonth, alertLiteMonthly);
   return NextResponse.json({
     tier: auth.tier,
     canSend: tierAllowsLite(auth.tier),
     sentThisMonth,
-    monthlyLimit: auth.tier === "pro" ? null : LITE_ALERT_MONTHLY_LIMIT,
+    monthlyLimit: auth.tier === "pro" ? null : alertLiteMonthly,
     remaining: remaining === Infinity ? null : remaining,
     favoriteCount,
     alerts,
@@ -100,10 +100,11 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   }
 
   // 월 한도(라이트) 체크.
+  const { alertLiteMonthly, alertDaily } = await getSiteSettings();
   const sentThisMonth = await alertsSentThisMonth(id, now);
-  if (remainingAlerts(tier, sentThisMonth) <= 0) {
+  if (remainingAlerts(tier, sentThisMonth, alertLiteMonthly) <= 0) {
     return NextResponse.json(
-      { error: `이번 달 발송 횟수를 모두 사용했어요. (라이트 월 ${LITE_ALERT_MONTHLY_LIMIT}회)`, code: "limit_reached" },
+      { error: `이번 달 발송 횟수를 모두 사용했어요. (라이트 월 ${alertLiteMonthly}회)`, code: "limit_reached" },
       { status: 409 },
     );
   }
@@ -112,7 +113,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   const sentToday = await prisma.storeAlert.count({
     where: { storeId: id, createdAt: { gte: kstTodayStart() } },
   });
-  if (sentToday >= ALERT_DAILY_LIMIT) {
+  if (sentToday >= alertDaily) {
     return NextResponse.json({ error: "오늘은 더 보낼 수 없어요. (하루 한도 초과)" }, { status: 429 });
   }
 

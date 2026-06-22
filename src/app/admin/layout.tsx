@@ -103,6 +103,9 @@ export default async function AdminLayout({
               links={[
                 ["/admin/launch", "운영 모드"],
                 ["/admin/points", "적립 포인트"],
+                ["/admin/settings", "운영 설정"],
+                ["/admin/pricing", "요금·한도"],
+                ["/admin/params", "광고·예약"],
               ]}
             />
           </div>

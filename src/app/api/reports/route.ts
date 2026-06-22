@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/session";
-import { REPORT_HIDE_THRESHOLD } from "@/lib/constants";
+import { getSiteSettings } from "@/lib/siteSettings";
 
 /**
  * 신고/정정 접수 (스펙 Phase 4).
@@ -57,8 +57,9 @@ export async function POST(req: NextRequest) {
     const openCount = await prisma.report.count({
       where: { targetType: type, targetId, status: "open" },
     });
+    const threshold = (await getSiteSettings()).reportHideThreshold;
     let hidden = false;
-    if (openCount >= REPORT_HIDE_THRESHOLD) {
+    if (openCount >= threshold) {
       try {
         if (type === "store") {
           await prisma.store.update({ where: { id: targetId }, data: { status: "hidden" } });

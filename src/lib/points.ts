@@ -16,9 +16,11 @@ export function yearsAgo(n: number, from = new Date()): Date {
 /** 포인트 잔액 = PointLog 합계(소멸 기간 이내). (서버 전용) */
 export async function getPointBalance(userId: string): Promise<number> {
   const { prisma } = await import("@/lib/prisma");
+  const { getSiteSettings } = await import("@/lib/siteSettings");
+  const { pointExpiryYears } = await getSiteSettings();
   const agg = await prisma.pointLog.aggregate({
     _sum: { amount: true },
-    where: { userId, createdAt: { gte: yearsAgo(POINT_EXPIRY_YEARS) } },
+    where: { userId, createdAt: { gte: yearsAgo(pointExpiryYears) } },
   });
   // 표시/판정용 잔액은 절대 음수가 되지 않게 0으로 클램프(소비는 잔액 검증으로 차단됨).
   return Math.max(0, agg._sum.amount ?? 0);

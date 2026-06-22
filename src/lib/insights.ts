@@ -56,6 +56,8 @@ export type RegionCategoryStat = {
 
 /** 동(region)×업종(category) 평균 세일가·건수(비식별, k-익명). */
 export async function getRegionCategoryStats(periodDays = 90): Promise<RegionCategoryStat[]> {
+  const { getSiteSettings } = await import("@/lib/siteSettings");
+  const minStores = (await getSiteSettings()).insightsMinStores;
   const sales = await loadSales(periodDays);
   const buckets = new Map<string, { region: string; category: string; prices: number[]; stores: Set<string> }>();
   for (const s of sales) {
@@ -72,7 +74,7 @@ export async function getRegionCategoryStats(periodDays = 90): Promise<RegionCat
   }
   const out: RegionCategoryStat[] = [];
   for (const b of buckets.values()) {
-    if (b.stores.size < MIN_STORES) continue; // k-익명성
+    if (b.stores.size < minStores) continue; // k-익명성
     const sum = b.prices.reduce((a, p) => a + p, 0);
     out.push({
       region: b.region,
@@ -99,6 +101,8 @@ export type ItemPriceStat = {
 
 /** 품목별 가격 분포(비식별, k-익명). 상위 N. */
 export async function getItemPriceStats(periodDays = 90, limit = 30): Promise<ItemPriceStat[]> {
+  const { getSiteSettings } = await import("@/lib/siteSettings");
+  const minStores = (await getSiteSettings()).insightsMinStores;
   const sales = await loadSales(periodDays);
   const itemNameByProduct = new Map<string, string>();
   const productIds = [...new Set(sales.map((s) => s.productId).filter((x): x is string => !!x))];
@@ -120,7 +124,7 @@ export async function getItemPriceStats(periodDays = 90, limit = 30): Promise<It
   }
   const out: ItemPriceStat[] = [];
   for (const [item, b] of buckets) {
-    if (b.stores.size < MIN_STORES) continue;
+    if (b.stores.size < minStores) continue;
     const sum = b.prices.reduce((a, p) => a + p, 0);
     out.push({
       item,

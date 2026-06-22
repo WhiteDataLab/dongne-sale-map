@@ -4,12 +4,12 @@ import { getCurrentUser } from "@/lib/session";
 import { canManageMenu } from "@/lib/menu";
 import { isPublicStorageUrl } from "@/lib/supabaseStorage";
 import { getPointConfig } from "@/lib/pointConfig";
+import { getSiteSettings } from "@/lib/siteSettings";
 
 /** 메뉴(상품) 추가 (스펙 Phase 7b). 사진 필수. 권한: canManageMenu. */
 export const runtime = "nodejs";
 
 const RATE_WINDOW_MS = 5 * 60_000;
-const RATE_MAX = 8; // 5분 내 메뉴 등록 상한(포인트 파밍·도배 방지)
 
 type Body = {
   storeId?: string;
@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     const recent = await prisma.product.count({
       where: { createdById: user.id, createdAt: { gt: new Date(Date.now() - RATE_WINDOW_MS) } },
     });
-    if (recent >= RATE_MAX) {
+    if (recent >= (await getSiteSettings()).rateProduct) {
       return NextResponse.json({ error: "잠시 후 다시 시도해 주세요. (너무 빠른 연속 등록)" }, { status: 429 });
     }
     const productPoint = (await getPointConfig()).product;

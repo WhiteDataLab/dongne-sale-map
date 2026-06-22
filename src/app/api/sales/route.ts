@@ -4,6 +4,7 @@ import { getCurrentUserId } from "@/lib/session";
 import { asStoreHours, minutesUntilClose, kstTodayStart } from "@/lib/businessHours";
 import { isPublicStorageUrl } from "@/lib/supabaseStorage";
 import { getPointConfig } from "@/lib/pointConfig";
+import { getSiteSettings } from "@/lib/siteSettings";
 
 /**
  * 세일 제보 (스펙 Phase 3).
@@ -15,7 +16,6 @@ import { getPointConfig } from "@/lib/pointConfig";
 export const runtime = "nodejs";
 
 const RATE_WINDOW_MS = 60_000;
-const RATE_MAX = 3;
 
 const MAX_PHOTOS = 10;
 const MAX_CUSTOM_MS = 48 * 60 * 60 * 1000;
@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
     const recent = await prisma.sale.count({
       where: { createdById: userId, createdAt: { gt: new Date(Date.now() - RATE_WINDOW_MS) } },
     });
-    if (recent >= RATE_MAX) {
+    if (recent >= (await getSiteSettings()).rateSale) {
       return NextResponse.json(
         { error: "잠시 후 다시 시도해 주세요. (너무 빠른 연속 제보)" },
         { status: 429 },

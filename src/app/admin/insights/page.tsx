@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getAdminSession } from "@/lib/admin";
-import { getRegionCategoryStats, getItemPriceStats, getMarketSummary, MIN_STORES } from "@/lib/insights";
+import { getRegionCategoryStats, getItemPriceStats, getMarketSummary } from "@/lib/insights";
+import { getSiteSettings } from "@/lib/siteSettings";
 
 /** L6 — 동네 물가/세일 데이터 B2B 리포트(관리자). 비식별 집계(k-익명 ≥ MIN_STORES 가게). */
 export const dynamic = "force-dynamic";
@@ -21,6 +22,7 @@ export default async function AdminInsightsPage({
     getRegionCategoryStats(days),
     getItemPriceStats(days, 30),
   ]);
+  const minStores = (await getSiteSettings()).insightsMinStores;
 
   const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
 
@@ -28,7 +30,7 @@ export default async function AdminInsightsPage({
     <div>
       <h1 className="mb-1 text-lg font-bold">동네 물가 데이터 (B2B)</h1>
       <p className="mb-3 text-xs text-ink-3">
-        세일 데이터의 비식별 집계예요. 가게 {MIN_STORES}곳 미만 버킷은 익명성 보장을 위해 숨겨져요. 지자체·리서치·FMCG 리포트 원천.
+        세일 데이터의 비식별 집계예요. 가게 {minStores}곳 미만 버킷은 익명성 보장을 위해 숨겨져요. 지자체·리서치·FMCG 리포트 원천.
       </p>
 
       {/* 기간 선택 */}
@@ -70,7 +72,7 @@ export default async function AdminInsightsPage({
       <h2 className="mb-1 text-sm font-bold">동네 × 업종 평균 세일가</h2>
       {regionStats.length === 0 ? (
         <p className="rounded-xl border border-dashed border-line p-6 text-center text-sm text-ink-3">
-          아직 공개할 집계가 부족해요. (가게 {MIN_STORES}곳 이상 동네·업종 필요)
+          아직 공개할 집계가 부족해요. (가게 {minStores}곳 이상 동네·업종 필요)
         </p>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-line-2">

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ipLimit } from "@/lib/rateLimit";
 import { generateCode, hashCode, isSmsDevMode, normalizePhone, sendSmsCode } from "@/lib/sms";
+import { getSiteSettings } from "@/lib/siteSettings";
 
 /**
  * 전화번호 인증번호 발송 (Phase 5, 로그인 전 단계).
@@ -10,8 +11,7 @@ import { generateCode, hashCode, isSmsDevMode, normalizePhone, sendSmsCode } fro
 export const runtime = "nodejs";
 
 const CODE_TTL_MS = 5 * 60 * 1000; // 5분
-const RATE_WINDOW_MS = 60 * 1000;
-const RATE_MAX = 3; // 동일 번호 1분 내 발송 횟수 제한 (어뷰징 방어)
+const RATE_WINDOW_MS = 60 * 1000; // 동일 번호 1분 내 발송 횟수 제한 (어뷰징 방어)
 
 export async function POST(req: NextRequest) {
   // 번호를 바꿔가며 SMS 폭탄/발송비 남용하는 공격 방어: IP 기준 분당 5건
@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
     const recent = await prisma.phoneVerification.count({
       where: { phone, createdAt: { gt: new Date(Date.now() - RATE_WINDOW_MS) } },
     });
-    if (recent >= RATE_MAX) {
+    if (recent >= (await getSiteSettings()).ratePhone) {
       return NextResponse.json(
         { error: "잠시 후 다시 시도해 주세요." },
         { status: 429 },

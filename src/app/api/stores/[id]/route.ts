@@ -8,9 +8,10 @@ import { asStoreHours, isOpenNow, openStatusNow, kstTodayStart } from "@/lib/bus
 import { liveSponsorFilter, getActiveSubscriptionForStore } from "@/lib/sponsors";
 import { getStoreCoupons } from "@/lib/coupons";
 import { reservedQtyMap } from "@/lib/reservations";
-import { isStorePro, storeTier, PRO_GALLERY_MAX } from "@/lib/pro";
+import { isStorePro, storeTier } from "@/lib/pro";
 import { getLaunchFlags } from "@/lib/launchFlags";
 import { getPointConfig } from "@/lib/pointConfig";
+import { getSiteSettings } from "@/lib/siteSettings";
 import type { Category } from "@/lib/constants";
 import type { StoreDetailDTO, StoreSource, PriceTrend } from "@/lib/types";
 
@@ -343,10 +344,11 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
           { status: 403 },
         );
       }
+      const galleryMax = (await getSiteSettings()).proGalleryMax;
       const urls = Array.isArray(body.galleryUrls)
         ? body.galleryUrls
             .filter((u) => typeof u === "string" && isPublicStorageUrl(u))
-            .slice(0, PRO_GALLERY_MAX)
+            .slice(0, galleryMax)
         : [];
       data.galleryUrls = urls;
     }

@@ -161,15 +161,26 @@ export async function getSponsorships(): Promise<SponsorRow[]> {
   });
 }
 
-/** 무료체험 시작 시 종료 시각(now + 14일). */
-export function trialEndDate(from: Date = new Date()): Date {
-  return new Date(from.getTime() + TRIAL_DAYS * DAY_MS);
+/** 무료체험 시작 시 종료 시각(now + trialDays). 기본 일수는 관리자 설정(기본 14). */
+export function trialEndDate(from: Date = new Date(), trialDays: number = TRIAL_DAYS): Date {
+  return new Date(from.getTime() + trialDays * DAY_MS);
 }
 
-/** 유료 1주기 연장 종료 시각(기준 시각 + 30일). 기준은 기존 endsAt(미래면)·아니면 now. */
-export function extendPaidDate(currentEndsAt: Date, from: Date = new Date()): Date {
+/** 유료 1주기 연장 종료 시각(기준 + paidDays). 기준은 기존 endsAt(미래면)·아니면 now. 기본 일수는 관리자 설정(기본 30). */
+export function extendPaidDate(
+  currentEndsAt: Date,
+  from: Date = new Date(),
+  paidDays: number = PAID_PERIOD_DAYS,
+): Date {
   const base = currentEndsAt > from ? currentEndsAt : from;
-  return new Date(base.getTime() + PAID_PERIOD_DAYS * DAY_MS);
+  return new Date(base.getTime() + paidDays * DAY_MS);
+}
+
+/** 구독 플랜 → 라이브 월 구독료(원). 관리자 설정(요금·한도)에서 읽는다. */
+export async function planPriceKrw(plan: SubPlan): Promise<number> {
+  const { getSiteSettings } = await import("@/lib/siteSettings");
+  const s = await getSiteSettings();
+  return plan === "pro" ? s.pricePro : plan === "lite" ? s.priceLite : s.priceSponsor;
 }
 
 /** 주소에서 동네 라벨(동/읍/면/가) 추출 — 실패 시 '구독'. (영업/관리 표시용) */
@@ -199,10 +210,12 @@ export async function createTrialSubscription(opts: {
   region: string;
   plan?: SubPlan; // 기본 sponsor. pro 면 프리미엄 혜택까지 활성(가격만 다르고 노출 스폰서는 동일 생성).
 }) {
+  const { getSiteSettings } = await import("@/lib/siteSettings");
+  const settings = await getSiteSettings();
   const now = new Date();
-  const ends = trialEndDate(now);
+  const ends = trialEndDate(now, settings.trialDays);
   const plan: SubPlan = opts.plan ?? "sponsor";
-  const price = PLAN_PRICE_KRW[plan];
+  const price = plan === "pro" ? settings.pricePro : plan === "lite" ? settings.priceLite : settings.priceSponsor;
   return prisma.$transaction(async (tx) => {
     const sub = await tx.subscription.create({
       data: {

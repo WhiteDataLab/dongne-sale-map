@@ -6,10 +6,9 @@ import {
   type SubPlan,
   planHasExposure,
   regionFromAddress,
-  PLAN_PRICE_KRW,
   PLAN_ORDER_NAME,
-  PAID_PERIOD_DAYS,
 } from "@/lib/sponsors";
+import { getSiteSettings } from "@/lib/siteSettings";
 import { chargeBilling, isTossConfigured, TossError } from "@/lib/toss";
 
 /**
@@ -65,14 +64,15 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   }
   if (sub.plan === plan) return NextResponse.json({ ok: true, plan });
 
-  const newPrice = PLAN_PRICE_KRW[plan];
+  const settings = await getSiteSettings();
+  const newPrice = plan === "pro" ? settings.pricePro : plan === "lite" ? settings.priceLite : settings.priceSponsor;
   const now = new Date();
   const upgrading = newPrice > sub.priceKrw;
 
   // 유료(active) 업그레이드 → 남은 기간 차액을 즉시 일할 청구.
   if (upgrading && sub.status === "active") {
     const remainMs = sub.nextBillingAt.getTime() - now.getTime();
-    const fraction = Math.max(0, Math.min(1, remainMs / (PAID_PERIOD_DAYS * DAY_MS)));
+    const fraction = Math.max(0, Math.min(1, remainMs / (settings.paidPeriodDays * DAY_MS)));
     const diff = Math.round((newPrice - sub.priceKrw) * fraction);
 
     if (diff > 0) {

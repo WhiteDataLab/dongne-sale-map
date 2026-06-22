@@ -2,12 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/session";
 import { isPublicStorageUrl } from "@/lib/supabaseStorage";
+import { getSiteSettings } from "@/lib/siteSettings";
 
 /** 고객센터 1:1 문의 등록. 로그인 필요. */
 export const runtime = "nodejs";
 
 const RATE_WINDOW_MS = 60_000;
-const RATE_MAX = 3;
 
 export async function POST(req: NextRequest) {
   const userId = await getCurrentUserId();
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
   const recent = await prisma.inquiry.count({
     where: { userId, createdAt: { gt: new Date(Date.now() - RATE_WINDOW_MS) } },
   });
-  if (recent >= RATE_MAX) {
+  if (recent >= (await getSiteSettings()).rateInquiry) {
     return NextResponse.json({ error: "잠시 후 다시 시도해 주세요." }, { status: 429 });
   }
 

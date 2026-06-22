@@ -3,14 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 import { canManageStore } from "@/lib/menu";
 import { getLaunchFlags } from "@/lib/launchFlags";
-import {
-  getActiveAdCampaign,
-  isBillableAction,
-  AD_MIN_BID,
-  AD_MAX_BID,
-  AD_MIN_BUDGET,
-  AD_MAX_BUDGET,
-} from "@/lib/ads";
+import { getActiveAdCampaign, isBillableAction } from "@/lib/ads";
+import { getSiteSettings } from "@/lib/siteSettings";
 
 /**
  * L3(수익화) — 성과형 광고(CPA) 캠페인 관리(사장님/관리자).
@@ -68,13 +62,14 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   if (!isBillableAction(body.action)) {
     return NextResponse.json({ error: "과금 대상(갈래요/길찾기)을 선택해 주세요." }, { status: 400 });
   }
+  const { adMinBid, adMaxBid, adMinBudget, adMaxBudget } = await getSiteSettings();
   const bidKrw = Math.round(Number(body.bidKrw));
   const budgetKrw = Math.round(Number(body.budgetKrw));
-  if (!Number.isFinite(bidKrw) || bidKrw < AD_MIN_BID || bidKrw > AD_MAX_BID) {
-    return NextResponse.json({ error: `입찰가는 ${AD_MIN_BID}~${AD_MAX_BID}원이에요.` }, { status: 400 });
+  if (!Number.isFinite(bidKrw) || bidKrw < adMinBid || bidKrw > adMaxBid) {
+    return NextResponse.json({ error: `입찰가는 ${adMinBid}~${adMaxBid}원이에요.` }, { status: 400 });
   }
-  if (!Number.isFinite(budgetKrw) || budgetKrw < AD_MIN_BUDGET || budgetKrw > AD_MAX_BUDGET) {
-    return NextResponse.json({ error: `예산은 ${AD_MIN_BUDGET.toLocaleString()}원 이상이에요.` }, { status: 400 });
+  if (!Number.isFinite(budgetKrw) || budgetKrw < adMinBudget || budgetKrw > adMaxBudget) {
+    return NextResponse.json({ error: `예산은 ${adMinBudget.toLocaleString()}원 이상이에요.` }, { status: 400 });
   }
   if (budgetKrw < bidKrw) {
     return NextResponse.json({ error: "예산은 입찰가보다 커야 해요." }, { status: 400 });
@@ -121,9 +116,10 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   } else if (op === "cancel") {
     await prisma.adCampaign.update({ where: { id: campaign.id }, data: { status: "canceled" } });
   } else if (op === "topup") {
+    const { adMinBudget } = await getSiteSettings();
     const amount = Math.round(Number(body.amount));
-    if (!Number.isFinite(amount) || amount < AD_MIN_BUDGET) {
-      return NextResponse.json({ error: `추가 예산은 ${AD_MIN_BUDGET.toLocaleString()}원 이상이에요.` }, { status: 400 });
+    if (!Number.isFinite(amount) || amount < adMinBudget) {
+      return NextResponse.json({ error: `추가 예산은 ${adMinBudget.toLocaleString()}원 이상이에요.` }, { status: 400 });
     }
     // 예산 추가 + 소진 상태였으면 재가동.
     const nextStatus = campaign.status === "depleted" ? "active" : campaign.status;

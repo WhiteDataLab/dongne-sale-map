@@ -5,13 +5,19 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAdminSession } from "@/lib/admin";
 import {
-  SPONSOR_PRICE_KRW,
   liveSponsorFilter,
   trialEndDate,
   extendPaidDate,
 } from "@/lib/sponsors";
+import { getSiteSettings } from "@/lib/siteSettings";
 import { setLaunchFlag, type LaunchFlags } from "@/lib/launchFlags";
 import { setPointConfig, POINT_CONFIG_META, type PointConfig } from "@/lib/pointConfig";
+import {
+  setSiteSetting,
+  SETTINGS_META,
+  type SiteSettings,
+  type SettingsGroup,
+} from "@/lib/siteSettings";
 
 /** 모든 관리 액션은 호출 시 관리자 권한을 재확인한다(폼에서 직접 호출될 수 있으므로). */
 async function ensureAdmin() {
@@ -42,6 +48,21 @@ export async function savePointConfig(formData: FormData) {
     await setPointConfig(key as keyof PointConfig, n);
   }
   revalidatePath("/admin/points");
+}
+
+/** 사이트 설정(운영/요금/광고·예약) 그룹 단위 저장. 비정상 값은 무시(기존 유지). */
+export async function saveSiteSettings(formData: FormData) {
+  await ensureAdmin();
+  const group = String(formData.get("__group")) as SettingsGroup;
+  const fields = SETTINGS_META.filter((m) => m.group === group);
+  for (const { key } of fields) {
+    const raw = formData.get(key);
+    if (raw == null) continue;
+    const n = Number(String(raw).trim());
+    if (!Number.isFinite(n) || n < 0) continue;
+    await setSiteSetting(key as keyof SiteSettings, n);
+  }
+  revalidatePath(`/admin/${group === "ops" ? "settings" : group === "pricing" ? "pricing" : "params"}`);
 }
 
 export async function resolveReport(formData: FormData) {
@@ -294,14 +315,15 @@ export async function startSponsorTrial(formData: FormData) {
   });
   if (existing) return;
 
+  const settings = await getSiteSettings();
   const now = new Date();
-  const ends = trialEndDate(now);
+  const ends = trialEndDate(now, settings.trialDays);
   await prisma.sponsorship.create({
     data: {
       storeId,
       region,
       status: "trial",
-      priceKrw: SPONSOR_PRICE_KRW,
+      priceKrw: settings.priceSponsor,
       trialEndsAt: ends,
       startsAt: now,
       endsAt: ends, // 체험 종료 = 노출 보장 종료(결제 확인 시 연장)
@@ -316,22 +338,24 @@ export async function confirmSponsorPayment(formData: FormData) {
   const id = String(formData.get("id"));
   const s = await prisma.sponsorship.findUnique({ where: { id }, select: { endsAt: true } });
   if (!s) return;
+  const { paidPeriodDays } = await getSiteSettings();
   await prisma.sponsorship.update({
     where: { id },
-    data: { status: "active", endsAt: extendPaidDate(s.endsAt) },
+    data: { status: "active", endsAt: extendPaidDate(s.endsAt, new Date(), paidPeriodDays) },
   });
   revalidatePath("/admin/sponsors");
 }
 
-/** M1-A: 유료 1주기(30일) 연장. */
+/** M1-A: 유료 1주기 연장(기간은 관리자 설정). */
 export async function extendSponsor(formData: FormData) {
   await ensureAdmin();
   const id = String(formData.get("id"));
   const s = await prisma.sponsorship.findUnique({ where: { id }, select: { endsAt: true } });
   if (!s) return;
+  const { paidPeriodDays } = await getSiteSettings();
   await prisma.sponsorship.update({
     where: { id },
-    data: { status: "active", endsAt: extendPaidDate(s.endsAt) },
+    data: { status: "active", endsAt: extendPaidDate(s.endsAt, new Date(), paidPeriodDays) },
   });
   revalidatePath("/admin/sponsors");
 }

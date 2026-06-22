@@ -27,9 +27,16 @@ export function tierAllowsLite(t: StoreTier): boolean {
   return t === "lite" || t === "pro";
 }
 
-/** 쿠폰 활성 한도(티어별). */
-export function couponLimitForTier(t: StoreTier): number {
-  return t === "pro" ? PRO_COUPON_ACTIVE_LIMIT : t === "lite" ? LITE_COUPON_ACTIVE_LIMIT : FREE_COUPON_ACTIVE_LIMIT;
+/** 쿠폰 활성 한도(티어별). limits 미지정 시 기본 상수, 지정 시 관리자 설정값 사용. */
+export function couponLimitForTier(
+  t: StoreTier,
+  limits: { free: number; lite: number; pro: number } = {
+    free: FREE_COUPON_ACTIVE_LIMIT,
+    lite: LITE_COUPON_ACTIVE_LIMIT,
+    pro: PRO_COUPON_ACTIVE_LIMIT,
+  },
+): number {
+  return t === "pro" ? limits.pro : t === "lite" ? limits.lite : limits.free;
 }
 
 /**
