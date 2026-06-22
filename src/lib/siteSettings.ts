@@ -19,7 +19,7 @@ export type SiteSettings = {
   reportHideThreshold: number; // 신고 누적 자동숨김 임계
   pointExpiryYears: number; // 포인트 소멸 기간(년)
   pointHistoryYears: number; // 포인트 내역 조회 범위(년)
-  productPointMaxCount: number; // 메뉴 등록 포인트 적립 상한(한 계정당 N개까지만 적립)
+  productPointMaxCount: number; // 메뉴 등록 포인트 적립 상한(한 계정당 하루 N개까지만 적립)
   insightsMinStores: number; // 물가 통계 노출 최소 표본(가게 수)
   rateReview: number; // 리뷰 1분 내 작성 상한
   rateSale: number; // 세일 제보 1분 내 상한
@@ -143,7 +143,7 @@ export const SETTINGS_META: SettingMeta[] = [
   { key: "reportHideThreshold", group: "ops", label: "신고 자동숨김 임계", desc: "콘텐츠가 이만큼 신고되면 자동으로 숨김 처리돼요.", unit: "건" },
   { key: "pointExpiryYears", group: "ops", label: "포인트 소멸 기간", desc: "적립 후 이 기간이 지난 포인트는 잔액에서 소멸돼요.", unit: "년" },
   { key: "pointHistoryYears", group: "ops", label: "포인트 내역 조회 범위", desc: "사용자가 볼 수 있는 포인트 내역 기간이에요.", unit: "년" },
-  { key: "productPointMaxCount", group: "ops", label: "메뉴 등록 적립 상한", desc: "한 계정이 메뉴 등록으로 포인트를 받을 수 있는 최대 개수예요. 초과분은 적립되지 않아요.", unit: "개" },
+  { key: "productPointMaxCount", group: "ops", label: "메뉴 등록 적립 상한(1일)", desc: "한 계정이 하루 동안 메뉴 등록으로 포인트를 받을 수 있는 최대 개수예요. 초과분은 적립되지 않아요(자정 KST 기준 초기화).", unit: "개" },
   { key: "insightsMinStores", group: "ops", label: "물가 통계 최소 표본", desc: "이 수 미만의 가게만 있는 품목은 물가 통계에서 가려요.", unit: "곳" },
   { key: "rateReview", group: "ops", label: "리뷰 작성 한도(1분)", desc: "1분 내 같은 사용자의 리뷰 작성 상한(도배 방지).", unit: "건" },
   { key: "rateSale", group: "ops", label: "세일 제보 한도(1분)", desc: "1분 내 세일 제보 상한.", unit: "건" },

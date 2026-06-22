@@ -5,6 +5,7 @@ import { canManageMenu } from "@/lib/menu";
 import { isPublicStorageUrl } from "@/lib/supabaseStorage";
 import { getPointConfig } from "@/lib/pointConfig";
 import { getSiteSettings } from "@/lib/siteSettings";
+import { kstTodayStart } from "@/lib/businessHours";
 
 /** 메뉴(상품) 추가 (스펙 Phase 7b). 사진 필수. 권한: canManageMenu. */
 export const runtime = "nodejs";
@@ -61,9 +62,9 @@ export async function POST(req: NextRequest) {
     }
     const productPoint = (await getPointConfig()).product;
     const pointCap = (await getSiteSettings()).productPointMaxCount;
-    // 한 계정당 메뉴 등록 적립 상한: 이미 적립한 메뉴 수가 상한 이상이면 등록은 되지만 포인트 미지급.
+    // 한 계정당 1일 메뉴 등록 적립 상한: 오늘(KST) 이미 적립한 메뉴 수가 상한 이상이면 등록은 되지만 포인트 미지급.
     const earnedCount = await prisma.pointLog.count({
-      where: { userId: user.id, refType: "product", amount: { gt: 0 } },
+      where: { userId: user.id, refType: "product", amount: { gt: 0 }, createdAt: { gte: kstTodayStart() } },
     });
     const grant = earnedCount < pointCap ? productPoint : 0;
     const product = await prisma.$transaction(async (tx) => {
