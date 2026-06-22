@@ -22,10 +22,10 @@ async function authorize(reviewId: string) {
   const review = await prisma.review
     .findUnique({
       where: { id: reviewId },
-      select: { id: true, hidden: true, store: { select: { id: true, ownerId: true, status: true } } },
+      select: { id: true, hidden: true, held: true, store: { select: { id: true, ownerId: true, status: true } } },
     })
     .catch(() => null);
-  if (!review || review.hidden || review.store.status !== "active") {
+  if (!review || review.hidden || review.held || review.store.status !== "active") {
     return { error: NextResponse.json({ error: "리뷰를 찾을 수 없어요." }, { status: 404 }) };
   }
   if (!canManageStore(review.store, user)) {

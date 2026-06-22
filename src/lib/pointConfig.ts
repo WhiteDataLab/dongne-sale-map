@@ -71,6 +71,16 @@ export async function getPointConfig(): Promise<PointConfig> {
   return out;
 }
 
+/**
+ * 리뷰 적립액: (최초/재방문) × (글/사진). base = `review` 설정값(기본 10).
+ *  - 최초: 글 base(10) · 사진 2×base(20)
+ *  - 재방문(두번째+, 영수증 필수): 글 2×base(20) · 사진 4×base(40)
+ */
+export function reviewGrant(base: number, isFirst: boolean, hasPhoto: boolean): number {
+  if (isFirst) return hasPhoto ? base * 2 : base;
+  return hasPhoto ? base * 4 : base * 2;
+}
+
 /** 단일 적립 수치 저장(관리자 전용 액션에서 호출). 0 이상 정수로 저장. */
 export async function setPointConfig(key: keyof PointConfig, value: number): Promise<void> {
   const k = POINT_CONFIG_KEYS[key];

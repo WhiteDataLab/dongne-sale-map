@@ -39,7 +39,7 @@ export async function GET(
           orderBy: { createdAt: "desc" },
         },
         reviews: {
-          where: { hidden: false }, // 자동 숨김된 리뷰 제외 (Phase 4)
+          where: { hidden: false, held: false }, // 신고 자동숨김(Phase 4) + 모더레이션 임시보관 제외
           include: {
             user: { select: { nickname: true } },
             reply: { include: { author: { select: { nickname: true } } } }, // M8: 사장님 답글
@@ -94,6 +94,8 @@ export async function GET(
     // 즐겨찾기 여부: 로그인 사용자의 Favorite 존재 여부.
     const user = await getCurrentUser();
     const userId = user?.id ?? null;
+    // 리뷰 영수증 게이트: 로그인 사용자의 누적 리뷰 수(0이면 최초 → 영수증 불필요, 1+면 영수증 필수).
+    const viewerReviewCount = userId ? await prisma.review.count({ where: { userId } }) : 0;
 
     // M2: 사장님 패널 진입점용 — 관리 권한자에게만 활성 구독 상태 노출.
     const canManage = canManageStore(store, user);
@@ -201,6 +203,7 @@ export async function GET(
       tier,
       launch,
       pointConfig: { review: pc.review, product: pc.product },
+      viewerReviewCount,
       bannerUrl: store.bannerUrl,
       galleryUrls: store.galleryUrls,
       registeredBy: {

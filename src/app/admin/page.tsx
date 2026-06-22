@@ -8,14 +8,16 @@ export default async function AdminHome() {
   let pendingMerchants = 0;
   let pendingRedemptions = 0;
   let openInquiries = 0;
+  let heldReviews = 0;
   let introVideo: string | null = null;
   try {
-    const [r, s, m, rd, iq, cfg] = await Promise.all([
+    const [r, s, m, rd, iq, hq, cfg] = await Promise.all([
       prisma.report.count({ where: { status: "open" } }),
       prisma.store.count({ where: { verified: false, status: "active" } }),
       prisma.merchantVerification.count({ where: { status: "pending" } }),
       prisma.redemption.count({ where: { status: "requested" } }),
       prisma.inquiry.count({ where: { status: "open" } }),
+      prisma.review.count({ where: { held: true } }),
       prisma.siteConfig.findUnique({ where: { key: "intro_video_url" } }),
     ]);
     openReports = r;
@@ -23,6 +25,7 @@ export default async function AdminHome() {
     pendingMerchants = m;
     pendingRedemptions = rd;
     openInquiries = iq;
+    heldReviews = hq;
     introVideo = cfg?.value ?? null;
   } catch {
     // DB 미연결 시 0
@@ -90,6 +93,15 @@ export default async function AdminHome() {
         <span className="font-bold text-ink">신고 큐</span>
         <span className="num rounded-full bg-deal-wash px-2 py-0.5 text-sm font-bold text-deal-ink">
           처리 대기 {openReports}
+        </span>
+      </Link>
+      <Link
+        href="/admin/quarantine"
+        className="flex items-center justify-between rounded-xl border border-line p-4"
+      >
+        <span className="font-bold text-ink">🔒 임시 보관함</span>
+        <span className="num rounded-full bg-deal-wash px-2 py-0.5 text-sm font-bold text-deal-ink">
+          검토 대기 {heldReviews}
         </span>
       </Link>
       <Link

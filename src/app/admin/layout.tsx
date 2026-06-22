@@ -63,6 +63,7 @@ export default async function AdminLayout({
               label="심사 큐"
               links={[
                 ["/admin/reports", "신고 큐"],
+                ["/admin/quarantine", "임시 보관함"],
                 ["/admin/stores", "가게 인증"],
                 ["/admin/merchants", "사장님 인증"],
               ]}

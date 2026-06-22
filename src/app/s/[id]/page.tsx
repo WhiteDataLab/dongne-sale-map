@@ -19,7 +19,7 @@ async function getStore(id: string) {
         where: { status: "active", expiresAt: { gt: now } },
         orderBy: { createdAt: "desc" },
       },
-      reviews: { where: { hidden: false }, select: { rating: true } },
+      reviews: { where: { hidden: false, held: false }, select: { rating: true } },
     },
   });
 }

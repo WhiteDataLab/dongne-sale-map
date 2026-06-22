@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 import { deletePublicImages, isPublicStorageUrl, isReceiptPath } from "@/lib/supabaseStorage";
+import { screenReview } from "@/lib/moderation";
 
 /** 리뷰 수정/삭제 (작성자 본인 또는 관리자). */
 export const runtime = "nodejs";
@@ -90,6 +91,10 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     const receiptUrl =
       typeof body.receiptPath === "string" && isReceiptPath(body.receiptPath) ? body.receiptPath : undefined;
 
+    // 수정 내용 자동 모더레이션: 현재 내용 기준으로 임시 보관 여부 재판정.
+    // (노출은 항상 '현재 내용이 깨끗할 때만' 가능 → 욕설/광고로 수정하면 다시 보관, 정정하면 해제)
+    const screen = screenReview([content, ...tags].join(" "));
+
     await prisma.review.update({
       where: { id },
       data: {
@@ -99,6 +104,9 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
         productIds: valid.map((p) => p.id),
         photoUrls,
         ...(receiptUrl ? { receiptUrl } : {}),
+        held: screen.flagged,
+        heldReason: screen.flagged ? screen.reason : null,
+        heldAt: screen.flagged ? new Date() : null,
       },
     });
 

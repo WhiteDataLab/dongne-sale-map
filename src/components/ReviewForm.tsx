@@ -33,6 +33,7 @@ export function ReviewForm({
   review,
   reviewPoint = 10,
   productPoint = 5,
+  requireReceipt = false,
   onGoRegisterProduct,
   onDone,
   onCancel,
@@ -43,6 +44,8 @@ export function ReviewForm({
   review?: ReviewDTO;
   reviewPoint?: number;
   productPoint?: number;
+  /** 두번째 리뷰부터(true): 구매 영수증 인증 필수. 최초 리뷰(false)는 불필요. */
+  requireReceipt?: boolean;
   onGoRegisterProduct?: () => void;
   onDone: () => void;
   onCancel: () => void;
@@ -131,6 +134,11 @@ export function ReviewForm({
     if (selected.length === 0 && !content) {
       return onToast("태그를 고르거나 ‘기타’로 직접 입력해 주세요.");
     }
+    // 두번째 리뷰부터는 구매 영수증 인증 필수(최초 리뷰는 불필요).
+    const hasReceipt = receiptPath != null || (isEdit && Boolean(review?.receiptVerified));
+    if (!isEdit && requireReceipt && !hasReceipt) {
+      return onToast("두번째 리뷰부터는 구매 영수증 인증이 필요해요. 영수증을 올려 주세요.");
+    }
     setSubmitting(true);
     try {
       // 새로 추가한 사진만 업로드(수정 모드의 기존 사진은 그대로 유지)
@@ -189,16 +197,19 @@ export function ReviewForm({
         onToast(res.status === 401 ? "로그인이 필요해요." : e.error ?? "등록 실패");
         return;
       }
-      const { pointPending, scored } = (await res.json()) as {
+      const { pointPending, scored, held } = (await res.json()) as {
         pointPending?: number;
         scored?: boolean;
+        held?: boolean;
       };
       onToast(
-        pointPending && pointPending > 0
-          ? `리뷰 등록! 적립 대기 +${pointPending}P`
-          : scored === false
-            ? "리뷰 등록 완료! 오늘 이미 작성해 별점·포인트는 반영되지 않아요."
-            : `리뷰 등록 완료! 다음부터는 사진을 함께 올리면 ${reviewPoint}P 받아요.`,
+        held
+          ? "리뷰가 접수됐어요. 부적절한 표현이 감지돼 검토 후 노출돼요."
+          : pointPending && pointPending > 0
+            ? `리뷰 등록! 적립 대기 +${pointPending}P`
+            : scored === false
+              ? "리뷰 등록 완료! 오늘 이미 작성해 별점·포인트는 반영되지 않아요."
+              : "리뷰 등록 완료! 감사해요.",
       );
       onDone();
     } catch {
@@ -414,9 +425,18 @@ export function ReviewForm({
         <div className="flex items-center justify-between gap-2">
           <div className="min-w-0">
             <p className="text-sm font-medium">
-              🧾 영수증 인증 <span className="text-xs font-normal text-ink-3">(선택)</span>
+              🧾 영수증 인증{" "}
+              {requireReceipt && !isEdit ? (
+                <span className="text-xs font-bold text-red-500">(필수)</span>
+              ) : (
+                <span className="text-xs font-normal text-ink-3">(선택)</span>
+              )}
             </p>
-            <p className="text-xs text-ink-3">올리면 ‘영수증 인증’ 배지가 붙어요. 이미지는 비공개로 보관돼요.</p>
+            <p className="text-xs text-ink-3">
+              {requireReceipt && !isEdit
+                ? "두번째 리뷰부터는 이 가게 구매 영수증이 필요해요. 이미지는 비공개로 보관돼요."
+                : "올리면 ‘영수증 인증’ 배지가 붙어요. 이미지는 비공개로 보관돼요."}
+            </p>
           </div>
           <button
             type="button"
@@ -450,8 +470,18 @@ export function ReviewForm({
       </div>
 
       {!isEdit && (
-        <p className="rounded-lg bg-brand-wash px-3 py-2 text-xs text-brand-ink">
-          💡 첫 리뷰는 글만 써도 {reviewPoint}P! 그 다음부터는 <b>사진과 함께</b> 작성하면 {reviewPoint}P를 받아요. (같은 날 같은 가게 재작성은 별점·포인트 미반영)
+        <p className="rounded-lg bg-brand-wash px-3 py-2 text-xs leading-relaxed text-brand-ink">
+          {requireReceipt ? (
+            <>
+              💡 두번째 리뷰부터는 <b>구매 영수증 인증 필수</b>예요. 글 {reviewPoint * 2}P, <b>사진까지</b>{" "}
+              올리면 {reviewPoint * 4}P를 받아요. (영수증 없이는 작성할 수 없어요)
+            </>
+          ) : (
+            <>
+              💡 첫 리뷰는 <b>글만 써도 {reviewPoint}P</b>, <b>사진까지</b> 올리면 {reviewPoint * 2}P! (같은 날
+              같은 가게 재작성은 별점·포인트 미반영)
+            </>
+          )}
         </p>
       )}
 

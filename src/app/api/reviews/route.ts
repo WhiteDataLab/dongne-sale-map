@@ -3,17 +3,18 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/session";
 import { isPublicStorageUrl, isReceiptPath } from "@/lib/supabaseStorage";
 import { kstTodayStart } from "@/lib/businessHours";
-import { getPointConfig } from "@/lib/pointConfig";
+import { getPointConfig, reviewGrant } from "@/lib/pointConfig";
 import { getSiteSettings } from "@/lib/siteSettings";
+import { screenReview } from "@/lib/moderation";
 
 /**
  * 리뷰 작성 (스펙 Phase 3 + 리뷰 규칙 개편).
  * 규칙:
  *  - 모든 리뷰는 구매 메뉴(상품) 1개 이상 연결 필수(다중 선택 가능).
- *  - 최초 리뷰는 글만 써도 포인트 지급 + 별점 반영.
- *  - 2번째 리뷰부터는 사진을 함께 올려야 포인트 지급.
- *  - 같은 날 같은 가게에 이미 (반영된)리뷰가 있으면 재작성은 가능하나
- *    포인트·별점 미반영(scored=false). 그 리뷰를 삭제하면 다시 반영 가능.
+ *  - **최초 리뷰**(계정 첫 리뷰): 영수증 없이 가능. 글만=base(기본 10) / 사진 동반=2×base(20).
+ *  - **두번째 리뷰부터**: 해당 가게 구매 **영수증 필수**(없으면 작성 불가). 글=2×base(20) / 사진=4×base(40).
+ *  - 같은 날 같은 가게에 이미 (반영된)리뷰가 있으면 재작성은 가능하나 포인트·별점 미반영(scored=false).
+ *  - **자동 모더레이션**: 욕설·음란·광고 감지 시 삭제 대신 임시 보관(held) → 비공개 보류 + 관리자 검토.
  * 어뷰징 방어: 레이트리밋, 사진/메뉴는 우리 데이터만 인정.
  */
 export const runtime = "nodejs";
@@ -109,30 +110,55 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "잠시 후 다시 시도해 주세요." }, { status: 429 });
     }
 
-    // 별점/포인트 반영 여부(scored): 같은 날(KST) 이 가게에 이미 반영된 리뷰가 있으면 미반영.
+    // 최초/재방문 판정(계정 기준). 두번째 리뷰부터는 구매 영수증 인증 필수.
+    const priorCount = await prisma.review.count({ where: { userId } });
+    const isFirst = priorCount === 0;
+    const hasPhoto = photoUrls.length > 0;
+    const hasReceipt = receiptUrl !== null;
+    if (!isFirst && !hasReceipt) {
+      return NextResponse.json(
+        { error: "두번째 리뷰부터는 구매 영수증 인증이 필요해요.", code: "receipt_required" },
+        { status: 400 },
+      );
+    }
+
+    // 자동 모더레이션: 욕설·음란·광고 → 임시 보관(held). 삭제가 아니라 비공개 보류.
+    const screen = screenReview([content, ...tags].join(" "));
+    const held = screen.flagged;
+
+    // 별점/포인트 반영(scored): 같은 날(KST) 이 가게에 반영 리뷰가 이미 있으면 미반영.
+    // 임시 보관(held)도 미반영(별점·포인트 보류) — 관리자 복원 시 반영/적립.
     const todayScored = await prisma.review.count({
       where: { userId, storeId, scored: true, createdAt: { gte: kstTodayStart() } },
     });
-    const scored = todayScored === 0;
+    const scored = todayScored === 0 && !held;
 
-    // 포인트 정책: 반영 대상이면서, 최초 리뷰는 무조건 / 이후엔 사진 있을 때만
-    const priorCount = await prisma.review.count({ where: { userId } });
-    const isFirst = priorCount === 0;
-    // 사진 또는 영수증 인증이 있으면 '인증된 리뷰'로 보고 2번째부터도 포인트 지급
-    const hasProof = photoUrls.length > 0 || receiptUrl !== null;
-    const reviewPoint = (await getPointConfig()).review;
-    const grant = scored && (isFirst || hasProof) ? reviewPoint : 0;
+    const base = (await getPointConfig()).review;
+    const grant = scored ? reviewGrant(base, isFirst, hasPhoto) : 0;
 
     const review = await prisma.$transaction(async (tx) => {
       const created = await tx.review.create({
-        data: { storeId, userId, rating, content, tags, productIds: linkedIds, photoUrls, receiptUrl, scored },
+        data: {
+          storeId,
+          userId,
+          rating,
+          content,
+          tags,
+          productIds: linkedIds,
+          photoUrls,
+          receiptUrl,
+          scored,
+          held,
+          heldReason: held ? screen.reason : null,
+          heldAt: held ? new Date() : null,
+        },
       });
       if (grant > 0) {
         await tx.pointLog.create({
           data: {
             userId,
             amount: grant,
-            reason: isFirst ? "첫 리뷰 작성" : "사진 리뷰 작성",
+            reason: isFirst ? "첫 리뷰 작성" : "영수증 리뷰 작성",
             status: "pending",
             refType: "review",
             refId: created.id,
@@ -148,6 +174,7 @@ export async function POST(req: NextRequest) {
       pointPending: grant,
       isFirst,
       scored,
+      held,
     });
   } catch {
     return NextResponse.json({ error: "리뷰 등록에 실패했어요." }, { status: 500 });

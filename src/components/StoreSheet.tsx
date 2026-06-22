@@ -1746,6 +1746,7 @@ function ReviewsTab({
           products={detail.products}
           reviewPoint={detail.pointConfig.review}
           productPoint={detail.pointConfig.product}
+          requireReceipt={detail.viewerReviewCount > 0}
           onGoRegisterProduct={onGoRegisterProduct}
           onDone={onDone}
           onCancel={onClose}

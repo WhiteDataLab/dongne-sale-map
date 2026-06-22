@@ -152,6 +152,8 @@ export type StoreDetailDTO = StoreDTO & {
   launch: LaunchFlags;
   // 적립 포인트(관리자 조정) — 리뷰/메뉴 등록 안내 문구 표시용.
   pointConfig: { review: number; product: number };
+  // 로그인 사용자의 누적 리뷰 수(0=최초 리뷰, 1+=영수증 인증 필수). 비로그인 0.
+  viewerReviewCount: number;
 };
 
 /** 지오코딩 결과 (검색어 → 좌표). */

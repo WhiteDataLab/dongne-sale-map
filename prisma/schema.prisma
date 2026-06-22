@@ -554,6 +554,9 @@ model Review {
   receiptUrl String? // 영수증 인증(선택) — 비공개 버킷 경로만 저장(공개 노출 X, 배지로만 표시)
   scored     Boolean  @default(true) // 포인트·별점 반영 여부. 같은 날 같은 가게 재작성은 false
   hidden     Boolean  @default(false) // 신고 누적 N건 시 soft hide (Phase 4)
+  held       Boolean  @default(false) // 자동 모더레이션 임시 보관(욕설·음란·광고). 비공개 보류, 관리자 검토 대기
+  heldReason String? // 보관 사유(감지 카테고리)
+  heldAt     DateTime? // 보관 시각
   createdAt  DateTime @default(now())
 
   store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
@@ -562,6 +565,7 @@ model Review {
 
   @@index([storeId])
   @@index([userId])
+  @@index([held])
 }
 
 // M8(수익화): 사장님 리뷰 답글. 라이트+ 플랜의 '관계' 기능 — 인증 사장님(소유자)·관리자가

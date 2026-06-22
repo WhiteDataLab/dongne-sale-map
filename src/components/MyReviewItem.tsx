@@ -20,6 +20,7 @@ export type MyReview = {
   receiptVerified: boolean;
   createdAt: string; // ISO
   scored: boolean;
+  held?: boolean; // 자동 모더레이션 임시 보관(검토 대기)
   reply: ReviewReplyDTO | null; // M8: 사장님 답글(내 리뷰에 달린)
 };
 
@@ -68,6 +69,11 @@ export function MyReviewItem({ review }: { review: MyReview }) {
         <div className="min-w-0">
           <p className="truncate text-sm font-medium">🏪 {review.storeName}</p>
           <p className="text-amber-500 text-xs">{starString(review.rating)}</p>
+          {review.held && (
+            <span className="mt-1 inline-block rounded bg-amber-100 px-1.5 py-0.5 text-[11px] font-semibold text-amber-700">
+              🔒 검토 중 (부적절 표현 감지 — 정정하면 다시 노출돼요)
+            </span>
+          )}
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <button

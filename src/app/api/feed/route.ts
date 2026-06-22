@@ -56,7 +56,7 @@ export async function GET(req: NextRequest) {
         },
       }),
       prisma.review.findMany({
-        where: { hidden: false, store: inBounds },
+        where: { hidden: false, held: false, store: inBounds },
         orderBy: { createdAt: "desc" },
         take: 25,
         select: {

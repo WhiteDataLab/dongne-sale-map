@@ -60,6 +60,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "잠시 후 다시 시도해 주세요. (너무 빠른 연속 등록)" }, { status: 429 });
     }
     const productPoint = (await getPointConfig()).product;
+    const pointCap = (await getSiteSettings()).productPointMaxCount;
+    // 한 계정당 메뉴 등록 적립 상한: 이미 적립한 메뉴 수가 상한 이상이면 등록은 되지만 포인트 미지급.
+    const earnedCount = await prisma.pointLog.count({
+      where: { userId: user.id, refType: "product", amount: { gt: 0 } },
+    });
+    const grant = earnedCount < pointCap ? productPoint : 0;
     const product = await prisma.$transaction(async (tx) => {
       const created = await tx.product.create({
         data: {
@@ -73,20 +79,27 @@ export async function POST(req: NextRequest) {
           createdById: user.id,
         },
       });
-      // 메뉴 등록 적립(pending) — 커뮤니티 메뉴 채우기 유도
-      await tx.pointLog.create({
-        data: {
-          userId: user.id,
-          amount: productPoint,
-          reason: "메뉴 등록",
-          status: "pending",
-          refType: "product",
-          refId: created.id,
-        },
-      });
+      // 메뉴 등록 적립(pending) — 커뮤니티 메뉴 채우기 유도. 상한 초과 시 미지급.
+      if (grant > 0) {
+        await tx.pointLog.create({
+          data: {
+            userId: user.id,
+            amount: grant,
+            reason: "메뉴 등록",
+            status: "pending",
+            refType: "product",
+            refId: created.id,
+          },
+        });
+      }
       return created;
     });
-    return NextResponse.json({ ok: true, productId: product.id, pointPending: productPoint });
+    return NextResponse.json({
+      ok: true,
+      productId: product.id,
+      pointPending: grant,
+      pointCapped: grant === 0,
+    });
   } catch {
     return NextResponse.json({ error: "메뉴 등록에 실패했어요." }, { status: 500 });
   }

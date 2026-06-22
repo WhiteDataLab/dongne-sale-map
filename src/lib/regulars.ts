@@ -64,7 +64,7 @@ export async function getRegulars(
       take: 8000,
     }),
     prisma.review.findMany({
-      where: { storeId, hidden: false, createdAt: { gte: since } },
+      where: { storeId, hidden: false, held: false, createdAt: { gte: since } },
       select: { userId: true, createdAt: true },
       take: 2000,
     }),

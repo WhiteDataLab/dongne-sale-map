@@ -105,7 +105,7 @@ export async function getLeads(
     prisma.sale.groupBy({ by: ["storeId"], where: { storeId: { in: ids } }, _count: { _all: true } }),
     prisma.review.groupBy({
       by: ["storeId"],
-      where: { storeId: { in: ids }, hidden: false },
+      where: { storeId: { in: ids }, hidden: false, held: false },
       _count: { _all: true },
     }),
     prisma.favorite.groupBy({ by: ["storeId"], where: { storeId: { in: ids } }, _count: { _all: true } }),

@@ -65,6 +65,55 @@ export async function saveSiteSettings(formData: FormData) {
   revalidatePath(`/admin/${group === "ops" ? "settings" : group === "pricing" ? "pricing" : "params"}`);
 }
 
+/**
+ * 임시 보관(held) 리뷰 복원 → 공개 노출. 잘못 격리된 경우를 위해 점수·적립도 살린다.
+ * (작성 시 held 면 scored=false·미적립이었으므로, 복원 시 scored=true + 적립 1회 생성)
+ */
+export async function releaseHeldReview(formData: FormData) {
+  await ensureAdmin();
+  const id = String(formData.get("id"));
+  const r = await prisma.review.findUnique({
+    where: { id },
+    select: { id: true, userId: true, photoUrls: true, createdAt: true, held: true },
+  });
+  if (!r || !r.held) return;
+  const { reviewGrant, getPointConfig } = await import("@/lib/pointConfig");
+  const already = await prisma.pointLog.findFirst({ where: { refType: "review", refId: id } });
+  const isFirst =
+    (await prisma.review.count({ where: { userId: r.userId, createdAt: { lt: r.createdAt } } })) === 0;
+  const base = (await getPointConfig()).review;
+  const grant = already ? 0 : reviewGrant(base, isFirst, r.photoUrls.length > 0);
+  await prisma.$transaction(async (tx) => {
+    await tx.review.update({
+      where: { id },
+      data: { held: false, heldReason: null, heldAt: null, scored: true },
+    });
+    if (grant > 0) {
+      await tx.pointLog.create({
+        data: { userId: r.userId, amount: grant, reason: "리뷰 복원 적립", status: "pending", refType: "review", refId: id },
+      });
+    }
+  });
+  revalidatePath("/admin/quarantine");
+}
+
+/** 임시 보관 리뷰 삭제(스팸 확정). 적립 회수 + 사진 정리. */
+export async function deleteHeldReview(formData: FormData) {
+  await ensureAdmin();
+  const id = String(formData.get("id"));
+  const r = await prisma.review.findUnique({ where: { id }, select: { photoUrls: true } });
+  if (!r) return;
+  await prisma.$transaction([
+    prisma.pointLog.deleteMany({ where: { refType: "review", refId: id } }),
+    prisma.review.delete({ where: { id } }),
+  ]);
+  if (r.photoUrls.length) {
+    const { deletePublicImages } = await import("@/lib/supabaseStorage");
+    await deletePublicImages(r.photoUrls);
+  }
+  revalidatePath("/admin/quarantine");
+}
+
 export async function resolveReport(formData: FormData) {
   await ensureAdmin();
   const id = String(formData.get("id"));

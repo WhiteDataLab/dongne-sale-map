@@ -119,6 +119,7 @@ export default async function AccountPage() {
     photoUrls: string[];
     receiptUrl: string | null;
     scored: boolean;
+    held: boolean;
     createdAt: Date;
     store: { name: string };
     reply: { id: string; body: string; hidden: boolean; createdAt: Date; author: { nickname: string } } | null;
@@ -139,6 +140,7 @@ export default async function AccountPage() {
         photoUrls: true,
         receiptUrl: true,
         scored: true,
+        held: true,
         createdAt: true,
         store: { select: { name: true } },
         reply: { select: { id: true, body: true, hidden: true, createdAt: true, author: { select: { nickname: true } } } },
@@ -304,6 +306,7 @@ export default async function AccountPage() {
               photoUrls: r.photoUrls,
               receiptVerified: Boolean(r.receiptUrl),
               scored: r.scored,
+              held: r.held,
               createdAt: r.createdAt.toISOString(),
               reply:
                 r.reply && !r.reply.hidden

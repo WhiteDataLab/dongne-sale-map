@@ -131,7 +131,8 @@
       "Bash(node --env-file=.env.local _tmp_giftcat.mjs read)",
       "Bash(node --env-file=.env.local _tmp_giftcat.mjs revert)",
       "Bash(grep -n \"pushHistory\\(\\); // \\\\|pushHistory\\(\\);$\\\\|const p = toImg\\(e.clientX\" src/components/PhotoEditor.tsx)",
-      "PowerShell(npx tsc --noEmit)"
+      "PowerShell(npx tsc --noEmit)",
+      "Bash(grep -o \"DATABASE_URL=.\\\\{0,30\\\\}\" .env.local)"
     ]
   }
 }
