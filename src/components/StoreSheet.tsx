@@ -1744,6 +1744,8 @@ function ReviewsTab({
         <ReviewForm
           storeId={detail.id}
           products={detail.products}
+          reviewPoint={detail.pointConfig.review}
+          productPoint={detail.pointConfig.product}
           onGoRegisterProduct={onGoRegisterProduct}
           onDone={onDone}
           onCancel={onClose}
@@ -1753,6 +1755,8 @@ function ReviewsTab({
         <ReviewForm
           storeId={detail.id}
           products={detail.products}
+          reviewPoint={detail.pointConfig.review}
+          productPoint={detail.pointConfig.product}
           review={editReview}
           onDone={() => {
             setEditReview(null);

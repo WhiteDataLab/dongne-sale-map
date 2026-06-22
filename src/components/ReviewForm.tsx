@@ -31,6 +31,8 @@ export function ReviewForm({
   storeId,
   products = [],
   review,
+  reviewPoint = 10,
+  productPoint = 5,
   onGoRegisterProduct,
   onDone,
   onCancel,
@@ -39,6 +41,8 @@ export function ReviewForm({
   storeId: string;
   products?: PickableProduct[];
   review?: ReviewDTO;
+  reviewPoint?: number;
+  productPoint?: number;
   onGoRegisterProduct?: () => void;
   onDone: () => void;
   onCancel: () => void;
@@ -194,7 +198,7 @@ export function ReviewForm({
           ? `리뷰 등록! 적립 대기 +${pointPending}P`
           : scored === false
             ? "리뷰 등록 완료! 오늘 이미 작성해 별점·포인트는 반영되지 않아요."
-            : "리뷰 등록 완료! 다음부터는 사진을 함께 올리면 10P 받아요.",
+            : `리뷰 등록 완료! 다음부터는 사진을 함께 올리면 ${reviewPoint}P 받아요.`,
       );
       onDone();
     } catch {
@@ -271,7 +275,7 @@ export function ReviewForm({
           <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
             <p className="text-sm font-medium text-amber-800">상품부터 등록하시겠어요?</p>
             <p className="mt-0.5 text-xs text-amber-700">
-              구매하신 메뉴를 먼저 등록하면 <b>추가 포인트(+5P)</b>를 받을 수 있어요. 등록 후 다시 리뷰를 쓰면 리뷰 포인트도 받아요!
+              구매하신 메뉴를 먼저 등록하면 <b>추가 포인트(+{productPoint}P)</b>를 받을 수 있어요. 등록 후 다시 리뷰를 쓰면 리뷰 포인트도 받아요!
             </p>
             <button
               type="button"
@@ -447,7 +451,7 @@ export function ReviewForm({
 
       {!isEdit && (
         <p className="rounded-lg bg-brand-wash px-3 py-2 text-xs text-brand-ink">
-          💡 첫 리뷰는 글만 써도 10P! 그 다음부터는 <b>사진과 함께</b> 작성하면 10P를 받아요. (같은 날 같은 가게 재작성은 별점·포인트 미반영)
+          💡 첫 리뷰는 글만 써도 {reviewPoint}P! 그 다음부터는 <b>사진과 함께</b> 작성하면 {reviewPoint}P를 받아요. (같은 날 같은 가게 재작성은 별점·포인트 미반영)
         </p>
       )}
 

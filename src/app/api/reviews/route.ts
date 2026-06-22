@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/session";
 import { isPublicStorageUrl, isReceiptPath } from "@/lib/supabaseStorage";
 import { kstTodayStart } from "@/lib/businessHours";
+import { getPointConfig } from "@/lib/pointConfig";
 
 /**
  * 리뷰 작성 (스펙 Phase 3 + 리뷰 규칙 개편).
@@ -16,7 +17,6 @@ import { kstTodayStart } from "@/lib/businessHours";
  */
 export const runtime = "nodejs";
 
-const POINT_REVIEW = 10;
 const RATE_WINDOW_MS = 60_000;
 const RATE_MAX = 3;
 const MAX_TAGS = 12;
@@ -120,7 +120,8 @@ export async function POST(req: NextRequest) {
     const isFirst = priorCount === 0;
     // 사진 또는 영수증 인증이 있으면 '인증된 리뷰'로 보고 2번째부터도 포인트 지급
     const hasProof = photoUrls.length > 0 || receiptUrl !== null;
-    const grant = scored && (isFirst || hasProof) ? POINT_REVIEW : 0;
+    const reviewPoint = (await getPointConfig()).review;
+    const grant = scored && (isFirst || hasProof) ? reviewPoint : 0;
 
     const review = await prisma.$transaction(async (tx) => {
       const created = await tx.review.create({

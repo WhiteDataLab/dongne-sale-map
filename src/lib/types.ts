@@ -150,6 +150,8 @@ export type StoreDetailDTO = StoreDTO & {
   tier: StoreTier;
   // 운영 무료 오픈 모드 플래그 — 사장님 유료(구독·CPA) / 픽업 예약 UI 노출 여부.
   launch: LaunchFlags;
+  // 적립 포인트(관리자 조정) — 리뷰/메뉴 등록 안내 문구 표시용.
+  pointConfig: { review: number; product: number };
 };
 
 /** 지오코딩 결과 (검색어 → 좌표). */

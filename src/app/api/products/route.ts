@@ -3,11 +3,11 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 import { canManageMenu } from "@/lib/menu";
 import { isPublicStorageUrl } from "@/lib/supabaseStorage";
+import { getPointConfig } from "@/lib/pointConfig";
 
 /** 메뉴(상품) 추가 (스펙 Phase 7b). 사진 필수. 권한: canManageMenu. */
 export const runtime = "nodejs";
 
-const POINT_PRODUCT = 5; // 메뉴 등록 적립(표시용, status=pending)
 const RATE_WINDOW_MS = 5 * 60_000;
 const RATE_MAX = 8; // 5분 내 메뉴 등록 상한(포인트 파밍·도배 방지)
 
@@ -59,6 +59,7 @@ export async function POST(req: NextRequest) {
     if (recent >= RATE_MAX) {
       return NextResponse.json({ error: "잠시 후 다시 시도해 주세요. (너무 빠른 연속 등록)" }, { status: 429 });
     }
+    const productPoint = (await getPointConfig()).product;
     const product = await prisma.$transaction(async (tx) => {
       const created = await tx.product.create({
         data: {
@@ -76,7 +77,7 @@ export async function POST(req: NextRequest) {
       await tx.pointLog.create({
         data: {
           userId: user.id,
-          amount: POINT_PRODUCT,
+          amount: productPoint,
           reason: "메뉴 등록",
           status: "pending",
           refType: "product",
@@ -85,7 +86,7 @@ export async function POST(req: NextRequest) {
       });
       return created;
     });
-    return NextResponse.json({ ok: true, productId: product.id, pointPending: POINT_PRODUCT });
+    return NextResponse.json({ ok: true, productId: product.id, pointPending: productPoint });
   } catch {
     return NextResponse.json({ error: "메뉴 등록에 실패했어요." }, { status: 500 });
   }

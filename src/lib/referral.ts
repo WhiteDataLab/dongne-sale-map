@@ -1,9 +1,10 @@
 import { createHash } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { requireAuthSecret } from "@/lib/secret";
+import { getPointConfig, POINT_DEFAULTS } from "@/lib/pointConfig";
 
-/** 추천인 이벤트: 추천인·친구 각 +50P. */
-export const REFERRAL_POINT = 50;
+/** 추천인 이벤트 기본 적립액(관리자가 /admin/points 에서 조정). 표시용 기본값. */
+export const REFERRAL_POINT = POINT_DEFAULTS.referral;
 
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // 헷갈리는 문자(O,0,I,1) 제외
 
@@ -61,6 +62,7 @@ export async function grantReferralIfEligible(userId: string): Promise<boolean> 
     return false;
   }
 
+  const referralPoint = (await getPointConfig()).referral;
   try {
     await prisma.$transaction([
       prisma.user.update({ where: { id: userId }, data: { referralRewarded: true } }),
@@ -68,7 +70,7 @@ export async function grantReferralIfEligible(userId: string): Promise<boolean> 
       prisma.pointLog.create({
         data: {
           userId: u.referredById,
-          amount: REFERRAL_POINT,
+          amount: referralPoint,
           reason: "추천 보상 (친구 가입)",
           status: "pending",
           refType: "referral",
@@ -78,7 +80,7 @@ export async function grantReferralIfEligible(userId: string): Promise<boolean> 
       prisma.pointLog.create({
         data: {
           userId,
-          amount: REFERRAL_POINT,
+          amount: referralPoint,
           reason: "추천인 코드 보상",
           status: "pending",
           refType: "referral",

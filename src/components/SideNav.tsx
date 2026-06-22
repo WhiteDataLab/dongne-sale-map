@@ -14,10 +14,12 @@ export function SideNav({
   user,
   logoutAction,
   showReservations = true,
+  referralPoint = 50,
 }: {
   user: NavUser;
   logoutAction: () => Promise<void>;
   showReservations?: boolean;
+  referralPoint?: number;
 }) {
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
@@ -118,7 +120,7 @@ export function SideNav({
                 <Item href="/coupons">🎟️ 내 쿠폰</Item>
                 {showReservations && <Item href="/reservations">🏃 내 예약</Item>}
                 <Item href="/shop">🎁 포인트샵</Item>
-                <Item href="/invite">🎉 친구 초대 (+50P)</Item>
+                <Item href="/invite">🎉 친구 초대 (+{referralPoint}P)</Item>
                 <Item href="/notices">📢 공지 · 이벤트</Item>
 
                 <p className={groupLabel}>내 정보</p>

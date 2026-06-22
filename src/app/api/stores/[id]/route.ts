@@ -10,6 +10,7 @@ import { getStoreCoupons } from "@/lib/coupons";
 import { reservedQtyMap } from "@/lib/reservations";
 import { isStorePro, storeTier, PRO_GALLERY_MAX } from "@/lib/pro";
 import { getLaunchFlags } from "@/lib/launchFlags";
+import { getPointConfig } from "@/lib/pointConfig";
 import type { Category } from "@/lib/constants";
 import type { StoreDetailDTO, StoreSource, PriceTrend } from "@/lib/types";
 
@@ -102,6 +103,7 @@ export async function GET(
     const tier = await storeTier(id);
     // 운영 무료 오픈 모드: 사장님 유료(구독·CPA) / 픽업 예약 UI 노출 여부.
     const launch = await getLaunchFlags();
+    const pc = await getPointConfig();
 
     // M7(L2): 예약 가능 세일의 점유 수량 + 로그인 소비자의 진행중 예약.
     const reservableSaleIds = store.sales.filter((s) => s.reservable).map((s) => s.id);
@@ -197,6 +199,7 @@ export async function GET(
       coupons,
       tier,
       launch,
+      pointConfig: { review: pc.review, product: pc.product },
       bannerUrl: store.bannerUrl,
       galleryUrls: store.galleryUrls,
       registeredBy: {

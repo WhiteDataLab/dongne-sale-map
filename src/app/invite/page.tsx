@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { auth, signIn } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { ensureReferralCode, REFERRAL_POINT } from "@/lib/referral";
+import { ensureReferralCode } from "@/lib/referral";
+import { getPointConfig } from "@/lib/pointConfig";
 import { InvitePanel } from "@/components/InvitePanel";
 
 /** 친구 초대(추천인 코드): 친구가 코드로 가입하면 둘 다 +50P. */
@@ -32,6 +33,7 @@ export default async function InvitePage() {
     );
   }
 
+  const REFERRAL_POINT = (await getPointConfig()).referral;
   let code = "";
   let invitedCount = 0;
   let earned = 0;
@@ -99,7 +101,7 @@ export default async function InvitePage() {
         )}
 
         {code ? (
-          <InvitePanel code={code} canEnter={canEnter} />
+          <InvitePanel code={code} canEnter={canEnter} point={REFERRAL_POINT} />
         ) : (
           <p className="text-center text-sm text-ink-3">추천 코드를 불러오지 못했어요.</p>
         )}

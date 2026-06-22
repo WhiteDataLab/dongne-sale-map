@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/session";
 import { kstTodayStart } from "@/lib/businessHours";
+import { getPointConfig } from "@/lib/pointConfig";
 
 /**
  * 출석체크 (하루 1회). 포인트(pending):
@@ -13,9 +14,6 @@ import { kstTodayStart } from "@/lib/businessHours";
 export const runtime = "nodejs";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const POINT_DAILY = 10;
-const POINT_WEEKLY = 20;
-const POINT_MONTHLY = 50;
 
 export async function POST() {
   const userId = await getCurrentUserId();
@@ -42,9 +40,10 @@ export async function POST() {
     // 연속 여부: 어제 출석이면 streak+1, 아니면(또는 최초) 1로 리셋
     const streak = last && last.getTime() === yesterday.getTime() ? user.checkInStreak + 1 : 1;
 
-    const weekly = streak % 7 === 0 ? POINT_WEEKLY : 0;
-    const monthly = streak % 30 === 0 ? POINT_MONTHLY : 0;
-    const total = POINT_DAILY + weekly + monthly;
+    const pc = await getPointConfig();
+    const weekly = streak % 7 === 0 ? pc.checkinWeekly : 0;
+    const monthly = streak % 30 === 0 ? pc.checkinMonthly : 0;
+    const total = pc.checkinDaily + weekly + monthly;
 
     await prisma.$transaction(async (tx) => {
       await tx.user.update({
@@ -52,7 +51,7 @@ export async function POST() {
         data: { lastCheckInDate: today, checkInStreak: streak },
       });
       const logs = [
-        { amount: POINT_DAILY, reason: `출석체크 (${streak}일 연속)` },
+        { amount: pc.checkinDaily, reason: `출석체크 (${streak}일 연속)` },
         ...(weekly ? [{ amount: weekly, reason: "주간 출석 보너스 (7일)" }] : []),
         ...(monthly ? [{ amount: monthly, reason: "월간 출석 보너스 (30일)" }] : []),
       ];
@@ -70,7 +69,7 @@ export async function POST() {
     return NextResponse.json({
       ok: true,
       streak,
-      awarded: { daily: POINT_DAILY, weekly, monthly, total },
+      awarded: { daily: pc.checkinDaily, weekly, monthly, total },
     });
   } catch {
     return NextResponse.json({ error: "출석체크에 실패했어요." }, { status: 500 });

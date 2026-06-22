@@ -11,6 +11,7 @@ import {
   extendPaidDate,
 } from "@/lib/sponsors";
 import { setLaunchFlag, type LaunchFlags } from "@/lib/launchFlags";
+import { setPointConfig, POINT_CONFIG_META, type PointConfig } from "@/lib/pointConfig";
 
 /** 모든 관리 액션은 호출 시 관리자 권한을 재확인한다(폼에서 직접 호출될 수 있으므로). */
 async function ensureAdmin() {
@@ -28,6 +29,19 @@ export async function toggleLaunchFlag(formData: FormData) {
   const on = String(formData.get("on")) === "1";
   await setLaunchFlag(key, on);
   revalidatePath("/admin/launch");
+}
+
+/** 적립 포인트 수치 일괄 저장(리뷰·제보·메뉴·추천·출석). 비정상 값은 무시(기존 유지). */
+export async function savePointConfig(formData: FormData) {
+  await ensureAdmin();
+  for (const { key } of POINT_CONFIG_META) {
+    const raw = formData.get(key);
+    if (raw == null) continue;
+    const n = Number(String(raw).trim());
+    if (!Number.isFinite(n) || n < 0) continue;
+    await setPointConfig(key as keyof PointConfig, n);
+  }
+  revalidatePath("/admin/points");
 }
 
 export async function resolveReport(formData: FormData) {

@@ -100,7 +100,10 @@ export default async function AdminLayout({
             />
             <AdminGroup
               label="운영"
-              links={[["/admin/launch", "운영 모드"]]}
+              links={[
+                ["/admin/launch", "운영 모드"],
+                ["/admin/points", "적립 포인트"],
+              ]}
             />
           </div>
         </header>

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/session";
 import { asStoreHours, minutesUntilClose, kstTodayStart } from "@/lib/businessHours";
 import { isPublicStorageUrl } from "@/lib/supabaseStorage";
+import { getPointConfig } from "@/lib/pointConfig";
 
 /**
  * 세일 제보 (스펙 Phase 3).
@@ -13,7 +14,6 @@ import { isPublicStorageUrl } from "@/lib/supabaseStorage";
  */
 export const runtime = "nodejs";
 
-const POINT_SALE_REPORT = 10; // 제보 적립(표시용, status=pending)
 const RATE_WINDOW_MS = 60_000;
 const RATE_MAX = 3;
 
@@ -136,6 +136,7 @@ export async function POST(req: NextRequest) {
       expiresAt = new Date(now.getTime() + (mins ?? 120) * 60 * 1000); // 정보없음 → 2시간
     }
 
+    const salePoint = (await getPointConfig()).saleReport;
     // 세일 + 적립로그(pending) 동시 생성
     const sale = await prisma.$transaction(async (tx) => {
       const created = await tx.sale.create({
@@ -154,7 +155,7 @@ export async function POST(req: NextRequest) {
       await tx.pointLog.create({
         data: {
           userId,
-          amount: POINT_SALE_REPORT,
+          amount: salePoint,
           reason: "세일 제보",
           status: "granted", // 세일은 즉시 적립
           refType: "sale",
@@ -164,7 +165,7 @@ export async function POST(req: NextRequest) {
       return created;
     });
 
-    return NextResponse.json({ ok: true, saleId: sale.id, pointGranted: POINT_SALE_REPORT });
+    return NextResponse.json({ ok: true, saleId: sale.id, pointGranted: salePoint });
   } catch {
     return NextResponse.json({ error: "제보 등록에 실패했어요." }, { status: 500 });
   }

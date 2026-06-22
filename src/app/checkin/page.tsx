@@ -2,6 +2,7 @@ import Link from "next/link";
 import { auth, signIn } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { kstTodayStart } from "@/lib/businessHours";
+import { getPointConfig } from "@/lib/pointConfig";
 import { CheckInButton } from "@/components/CheckInButton";
 
 /** 출석체크 페이지. 매일 +10P, 연속 7일마다 +20P, 30일마다 +50P. */
@@ -45,6 +46,7 @@ export default async function CheckInPage() {
     // DB 미연결
   }
 
+  const pc = await getPointConfig();
   const today = kstTodayStart();
   const yesterday = new Date(today.getTime() - DAY_MS);
   const last = lastCheckInDate ? new Date(lastCheckInDate) : null;
@@ -75,7 +77,7 @@ export default async function CheckInPage() {
           {/* 주간(7일) 진행 */}
           <div className="mt-5 text-left">
             <div className="flex items-center justify-between text-xs">
-              <span className="font-medium text-ink-2">이번 주 출석 (7일마다 +20P)</span>
+              <span className="font-medium text-ink-2">이번 주 출석 (7일마다 +{pc.checkinWeekly}P)</span>
               <span className="text-ink-3">{weekProgress}/7</span>
             </div>
             <div className="mt-1.5 flex justify-between gap-1">
@@ -91,7 +93,7 @@ export default async function CheckInPage() {
           {/* 월간(30일) 진행 */}
           <div className="mt-4 text-left">
             <div className="flex items-center justify-between text-xs">
-              <span className="font-medium text-ink-2">이번 달 출석 (30일마다 +50P)</span>
+              <span className="font-medium text-ink-2">이번 달 출석 (30일마다 +{pc.checkinMonthly}P)</span>
               <span className="text-ink-3">{monthProgress}/30</span>
             </div>
             <div className="mt-1.5 h-2.5 w-full overflow-hidden rounded-full bg-surface-2">
@@ -103,16 +105,16 @@ export default async function CheckInPage() {
           </div>
 
           <div className="mt-5">
-            <CheckInButton checkedToday={checkedToday} />
+            <CheckInButton checkedToday={checkedToday} dailyPoint={pc.checkinDaily} />
           </div>
         </section>
 
         <section className="rounded-2xl bg-white p-4 text-sm text-ink-2 shadow-sm">
           <h2 className="mb-2 font-semibold">적립 안내</h2>
           <ul className="flex flex-col gap-1 text-xs">
-            <li>· 매일 출석 시 <b className="text-brand">+10P</b></li>
-            <li>· 연속 7일마다 <b className="text-brand">+20P</b> 추가</li>
-            <li>· 연속 30일마다 <b className="text-amber-600">+50P</b> 추가</li>
+            <li>· 매일 출석 시 <b className="text-brand">+{pc.checkinDaily}P</b></li>
+            <li>· 연속 7일마다 <b className="text-brand">+{pc.checkinWeekly}P</b> 추가</li>
+            <li>· 연속 30일마다 <b className="text-amber-600">+{pc.checkinMonthly}P</b> 추가</li>
             <li className="text-ink-3">· 하루라도 빠지면 연속일수가 1일부터 다시 시작돼요. (한국시간 자정 기준)</li>
             <li className="text-ink-3">· 포인트는 적립 대기(표시용)예요.</li>
           </ul>

@@ -8,9 +8,11 @@ import { ShareButton } from "./ShareButton";
 export function InvitePanel({
   code,
   canEnter,
+  point = 50,
 }: {
   code: string;
   canEnter: boolean;
+  point?: number;
 }) {
   const router = useRouter();
   const [copied, setCopied] = useState(false);
@@ -71,14 +73,14 @@ export function InvitePanel({
           <ShareButton
             path={sharePath}
             title="동네 세일 지도 초대"
-            text="내 추천 코드로 가입하면 둘 다 +50P! 동네 세일 지도에서 만나요"
+            text={`내 추천 코드로 가입하면 둘 다 +${point}P! 동네 세일 지도에서 만나요`}
             className="flex-1 rounded-lg bg-brand py-2 text-sm font-semibold text-white"
           >
             친구 초대하기
           </ShareButton>
         </div>
         <p className="mt-2 text-xs text-ink-3">
-          친구가 이 링크로 가입하면 <b className="text-brand">나와 친구 각각 +50P</b>!
+          친구가 이 링크로 가입하면 <b className="text-brand">나와 친구 각각 +{point}P</b>!
         </p>
       </div>
 
@@ -87,7 +89,7 @@ export function InvitePanel({
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
           <p className="text-sm font-semibold text-amber-800">추천 코드를 받으셨나요?</p>
           <p className="mt-0.5 text-xs text-amber-700">
-            가입 7일 이내에 친구 코드를 입력하면 둘 다 +50P를 받아요. (1회)
+            가입 7일 이내에 친구 코드를 입력하면 둘 다 +{point}P를 받아요. (1회)
           </p>
           <div className="mt-2 flex gap-2">
             <input
