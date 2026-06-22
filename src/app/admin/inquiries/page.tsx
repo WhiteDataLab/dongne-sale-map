@@ -11,7 +11,7 @@ export default async function AdminInquiries() {
     email: string;
     title: string;
     content: string;
-    attachmentUrl: string | null;
+    attachmentUrls: string[];
     status: string;
     answer: string | null;
     createdAt: Date;
@@ -27,7 +27,7 @@ export default async function AdminInquiries() {
         email: true,
         title: true,
         content: true,
-        attachmentUrl: true,
+        attachmentUrls: true,
         status: true,
         answer: true,
         createdAt: true,
@@ -72,9 +72,13 @@ export default async function AdminInquiries() {
                 </span>
               </div>
               <p className="mt-2 whitespace-pre-wrap text-sm text-ink-2">{q.content}</p>
-              {q.attachmentUrl && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={q.attachmentUrl} alt="" className="mt-2 w-40 rounded-lg object-cover" />
+              {q.attachmentUrls.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {q.attachmentUrls.map((url) => (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img key={url} src={url} alt="" className="size-28 rounded-lg object-cover" />
+                  ))}
+                </div>
               )}
 
               {q.answer && (

@@ -30,7 +30,7 @@ export default async function SupportPage() {
     title: string;
     content: string;
     status: string;
-    attachmentUrl: string | null;
+    attachmentUrls: string[];
     answer: string | null;
     answeredAt: Date | null;
     createdAt: Date;
@@ -45,7 +45,7 @@ export default async function SupportPage() {
         title: true,
         content: true,
         status: true,
-        attachmentUrl: true,
+        attachmentUrls: true,
         answer: true,
         answeredAt: true,
         createdAt: true,
@@ -88,9 +88,13 @@ export default async function SupportPage() {
                     <div className="border-t border-line-2 px-3 py-3">
                       <p className="text-xs text-ink-3">{new Date(q.createdAt).toLocaleString("ko-KR")}</p>
                       <p className="mt-1 whitespace-pre-wrap text-sm text-ink-2">{q.content}</p>
-                      {q.attachmentUrl && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={q.attachmentUrl} alt="" className="mt-2 w-40 rounded-lg object-cover" />
+                      {q.attachmentUrls.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {q.attachmentUrls.map((url) => (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img key={url} src={url} alt="" className="size-24 rounded-lg object-cover" />
+                          ))}
+                        </div>
                       )}
                       {q.answer ? (
                         <div className="mt-3 rounded-lg bg-brand-wash p-3">

@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
   const userId = await getCurrentUserId();
   if (!userId) return NextResponse.json({ error: "login_required" }, { status: 401 });
 
-  let b: { nickname?: string; email?: string; title?: string; content?: string; attachmentUrl?: string | null };
+  let b: { nickname?: string; email?: string; title?: string; content?: string; attachmentUrls?: unknown };
   try {
     b = await req.json();
   } catch {
@@ -33,8 +33,10 @@ export async function POST(req: NextRequest) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return NextResponse.json({ error: "이메일 형식을 확인해 주세요." }, { status: 400 });
   }
-  const attachmentUrl =
-    typeof b.attachmentUrl === "string" && isPublicStorageUrl(b.attachmentUrl) ? b.attachmentUrl : null;
+  // 첨부 이미지는 우리 공개 스토리지 URL만 인정(위조 URL 차단), 최대 5장.
+  const attachmentUrls = Array.isArray(b.attachmentUrls)
+    ? b.attachmentUrls.filter((u): u is string => typeof u === "string" && isPublicStorageUrl(u)).slice(0, 5)
+    : [];
 
   // 도배 방지 레이트리밋
   const recent = await prisma.inquiry.count({
@@ -46,7 +48,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const inquiry = await prisma.inquiry.create({
-      data: { userId, nickname, email, title, content, attachmentUrl },
+      data: { userId, nickname, email, title, content, attachmentUrls },
     });
     return NextResponse.json({ ok: true, id: inquiry.id });
   } catch {

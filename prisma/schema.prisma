@@ -283,7 +283,7 @@ model Inquiry {
   email         String // 회신 이메일
   title         String
   content       String
-  attachmentUrl String? // 첨부 이미지(선택)
+  attachmentUrls String[] // 첨부 이미지(선택, 최대 5장 — 다른 메뉴와 동일한 다중 첨부)
   status        InquiryStatus @default(open)
   answer        String? // 관리자 답변
   answeredAt    DateTime?
