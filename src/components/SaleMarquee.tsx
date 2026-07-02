@@ -49,7 +49,9 @@ export function SaleMarquee({
               {s.storeName}
             </span>
             <span className="text-white/85">{s.title}</span>
-            <span className="num font-extrabold text-amber-300">{won(s.salePrice)}</span>
+            <span className="num font-extrabold text-amber-300">
+              {s.salePrice != null ? won(s.salePrice) : "세일중"}
+            </span>
             {s.qty?.trim() && <span className="text-white/50">· {s.qty}</span>}
           </button>
         ))}

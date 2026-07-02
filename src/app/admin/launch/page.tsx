@@ -7,11 +7,13 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "운영 모드 — 관리" };
 
 type Row = {
-  key: "monetization" | "reservations" | "pointshop";
+  key: "monetization" | "reservations" | "pointshop" | "classicMap";
   on: boolean;
   title: string;
   onDesc: string;
   offDesc: string;
+  turnOnLabel?: string; // 기본 "켜기 (오픈)"
+  turnOffLabel?: string; // 기본 "끄기 (숨기기)"
 };
 
 export default async function AdminLaunchPage() {
@@ -43,6 +45,17 @@ export default async function AdminLaunchPage() {
       onDesc: "모은 포인트로 기프티콘을 교환할 수 있어요. 교환 시 실제 원가가 발생합니다.",
       offDesc:
         "적립은 계속되고 교환만 잠깁니다. /shop 은 '곧 교환 오픈 · 지금 모아두세요' 티저(상품 노출 + 교환 잠금)로 보여요.",
+    },
+    {
+      key: "classicMap",
+      on: flags.classicMap,
+      title: "🗺️ 이전 지도 UI 롤백",
+      onDesc:
+        "이전 지도 UI(카테고리 칩 필터 · 가게 등록 버튼만)로 되돌린 상태예요. 콜드스타트 개편(지금 세일중 토글·라이브 카운터·세일 히트맵·원탭 제보)이 숨겨져요.",
+      offDesc:
+        "새 콜드스타트 지도 UI가 켜져 있어요(기본). 문제가 생기면 켜서 이전 UI로 즉시 롤백할 수 있어요(재배포 불필요).",
+      turnOnLabel: "이전 UI로 롤백하기",
+      turnOffLabel: "새 UI로 다시 켜기",
     },
   ];
 
@@ -79,7 +92,7 @@ export default async function AdminLaunchPage() {
                   r.on ? "bg-ink" : "bg-brand"
                 }`}
               >
-                {r.on ? "끄기 (숨기기)" : "켜기 (오픈)"}
+                {r.on ? (r.turnOffLabel ?? "끄기 (숨기기)") : (r.turnOnLabel ?? "켜기 (오픈)")}
               </button>
             </form>
           </div>

@@ -489,9 +489,10 @@ model Sale {
   storeId   String
   productId String? // 상품과 연결되지 않은 단독 세일 가능
   title     String
-  photoUrl  String // 대표(커버) 사진 = photoUrls[0]
+  // migration 44(콜드스타트 원탭 제보): 사진·가격을 선택값으로 — '한 방 제보' 경로 허용.
+  photoUrl  String? // 대표(커버) 사진 = photoUrls[0]. null=사진 없는 원탭 제보
   photoUrls String[] @default([]) // 최대 10장 (Phase 6 확장)
-  salePrice Int
+  salePrice Int? // null=가격 미입력(원탭 제보) — 표시 시 '세일중' 폴백
   qty       String
   expiresAt DateTime // 만료시간 지나면 자동 비활성
   status    SaleStatus @default(active)

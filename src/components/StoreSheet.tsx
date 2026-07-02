@@ -923,7 +923,8 @@ export function ProductsTab({
   for (const s of detail.sales) {
     if (!s.productId) continue;
     const cur = saleByProduct.get(s.productId);
-    if (!cur || s.salePrice < cur.salePrice) saleByProduct.set(s.productId, s);
+    // 가격 미입력(null) 세일은 가격 있는 세일보다 후순위로(둘 다 null 이면 기존 유지)
+    if (!cur || (s.salePrice ?? Infinity) < (cur.salePrice ?? Infinity)) saleByProduct.set(s.productId, s);
   }
   const emoji = CATEGORY_META[detail.category].icon;
   // 세일 행을 항상 리스트 최상단에 고정(전체 모드에서도 세일이 먼저).
@@ -1006,7 +1007,7 @@ export function ProductsTab({
             <div className="menu-list">
               {visible.map(({ product: p, sale }) => {
                 const off =
-                  sale && p.price > sale.salePrice && p.price > 0
+                  sale && sale.salePrice != null && p.price > sale.salePrice && p.price > 0
                     ? Math.round((1 - sale.salePrice / p.price) * 100)
                     : 0;
                 const meta = [
@@ -1016,7 +1017,8 @@ export function ProductsTab({
                 ]
                   .filter((x) => x && String(x).trim())
                   .join(" · ");
-                const price = sale ? sale.salePrice : p.price;
+                // 세일이 있어도 가격 미입력(원탭 제보)이면 정가로 표시
+                const price = sale?.salePrice ?? p.price;
                 return (
                   <div
                     key={p.id}
@@ -1038,7 +1040,7 @@ export function ProductsTab({
                       </div>
                       {sale ? (
                         <p className="menu-sub">
-                          {p.price > sale.salePrice && (
+                          {sale.salePrice != null && p.price > sale.salePrice && (
                             <>
                               <s className="num">{won(p.price)}</s>
                               {" · "}
@@ -1166,7 +1168,9 @@ export function SalesTab({
           <div className="p-3">
             <div className="flex items-baseline justify-between gap-2">
               <p className="truncate font-medium">{s.title}</p>
-              <p className="shrink-0 font-bold text-red-600">{won(s.salePrice)}</p>
+              <p className="shrink-0 font-bold text-red-600">
+                {s.salePrice != null ? won(s.salePrice) : "세일중"}
+              </p>
             </div>
             {s.qty?.trim() && <p className="text-xs text-ink-3">{s.qty}</p>}
             <div className="mt-0.5 flex items-center gap-2 text-xs">

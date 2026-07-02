@@ -12,16 +12,21 @@ import { SaleMarquee } from "./SaleMarquee";
 import { SaleListPanel } from "./SaleListPanel";
 import { ReviewStream } from "./ReviewStream";
 import { LocalAdStrip } from "./LocalAdStrip";
+import { LiveHeadline } from "./LiveHeadline";
+import { QuickSaleSheet } from "./QuickSaleSheet";
 import { GpsIcon } from "./GpsIcon";
 import { trackImpressions } from "@/lib/track";
 import { DEFAULT_CENTER, DEFAULT_LEVEL, CATEGORY_META } from "@/lib/constants";
-import type { StoreDTO, FeedSale, FeedReview } from "@/lib/types";
+import type { StoreDTO, FeedSale, FeedReview, FeedCounts } from "@/lib/types";
 import type { LocalAdDTO } from "@/lib/localAds";
 
 /**
  * Phase 1 지도 화면: 카카오맵 렌더링 + 검색 이동 + bounds 핀 + 필터.
  * 기본 중심 = 이문동. 미인증 가게는 회색 핀, 클릭 시 "인증 진행중" 안내.
- * 가게 상세(바텀시트)는 Phase 2 → 지금은 안내만.
+ *
+ * 콜드스타트 개편(THEME_MAP_BENCHMARK_PM_BRIEF P0, coldstart=true 기본):
+ * 히어로 '지금 세일중' 토글 + 라이브 카운터 + 세일 히트맵 클러스터 + 원탭 세일 제보 FAB.
+ * /admin/launch 의 '이전 지도 UI 롤백'(flag_classic_map) 을 켜면 coldstart=false 로 이전 UI 복귀.
  */
 type Place = {
   name: string;
@@ -33,7 +38,7 @@ type Place = {
   category: string;
 };
 
-export function MapExplorer() {
+export function MapExplorer({ coldstart = true }: { coldstart?: boolean }) {
   const appKey = process.env.NEXT_PUBLIC_KAKAO_MAP_JS_KEY;
   const { loaded, error } = useKakaoLoader(appKey);
 
@@ -63,6 +68,10 @@ export function MapExplorer() {
   const [picked, setPicked] = useState<{ lat: number; lng: number; address: string } | null>(null);
   const [feed, setFeed] = useState<{ sales: FeedSale[]; reviews: FeedReview[]; localAds: LocalAdDTO[] }>({ sales: [], reviews: [], localAds: [] });
   const feedSigRef = useRef("");
+  // 콜드스타트: 라이브 카운터(오늘 제보·세일중·마감임박) + 원탭 제보 시트
+  const [counts, setCounts] = useState<FeedCounts | null>(null);
+  const [quickOpen, setQuickOpen] = useState(false);
+  const [quickCenter, setQuickCenter] = useState<{ lat: number; lng: number } | null>(null);
   // 현재 위치(좌표 미저장 — 거리 표시/지도 이동용 화면 상태)
   const [myLoc, setMyLoc] = useState<{ lat: number; lng: number } | null>(null);
   const router = useRouter();
@@ -130,10 +139,16 @@ export function MapExplorer() {
     });
     try {
       const res = await fetch(`/api/feed?${params.toString()}`);
-      const data = (await res.json()) as { sales?: FeedSale[]; reviews?: FeedReview[]; localAds?: LocalAdDTO[] };
+      const data = (await res.json()) as {
+        sales?: FeedSale[];
+        reviews?: FeedReview[];
+        localAds?: LocalAdDTO[];
+        counts?: FeedCounts;
+      };
       const sales = data.sales ?? [];
       const reviews = data.reviews ?? [];
       const localAds = data.localAds ?? [];
+      setCounts(data.counts ?? null);
       // 데이터가 동일하면 갱신 생략 → 마퀴/스트림 애니메이션이 폴링마다 끊기지 않게
       const sig = `${sales.map((s) => s.id).join(",")}|${reviews.map((r) => r.id).join(",")}|${localAds.map((a) => a.id).join(",")}`;
       if (sig !== feedSigRef.current) {
@@ -314,7 +329,7 @@ export function MapExplorer() {
           addPin(c.items[0]);
           continue;
         }
-        const el = buildClusterElement(c, () => {
+        const el = buildClusterElement(c, coldstart, () => {
           map.setLevel(Math.max(1, level - 2), { anchor: new kakao.maps.LatLng(c.lat, c.lng) });
         });
         const overlay = new kakao.maps.CustomOverlay({
@@ -329,7 +344,7 @@ export function MapExplorer() {
     } else {
       for (const s of stores) addPin(s);
     }
-  }, [stores, flashNotice, selectedStoreId]);
+  }, [stores, flashNotice, selectedStoreId, coldstart]);
 
   // 현재 위치로 지도 이동 (좌표 저장 안 함 — 지도 이동 보조용)
   const goToMyLocation = useCallback(() => {
@@ -528,7 +543,10 @@ export function MapExplorer() {
           </div>
         )}
 
-        <FilterBar filters={filters} onChange={setFilters} />
+        <FilterBar filters={filters} onChange={setFilters} hero={coldstart} />
+
+        {/* 콜드스타트 P0-3: 라이브 카운터 헤드라인 (오늘 제보 N건 · 마감임박 M곳) */}
+        {coldstart && !registerMode && <LiveHeadline counts={counts} />}
 
         {/* 현 지역 최신 세일 광고판 (가로 마퀴) — 누르면 가게 상세 열림 */}
         {!registerMode && (
@@ -554,7 +572,13 @@ export function MapExplorer() {
 
       {/* 빈 상태 (스펙 6장) — 빈 동네를 '첫 제보' 초대로 */}
       {!error && !loadingStores && stores.length === 0 && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-6 z-10 flex justify-center px-4">
+        <div
+          className={[
+            "pointer-events-none absolute inset-x-0 z-10 flex justify-center px-4",
+            // 콜드스타트 FAB 스택(원탭 제보+가게 등록)과 겹치지 않게 위로
+            coldstart ? "bottom-36" : "bottom-6",
+          ].join(" ")}
+        >
           <div className="pointer-events-auto max-w-[17rem] rounded-2xl border border-line bg-white/95 px-5 py-4 text-center shadow-[var(--sh-1)] backdrop-blur">
             <p className="text-2xl">🗺️</p>
             <p className="mt-1.5 text-base font-bold text-ink">이 동네는 아직 비어 있어요</p>
@@ -591,7 +615,9 @@ export function MapExplorer() {
       {!error && !registerMode && !showList && (
         <div
           className={[
-            "absolute bottom-24 right-4 z-20 flex-col items-center gap-2",
+            "absolute right-4 z-20 flex-col items-center gap-2",
+            // 콜드스타트 FAB 스택(원탭 제보+가게 등록)이 더 높아 컨트롤을 그만큼 위로
+            coldstart ? "bottom-36" : "bottom-24",
             // 모바일에서 가게 상세(바텀시트)가 열리면 가려지므로 숨김(FAB 와 동일 규칙). 데스크톱은 유지.
             selectedStoreId ? "hidden sm:flex" : "flex",
           ].join(" ")}
@@ -633,23 +659,79 @@ export function MapExplorer() {
         </div>
       )}
 
-      {/* 가게 등록 FAB → 지도에서 바로 좌표 찍어 등록 */}
-      {!error && !registerMode && !showList && (
-        <button
-          type="button"
-          onClick={() => {
-            setResults(null);
-            setSelectedStoreId(null);
+      {/* FAB — 콜드스타트: 원탭 세일 제보(주인공) + 가게 등록(보조) / 이전 UI: 가게 등록만 */}
+      {!error && !registerMode && !showList && !quickOpen && (
+        coldstart ? (
+          <div
+            className={[
+              "absolute bottom-5 right-4 z-20 flex-col items-end gap-2",
+              // 모바일에서 가게 상세(바텀시트)가 열리면 가려지므로 숨김. 데스크톱(좌측 패널)은 유지.
+              selectedStoreId ? "hidden sm:flex" : "flex",
+            ].join(" ")}
+          >
+            <button
+              type="button"
+              onClick={() => {
+                setResults(null);
+                setSelectedStoreId(null);
+                setRegisterMode(true);
+              }}
+              className="rounded-full border border-line bg-white px-3.5 py-2 text-xs font-bold text-ink-2 shadow-md"
+            >
+              ➕ 가게 등록
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setResults(null);
+                setSelectedStoreId(null);
+                setQuickCenter(() => {
+                  const c = mapRef.current?.getCenter?.();
+                  return c ? { lat: c.getLat(), lng: c.getLng() } : null;
+                });
+                setQuickOpen(true);
+              }}
+              style={{ background: "var(--deal-grad)" }}
+              className="flex min-h-[56px] items-center gap-1.5 rounded-full px-5 text-base font-extrabold text-white shadow-[0_8px_20px_rgba(255,59,48,0.35)]"
+            >
+              🔥 여기 세일중
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => {
+              setResults(null);
+              setSelectedStoreId(null);
+              setRegisterMode(true);
+            }}
+            className={[
+              "absolute bottom-5 right-4 z-20 items-center gap-1 rounded-full bg-brand px-4 py-3 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-brand-ink active:bg-blue-800",
+              // 모바일에서 가게 상세(바텀시트)가 열리면 가려지므로 숨김. 데스크톱(좌측 패널)은 유지.
+              selectedStoreId ? "hidden sm:flex" : "flex",
+            ].join(" ")}
+          >
+            ➕ 가게 등록
+          </button>
+        )
+      )}
+
+      {/* 콜드스타트 P0-1: 원탭 세일 제보 시트 */}
+      {!error && quickOpen && (
+        <QuickSaleSheet
+          stores={stores}
+          center={quickCenter}
+          onClose={() => setQuickOpen(false)}
+          onToast={flashNotice}
+          onDone={() => {
+            fetchStores();
+            fetchFeed();
+          }}
+          onRegisterStore={() => {
+            setQuickOpen(false);
             setRegisterMode(true);
           }}
-          className={[
-            "absolute bottom-5 right-4 z-20 items-center gap-1 rounded-full bg-brand px-4 py-3 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-brand-ink active:bg-blue-800",
-            // 모바일에서 가게 상세(바텀시트)가 열리면 가려지므로 숨김. 데스크톱(좌측 패널)은 유지.
-            selectedStoreId ? "hidden sm:flex" : "flex",
-          ].join(" ")}
-        >
-          ➕ 가게 등록
-        </button>
+        />
       )}
 
       {/* 등록 모드 안내 배너 */}
@@ -751,10 +833,17 @@ function groupByGrid(map: { getBounds: () => any }, stores: StoreDTO[], grid: nu
   }));
 }
 
-/** 클러스터 버블(개수 + 최저 세일가). 클릭 시 줌인. */
-function buildClusterElement(cluster: Cluster, onClick: () => void): HTMLElement {
+/** 클러스터 버블(개수 + 최저 세일가). 클릭 시 줌인.
+ *  heat=true(콜드스타트)면 활성 세일 밀도로 색을 입혀 '동네별 세일 히트맵'이 된다(러브버그맵 패턴). */
+function buildClusterElement(cluster: Cluster, heat: boolean, onClick: () => void): HTMLElement {
   const el = document.createElement("div");
   el.className = "store-cluster";
+
+  if (heat) {
+    const saleStores = cluster.items.filter((s) => s.hasActiveSale && s.verified).length;
+    if (saleStores >= 3) el.classList.add("store-cluster--hot");
+    else if (saleStores >= 1) el.classList.add("store-cluster--warm");
+  }
 
   const count = document.createElement("span");
   count.className = "store-cluster__count";

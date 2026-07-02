@@ -226,3 +226,38 @@
 ---
 
 > **후보 B 리뉴얼 완료**: ①토큰(B-1) → ②메뉴 리스트(B-2) → ③대시보드(B-3) → ④지도 핀·마퀴(B-4) → ⑤공용(B-5) → ⑥공유+reduced-motion(B-6). 구조·IA·API·결제 흐름 불변, 시각·접근성만. Part1/Part2 핸드오프 6단계 전부 반영.
+
+---
+
+## C — 콜드스타트 지도 UX (테마지도 벤치마크, 기록=`THEME_MAP_BENCHMARK_PM_BRIEF.md` P0)  ✅
+
+> 목적이 다름: P0~B가 '비주얼(비싸 보이게)'이었다면, C는 **밀도(콜드스타트) 엔진** — 거지맵·야장맵·러브버그맵이 검증한 소비자 바이럴 루프를 지도 구조에 이식. **전부 `/admin/launch` '이전 지도 UI 롤백'(flag_classic_map) 토글로 즉시 롤백 가능**(재배포 불필요).
+
+### C-1. 히어로 '지금 세일중' 1토글 필터 (P0-4, 거지맵 패턴)
+파일: [`FilterBar.tsx`](../src/components/FilterBar.tsx) (`hero` prop)
+- **AS-IS**: 업종(전체/야채/정육/과일/…) + 세일중 + 마감임박 + 영업중 칩 **11개 병렬** — 주된 의도가 묻힘.
+- **TO-BE**: **"🔥 지금 세일중" 큰 토글(48px, 켜면 deal-grad) 하나를 히어로로**, 마감임박은 보조 칩, 업종·영업중은 "필터 ▼"로 접음. '조건(지갑 사정)이 탐색의 출발점'(§4-E).
+- **변화 형태**: 첫 화면 인지 부하 11칩 → 1토글+2칩. 어르신 단순화와 정합(§7-5).
+
+### C-2. 라이브 카운터 헤드라인 (P0-3, 러브버그맵 패턴)
+파일: [`LiveHeadline.tsx`](../src/components/LiveHeadline.tsx)(신규) · [`/api/feed`](../src/app/api/feed/route.ts) `counts`
+- **AS-IS**: 지도에 생동감 신호 없음(마퀴는 개별 세일 나열).
+- **TO-BE**: 필터 아래 다크 필 "📢 이문동 오늘 세일 제보 N건 · 세일중 M곳 · ⏰ 마감임박 K곳"(18초 폴링, bounds 기준). 0건이면 "첫 제보의 주인공이 돼보세요!" 초대 카피로 폴백 — 빈 화면 막다름 회피.
+- **매출 레버**: FOMO·생동감 → 재방문·제보 전환(밀도 엔진).
+
+### C-3. 동네별 세일 히트맵 클러스터 (P0-2, 러브버그맵 패턴)
+파일: [`MapExplorer.tsx`](../src/components/MapExplorer.tsx) `buildClusterElement` · [`globals.css`](../src/app/globals.css) `.store-cluster--warm/--hot`
+- **AS-IS**: 줌아웃 클러스터가 흰 원(개수+최저가) — 어디가 핫한지 색으로 안 보임.
+- **TO-BE**: 활성 세일 1~2곳=`--deal-wash` warm, 3곳+=`--deal-grad` hot 버블. 줌아웃해도 "어디가 핫한 동네인지" 항상 보임 → 빈 지도 문제 구조적 회피.
+
+### C-4. 원탭 세일 제보 FAB + 시트 (P0-1, 이 개편의 핵심)
+파일: [`QuickSaleSheet.tsx`](../src/components/QuickSaleSheet.tsx)(신규) · [`MapExplorer.tsx`](../src/components/MapExplorer.tsx) FAB · [`/api/sales`](../src/app/api/sales/route.ts) · migration 44
+- **AS-IS**: 세일 제보 = 핀 클릭 → 상세 시트 → 세일/행사 탭 → 제보 폼(**사진+제목+가격 필수**) — 최소 5스텝.
+- **TO-BE**: 항상 떠 있는 **"🔥 여기 세일중" FAB(56px, deal-grad)** → 근처 인증 가게 리스트(거리순) 탭 → **"🔥 세일 제보 완료"**. 사진·가격·내용은 "✏️ 자세히 적기(선택)"로 확장, 만료는 가게 마감까지 자동. 가게 등록 FAB는 보조(작은 흰 필)로 강등.
+- **변화 형태**: 제보 5스텝·필수 4종 → **2탭·필수 0종**. 비로그인은 제보 시점에만 "3초 로그인" 안내(무로그인 조회 유지).
+
+### C-5. 정체성 카피 (P0-5 브랜드명 확정 전 카피)
+파일: [`Header.tsx`](../src/components/Header.tsx)
+- **TO-BE**: 헤더에 "우리 동네 오늘의 떨이·세일" 한 줄(sm+) — 0.5초에 뜻이 통하게. 브랜드명('장날'류) 확정은 비개발 P0-5로 별도.
+
+> **롤백**: `/admin/launch` → "🗺️ 이전 지도 UI 롤백" 켜기 → C-1~C-4 즉시 이전 UI(칩 병렬 필터·가게 등록 FAB만)로 복귀. C-5(헤더 카피)와 서버 확장(counts·최소 제보 API·migration 44)은 공용/additive라 유지.

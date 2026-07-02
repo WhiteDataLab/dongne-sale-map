@@ -23,8 +23,9 @@ type SaleRow = {
 
 async function loadSales(periodDays: number): Promise<SaleRow[]> {
   const since = new Date(Date.now() - periodDays * DAY_MS);
-  return prisma.sale.findMany({
-    where: { createdAt: { gte: since } },
+  // 가격 미입력(원탭 제보) 세일은 물가 통계 표본에서 제외
+  const rows = await prisma.sale.findMany({
+    where: { createdAt: { gte: since }, salePrice: { not: null } },
     select: {
       salePrice: true,
       createdAt: true,
@@ -36,6 +37,7 @@ async function loadSales(periodDays: number): Promise<SaleRow[]> {
     take: 8000,
     orderBy: { createdAt: "asc" },
   });
+  return rows.filter((r): r is (typeof rows)[number] & { salePrice: number } => r.salePrice != null);
 }
 
 /** 품목명 정규화(상품명/세일 제목 기반, 공백/숫자 단순화). */

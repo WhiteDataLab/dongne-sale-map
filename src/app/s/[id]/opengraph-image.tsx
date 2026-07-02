@@ -69,7 +69,7 @@ export default async function OgImage({ params }: { params: Promise<{ id: string
   const top = store.sales[0];
   const name = store.name.length > 16 ? store.name.slice(0, 16) + "…" : store.name;
   const title = top ? (top.title.length > 20 ? top.title.slice(0, 20) + "…" : top.title) : "";
-  const price = top ? top.salePrice.toLocaleString("ko-KR") : "";
+  const price = top?.salePrice != null ? top.salePrice.toLocaleString("ko-KR") : "";
 
   return new ImageResponse(
     (
@@ -142,13 +142,15 @@ export default async function OgImage({ params }: { params: Promise<{ id: string
               <div
                 style={{ display: "flex", fontSize: "92px", fontWeight: 800, color: "#E0331F", letterSpacing: "-4px" }}
               >
-                {price}
+                {price || "세일중"}
               </div>
-              <div
-                style={{ display: "flex", fontSize: "36px", fontWeight: 800, color: "#E0331F", marginLeft: "6px" }}
-              >
-                원
-              </div>
+              {price && (
+                <div
+                  style={{ display: "flex", fontSize: "36px", fontWeight: 800, color: "#E0331F", marginLeft: "6px" }}
+                >
+                  원
+                </div>
+              )}
             </div>
           </div>
         ) : (

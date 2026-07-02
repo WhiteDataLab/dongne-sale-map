@@ -95,6 +95,10 @@ export async function POST(req: NextRequest) {
         return { error: remaining <= 0 ? "예약이 마감됐어요." : `남은 수량은 ${remaining}개예요.`, status: 409 as const };
       }
 
+      // 가격 미입력(원탭 제보) 세일은 금액 확정이 불가해 예약 불가(사장님이 가격을 채우면 가능).
+      if (sale.salePrice == null) {
+        return { error: "가격이 입력되지 않은 세일은 예약할 수 없어요.", status: 409 as const };
+      }
       const amountKrw = sale.salePrice * qty;
       const created = await tx.reservation.create({
         data: {

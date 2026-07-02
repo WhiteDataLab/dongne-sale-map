@@ -13,16 +13,25 @@ import { prisma } from "@/lib/prisma";
  * - `pointshop`: 포인트샵 **교환(redeem)** 노출. OFF 면 적립은 계속하되 교환만 잠그고,
  *   `/shop` 은 "곧 교환 오픈 · 지금 모아두세요" 티저(상품 노출 + 교환 버튼 잠금)로 보인다.
  *   (포인트 적립=출석·제보·추천 은 플래그와 무관하게 항상 동작.)
+ * - `classicMap`: **콜드스타트 지도 UI 롤백 스위치**(테마지도 벤치마크 개편, docs/THEME_MAP_BENCHMARK_PM_BRIEF.md).
+ *   OFF(기본)=새 UI(히어로 '지금 세일중' 토글·라이브 카운터·세일 히트맵 클러스터·원탭 세일 제보 FAB),
+ *   ON=이전 지도 UI(카테고리 칩 필터바·가게 등록 FAB만)로 즉시 되돌림. 데이터/API 는 공용이라 안전.
  *
- * 기본값은 **셋 다 OFF**(SiteConfig 행 없음 → off). 즉 배포 즉시 무료 모드이며,
- * 관리자가 켜야 유료/예약/교환이 열린다.
+ * 기본값은 **전부 OFF**(SiteConfig 행 없음 → off). 즉 배포 즉시 무료 모드 + 새 콜드스타트 UI 이며,
+ * 관리자가 켜야 유료/예약/교환(또는 이전 지도 UI 롤백)이 열린다.
  */
-export type LaunchFlags = { monetization: boolean; reservations: boolean; pointshop: boolean };
+export type LaunchFlags = {
+  monetization: boolean;
+  reservations: boolean;
+  pointshop: boolean;
+  classicMap: boolean;
+};
 
 export const FLAG_KEYS = {
   monetization: "flag_monetization",
   reservations: "flag_reservations",
   pointshop: "flag_pointshop",
+  classicMap: "flag_classic_map",
 } as const;
 
 /** 현재 런치 플래그. SiteConfig 미설정 키는 off(false) 로 본다(무료 모드 기본). */
@@ -35,6 +44,7 @@ export async function getLaunchFlags(): Promise<LaunchFlags> {
     monetization: v.get(FLAG_KEYS.monetization) === "on",
     reservations: v.get(FLAG_KEYS.reservations) === "on",
     pointshop: v.get(FLAG_KEYS.pointshop) === "on",
+    classicMap: v.get(FLAG_KEYS.classicMap) === "on",
   };
 }
 

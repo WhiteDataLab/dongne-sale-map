@@ -118,7 +118,10 @@ export async function GET(req: NextRequest) {
       verified: s.verified,
       source: s.source as StoreSource,
       hasActiveSale: s.sales.length > 0,
-      saleMinPrice: s.sales.length > 0 ? Math.min(...s.sales.map((x) => x.salePrice)) : null,
+      saleMinPrice: (() => {
+        const priced = s.sales.map((x) => x.salePrice).filter((p): p is number => p != null);
+        return priced.length > 0 ? Math.min(...priced) : null;
+      })(),
       saleSoonExpiring: s.sales.some((x) => x.expiresAt <= soonThreshold),
       saleSoonestExpiry:
         s.sales.length > 0

@@ -33,7 +33,13 @@ export async function Header() {
         showReservations={flags.reservations}
         referralPoint={referralPoint}
       />
-      <h1 className="text-lg font-bold tracking-tight">동네 세일 지도</h1>
+      <div className="flex min-w-0 items-baseline gap-2">
+        <h1 className="shrink-0 text-lg font-bold tracking-tight">동네 세일 지도</h1>
+        {/* 콜드스타트 P0-5: 0.5초에 뜻이 통하는 정체성 한 줄(브랜드명 확정 전 카피) */}
+        <p className="hidden truncate text-xs font-medium text-ink-3 sm:block">
+          우리 동네 오늘의 떨이·세일
+        </p>
+      </div>
 
       <div className="ml-auto">
         {!user && (

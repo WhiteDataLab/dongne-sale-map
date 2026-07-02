@@ -23,7 +23,8 @@ export function SaleReserveBox({
   const info = sale.reservation;
   const [qty, setQty] = useState(1);
   const [busy, setBusy] = useState(false);
-  if (!info) return null;
+  // 가격 미입력(원탭 제보) 세일은 금액 확정 불가 → 예약 UI 미노출(서버도 409 가드)
+  if (!info || sale.salePrice == null) return null;
 
   const max = Math.min(10, info.remaining ?? 10);
 

@@ -703,6 +703,27 @@ summary:focus-visible {
   line-height: 1.4;
 }
 
+/* ── 콜드스타트: 동네별 세일 히트맵(러브버그맵 패턴) — 클러스터에 세일 밀도 색 ──
+   warm=활성 세일 1~2곳, hot=3곳+. 줌아웃해도 '어디가 핫한지'는 항상 보이게. */
+.store-cluster--warm {
+  background: var(--deal-wash);
+  border-color: var(--deal-1);
+}
+.store-cluster--warm .store-cluster__count {
+  color: var(--deal-ink);
+}
+.store-cluster--hot {
+  background: var(--deal-grad);
+  border-color: transparent;
+  box-shadow: 0 6px 16px rgba(255, 59, 48, 0.35);
+}
+.store-cluster--hot .store-cluster__count {
+  color: #fff;
+}
+.store-cluster--hot .store-cluster__price {
+  background: rgba(255, 255, 255, 0.92);
+}
+
 /* ── 휴업/폐업/영업종료 상태 ── */
 .store-pin__status {
   margin-left: 2px;

@@ -142,7 +142,8 @@ export function MerchantAlerts({
             <option value="">세일 연동 안 함 (일반 소식)</option>
             {sales.map((s) => (
               <option key={s.id} value={s.id}>
-                🔥 {s.title} ({s.salePrice.toLocaleString("ko-KR")}원)
+                🔥 {s.title}
+                {s.salePrice != null ? ` (${s.salePrice.toLocaleString("ko-KR")}원)` : ""}
               </option>
             ))}
           </select>

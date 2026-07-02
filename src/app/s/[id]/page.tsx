@@ -37,7 +37,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const top = store.sales[0];
   const title = `${store.name} 세일 정보 — 동네 세일 지도`;
   const description = top
-    ? `🔥 ${top.title} ${won(top.salePrice)} · 지금 진행중인 세일 ${store.sales.length}건`
+    ? `🔥 ${top.title}${top.salePrice != null ? ` ${won(top.salePrice)}` : ""} · 지금 진행중인 세일 ${store.sales.length}건`
     : `${store.name}의 메뉴·세일·리뷰를 확인해보세요.`;
 
   // OG/트위터 이미지는 동적 카드(opengraph-image.tsx)가 자동 생성·연결한다.
@@ -130,7 +130,9 @@ export default async function StoreSharePage({ params }: { params: Promise<{ id:
                       <div className="p-3">
                         <div className="flex items-baseline justify-between gap-2">
                           <p className="truncate font-bold text-ink">{s.title}</p>
-                          <p className="num shrink-0 text-lg font-extrabold text-deal-ink">{won(s.salePrice)}</p>
+                          <p className="num shrink-0 text-lg font-extrabold text-deal-ink">
+                            {s.salePrice != null ? won(s.salePrice) : "세일중"}
+                          </p>
                         </div>
                         {s.qty?.trim() && <p className="text-xs font-medium text-ink-3">{s.qty}</p>}
                         <div className="mt-1 flex items-center gap-2 text-xs">

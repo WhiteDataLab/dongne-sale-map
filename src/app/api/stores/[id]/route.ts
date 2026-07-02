@@ -150,7 +150,7 @@ export async function GET(
         };
         trendMap.set(key, g);
       }
-      g.points.push({ t: s.createdAt.toISOString(), p: s.salePrice });
+      if (s.salePrice != null) g.points.push({ t: s.createdAt.toISOString(), p: s.salePrice });
     }
     const priceTrends: PriceTrend[] = [...trendMap.values()]
       .filter((g) => g.points.length >= 2) // 추이가 되려면 2개 이상
@@ -174,7 +174,10 @@ export async function GET(
       isOpenNow: isOpenNow(hours, now),
       openStatus: openStatusNow(hours, now),
       hasActiveSale: store.sales.length > 0,
-      saleMinPrice: store.sales.length > 0 ? Math.min(...store.sales.map((x) => x.salePrice)) : null,
+      saleMinPrice: (() => {
+        const priced = store.sales.map((x) => x.salePrice).filter((p): p is number => p != null);
+        return priced.length > 0 ? Math.min(...priced) : null;
+      })(),
       saleSoonExpiring: store.sales.some((x) => x.expiresAt <= new Date(now.getTime() + 60 * 60 * 1000)),
       saleSoonestExpiry:
         store.sales.length > 0

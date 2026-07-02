@@ -59,7 +59,7 @@ export default async function NewsPage() {
       items.push({
         id: `sale-${s.id}`,
         icon: "🔥",
-        text: `${s.store.name} — ${s.title} ${won(s.salePrice)} 세일`,
+        text: `${s.store.name} — ${s.title} ${s.salePrice != null ? `${won(s.salePrice)} ` : ""}세일`,
         storeId: s.store.id,
         lat: s.store.lat,
         lng: s.store.lng,

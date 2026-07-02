@@ -29,12 +29,18 @@ async function ensureAdmin() {
 export async function toggleLaunchFlag(formData: FormData) {
   await ensureAdmin();
   const key = String(formData.get("key")) as keyof LaunchFlags;
-  if (key !== "monetization" && key !== "reservations" && key !== "pointshop") {
+  if (
+    key !== "monetization" &&
+    key !== "reservations" &&
+    key !== "pointshop" &&
+    key !== "classicMap"
+  ) {
     throw new Error("bad_key");
   }
   const on = String(formData.get("on")) === "1";
   await setLaunchFlag(key, on);
   revalidatePath("/admin/launch");
+  revalidatePath("/");
 }
 
 /** 적립 포인트 수치 일괄 저장(리뷰·제보·메뉴·추천·출석). 비정상 값은 무시(기존 유지). */

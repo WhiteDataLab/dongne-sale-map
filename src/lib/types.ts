@@ -37,11 +37,19 @@ export type FeedSale = {
   id: string;
   storeId: string;
   title: string;
-  salePrice: number;
+  salePrice: number | null; // null=가격 미입력(원탭 제보) → '세일중' 폴백 표시
   qty: string;
   storeName: string;
   createdAt: string;
   sponsored?: boolean; // M1-A: 스폰서 세일(마퀴 상단 고정 + 광고 배지)
+};
+
+/** 라이브 카운터 헤드라인(콜드스타트 P0-3): 현 지도 영역 집계. */
+export type FeedCounts = {
+  region: string; // 보이는 가게 주소에서 가장 흔한 동(洞), 없으면 '우리 동네'
+  activeSales: number; // 진행중 세일 수
+  soonExpiring: number; // 1시간 내 마감
+  todayReports: number; // 오늘(KST) 새 세일 제보 수
 };
 
 /** 실시간 리뷰 스트림(유튜브 채팅 느낌)용. */
@@ -81,9 +89,9 @@ export type SaleDTO = {
   id: string;
   productId: string | null; // 연결된 메뉴(상품) — 없으면 단독 세일. 메뉴 리스트 세일 행 매칭용
   title: string;
-  photoUrl: string;
+  photoUrl: string | null; // null=사진 없는 원탭 제보(migration 44)
   photoUrls: string[];
-  salePrice: number;
+  salePrice: number | null; // null=가격 미입력 → '세일중' 폴백 표시
   qty: string;
   expiresAt: string;
   createdAt: string;

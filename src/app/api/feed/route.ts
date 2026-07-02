@@ -3,12 +3,15 @@ import { prisma } from "@/lib/prisma";
 import { liveSponsorFilter, regionFromAddress } from "@/lib/sponsors";
 import { getProStoreIds } from "@/lib/pro";
 import { getLocalAdsForRegions } from "@/lib/localAds";
-import type { FeedSale, FeedReview } from "@/lib/types";
+import { kstTodayStart } from "@/lib/businessHours";
+import type { FeedSale, FeedReview, FeedCounts } from "@/lib/types";
 
 /**
  * 현 지도 영역(bounds)의 실시간 피드:
  * - sales: 최신 활성 세일 (지도 상단 광고판/마퀴용)
  * - reviews: 최신 리뷰 (유튜브 채팅처럼 올라가는 스트림용)
+ * - counts: 라이브 카운터 헤드라인용 집계 (오늘 제보 N건·마감임박 M곳 — 러브버그맵 패턴,
+ *   THEME_MAP_BENCHMARK_PM_BRIEF P0-3)
  * 줌아웃할수록 bounds 가 넓어져 더 많은 데이터가 들어온다.
  */
 export const runtime = "nodejs";
@@ -40,7 +43,8 @@ export async function GET(req: NextRequest) {
     // M4: 프로 플랜 가게는 스폰서 중에서도 더 위로(상위 노출).
     const proIds = await getProStoreIds([...sponsorIds], now);
 
-    const [saleRows, reviewRows] = await Promise.all([
+    const soonCutoff = new Date(now.getTime() + 60 * 60 * 1000);
+    const [saleRows, reviewRows, activeSaleCount, soonCount, todayReportCount] = await Promise.all([
       prisma.sale.findMany({
         where: { status: "active", expiresAt: { gt: now }, store: inBounds },
         orderBy: { createdAt: "desc" },
@@ -68,6 +72,12 @@ export async function GET(req: NextRequest) {
           store: { select: { name: true } },
         },
       }),
+      // 라이브 카운터: 현 영역 활성 세일 / 1시간 내 마감 / 오늘(KST) 새 제보
+      prisma.sale.count({ where: { status: "active", expiresAt: { gt: now }, store: inBounds } }),
+      prisma.sale.count({
+        where: { status: "active", expiresAt: { gt: now, lt: soonCutoff }, store: inBounds },
+      }),
+      prisma.sale.count({ where: { createdAt: { gte: kstTodayStart() }, store: inBounds } }),
     ]);
 
     // 스폰서 가게의 활성 세일이 최신 15개에 안 들었을 수 있으니 별도로 끌어와 합친다(중복 제거).
@@ -125,7 +135,23 @@ export async function GET(req: NextRequest) {
     const regions = [...new Set(inViewStores.map((s) => regionFromAddress(s.address)).filter((r) => r !== "구독"))];
     const localAds = await getLocalAdsForRegions(regions, now);
 
-    return NextResponse.json({ sales, reviews, localAds });
+    // 헤드라인용 동네 이름: 보이는 가게 주소에서 가장 흔한 동(洞). 없으면 '우리 동네'.
+    const regionCount = new Map<string, number>();
+    for (const s of inViewStores) {
+      const r = regionFromAddress(s.address);
+      if (r === "구독") continue;
+      regionCount.set(r, (regionCount.get(r) ?? 0) + 1);
+    }
+    const topRegion =
+      [...regionCount.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? "우리 동네";
+    const counts: FeedCounts = {
+      region: topRegion,
+      activeSales: activeSaleCount,
+      soonExpiring: soonCount,
+      todayReports: todayReportCount,
+    };
+
+    return NextResponse.json({ sales, reviews, localAds, counts });
   } catch {
     return NextResponse.json({ sales: [], reviews: [] });
   }

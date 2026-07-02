@@ -7,11 +7,13 @@ import { getPointConfig } from "@/lib/pointConfig";
 import { getSiteSettings } from "@/lib/siteSettings";
 
 /**
- * 세일 제보 (스펙 Phase 3).
- * - 사진 필수 + 제목 + 세일가 + 수량 + 만료(1h/2h/마감까지)
- * - 제보 시 PointLog(pending) 적립 로그 생성 (실지급 없음)
+ * 세일 제보 (스펙 Phase 3 + 콜드스타트 원탭 제보 확장, THEME_MAP_BENCHMARK_PM_BRIEF P0-1).
+ * - 기본 폼: 사진 + 제목 + 세일가 + 수량 + 만료(1h/2h/마감까지)
+ * - 원탭(최소) 제보: 가게만 있으면 등록 — 사진·가격·제목·수량은 **선택**(migration 44).
+ *   제목 미입력 시 기본 제목으로 저장. 사진 없는 제보의 어뷰징은 기존 가드
+ *   (레이트리밋 + 같은 가게·항목 하루 1회 + 활성 중복 409 + 신고 자동숨김)로 방어.
+ * - 제보 시 PointLog 적립 로그 생성 (실지급 없음)
  * - 같은 항목 중복 세일 → 409 "이미 세일중"(정정 진입점은 클라이언트에서 /api/reports)
- * - 어뷰징 방어: 단시간 다중 제보 레이트리밋
  */
 export const runtime = "nodejs";
 
@@ -24,7 +26,7 @@ type Body = {
   storeId?: string;
   productId?: string | null;
   title?: string;
-  salePrice?: number;
+  salePrice?: number | null; // null/미전송 = 가격 미입력(원탭 제보)
   qty?: string;
   expiresOption?: "1h" | "2h" | "close" | "custom";
   expiresAt?: string; // expiresOption === "custom" 일 때 ISO
@@ -58,15 +60,20 @@ export async function POST(req: NextRequest) {
     .filter((u) => typeof u === "string" && isPublicStorageUrl(u))
     .slice(0, MAX_PHOTOS);
 
-  if (!storeId || !title?.trim() || photos.length === 0) {
-    return NextResponse.json(
-      { error: "사진·제목은 필수예요." },
-      { status: 400 },
-    );
+  if (!storeId) {
+    return NextResponse.json({ error: "가게를 선택해 주세요." }, { status: 400 });
   }
-  if (typeof salePrice !== "number" || !Number.isFinite(salePrice) || salePrice < 0) {
+  // 원탭 제보: 제목 미입력 → 기본 제목(같은 가게 활성 중복은 아래 dup 가드가 1건으로 묶음)
+  const saleTitle = title?.trim() || "오늘 세일해요";
+  // 가격은 선택 — 입력했다면 유효해야 함(null=가격 미입력, 표시 시 '세일중' 폴백)
+  if (
+    salePrice !== undefined &&
+    salePrice !== null &&
+    (typeof salePrice !== "number" || !Number.isFinite(salePrice) || salePrice < 0)
+  ) {
     return NextResponse.json({ error: "세일가를 확인해 주세요." }, { status: 400 });
   }
+  const priceValue = typeof salePrice === "number" ? salePrice : null;
   const option = expiresOption ?? "close";
 
   try {
@@ -88,7 +95,7 @@ export async function POST(req: NextRequest) {
 
     // 중복 세일: 같은 가게에서 (상품 지정 시 동일 상품 / 아니면 동일 제목) 활성 세일 존재
     const now = new Date();
-    const itemMatch = productId ? { productId } : { title: title.trim() };
+    const itemMatch = productId ? { productId } : { title: saleTitle };
     const dup = await prisma.sale.findFirst({
       where: { storeId, status: "active", expiresAt: { gt: now }, ...itemMatch },
     });
@@ -143,10 +150,10 @@ export async function POST(req: NextRequest) {
         data: {
           storeId,
           productId: productId ?? null,
-          title: title.trim().slice(0, 200),
-          photoUrl: photos[0],
+          title: saleTitle.slice(0, 200),
+          photoUrl: photos[0] ?? null,
           photoUrls: photos,
-          salePrice,
+          salePrice: priceValue,
           qty: (qty?.trim() || "").slice(0, 100),
           expiresAt,
           createdById: userId,
