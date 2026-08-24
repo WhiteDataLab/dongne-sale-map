@@ -1,11 +1,13 @@
 "use client";
 
 // TODO(out-of-scope): 이 컴포넌트는 PROJECT_SPEC.md 페이즈 순서 밖의 "낙서 컨셉" 데모다.
-// 실제 카카오맵/지오코딩/DB 연동 없이 목업 데이터로 흐름만 보여준다.
+// 실제 카카오맵 SDK는 쓰지만 가게 데이터는 하드코딩 목업이며 DB/동네 세일과 연동되지 않는다.
 // 정식 채택 시 스펙(docs/PROJECT_SPEC.md)을 먼저 갱신하고 Phase로 편입한다.
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useKakaoLoader } from "./useKakaoLoader";
 import { DEFAULT_CENTER } from "@/lib/constants";
+import { haversineMeters, formatDistance } from "@/lib/geo";
 
 type Direction = "북" | "북동" | "동" | "남동" | "남" | "남서" | "서" | "북서";
 
@@ -51,6 +53,28 @@ interface SourcePoint {
   lat: number;
   lng: number;
 }
+
+interface DongPoint {
+  name: string;
+  lat: number;
+  lng: number;
+  active: boolean;
+}
+
+// 동대문구 넓은 시야 중심(대략) — 이문동을 포함해 인접 동이 함께 보이는 지점.
+const WIDE_CENTER = { lat: 37.5865, lng: 127.0555 };
+const WIDE_LEVEL = 7;
+const DONG_LEVEL = 4;
+
+// 동대문구 동 목업 좌표 (대략 위치). 이문동만 클릭 가능, 나머지는 "준비중" 표시용.
+const DONGS: DongPoint[] = [
+  { name: "이문동", lat: DEFAULT_CENTER.lat, lng: DEFAULT_CENTER.lng, active: true },
+  { name: "회기동", lat: 37.5895, lng: 127.0574, active: false },
+  { name: "청량리동", lat: 37.5803, lng: 127.0468, active: false },
+  { name: "휘경동", lat: 37.5928, lng: 127.0645, active: false },
+  { name: "전농동", lat: 37.5788, lng: 127.0561, active: false },
+  { name: "답십리동", lat: 37.5723, lng: 127.0508, active: false },
+];
 
 // 이문동 출발지 후보 (아파트/빌라/오피스텔) — 후보2 컨셉의 목업.
 const SOURCE_OPTIONS: SourcePoint[] = [
@@ -185,17 +209,6 @@ type RadiusKey = (typeof RADIUS_OPTIONS)[number]["key"];
 
 const DIRECTIONS: Direction[] = ["북", "북동", "동", "남동", "남", "남서", "서", "북서"];
 
-function haversineMeters(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
-  const R = 6371000;
-  const dLat = ((b.lat - a.lat) * Math.PI) / 180;
-  const dLng = ((b.lng - a.lng) * Math.PI) / 180;
-  const lat1 = (a.lat * Math.PI) / 180;
-  const lat2 = (b.lat * Math.PI) / 180;
-  const h =
-    Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
-  return 2 * R * Math.asin(Math.sqrt(h));
-}
-
 function directionFrom(a: { lat: number; lng: number }, b: { lat: number; lng: number }): Direction {
   const dLat = b.lat - a.lat;
   const dLng = b.lng - a.lng;
@@ -205,49 +218,161 @@ function directionFrom(a: { lat: number; lng: number }, b: { lat: number; lng: n
   return DIRECTIONS[idx];
 }
 
-function formatDistance(meters: number) {
-  if (meters < 1000) return `약 ${Math.round(meters / 10) * 10}m`;
-  return `약 ${(meters / 1000).toFixed(1)}km`;
-}
-
 function daysAgo(dateStr: string) {
   const diff = Math.round((Date.now() - new Date(dateStr).getTime()) / 86400000);
   if (diff <= 0) return "오늘 업데이트";
   return `${diff}일 전 업데이트`;
 }
 
-type Step = "map" | "source" | "search";
+type MatchedResult = {
+  store: DemoStore;
+  matched: DemoItem[];
+  distance: number;
+  direction: Direction;
+};
 
-/** 이문동 컨셉 데모: 동 클릭 → 출발지 선택 → 검색어 → 방향/거리 기반 결과. */
+type Step = "dong" | "source" | "search";
+
+function clearOverlays(ref: React.MutableRefObject<any[]>) {
+  ref.current.forEach((o) => o.setMap(null));
+  ref.current = [];
+}
+
+function pinStyle({
+  active,
+  filled,
+}: {
+  active: boolean;
+  filled: boolean;
+}) {
+  return `display:inline-flex;align-items:center;gap:4px;padding:7px 13px;border-radius:999px;
+    font-size:12.5px;font-weight:800;white-space:nowrap;box-shadow:0 4px 14px rgba(25,31,40,.18);
+    border:2px solid ${active ? "var(--blue)" : "var(--line)"};
+    background:${filled ? "var(--blue)" : "#fff"};
+    color:${filled ? "#fff" : "var(--ink-4)"};
+    cursor:${active ? "pointer" : "default"};
+    opacity:${active ? "1" : ".7"};`;
+}
+
+/** 이문동 컨셉 데모: 실제 카카오맵 위에서 동 클릭 → 출발지 선택 → 검색 결과 핀. */
 export function ImunConceptDemo() {
-  const [step, setStep] = useState<Step>("map");
+  const appKey = process.env.NEXT_PUBLIC_KAKAO_MAP_JS_KEY;
+  const { loaded, error } = useKakaoLoader(appKey);
+
+  const mapEl = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<any>(null);
+  const dongOverlaysRef = useRef<any[]>([]);
+  const sourceOverlaysRef = useRef<any[]>([]);
+  const storeOverlaysRef = useRef<any[]>([]);
+  const sourceMarkerRef = useRef<any>(null);
+
+  const [step, setStep] = useState<Step>("dong");
   const [source, setSource] = useState<SourcePoint | null>(null);
   const [customAddress, setCustomAddress] = useState("");
   const [query, setQuery] = useState("");
   const [radiusKey, setRadiusKey] = useState<RadiusKey>("dong");
+  const [selected, setSelected] = useState<MatchedResult | null>(null);
 
   const radius = RADIUS_OPTIONS.find((r) => r.key === radiusKey)!;
 
-  const results = useMemo(() => {
+  const results = useMemo<MatchedResult[]>(() => {
     if (!source || !query.trim()) return [];
     const q = query.trim();
     return DEMO_STORES.flatMap((store) => {
       const matched = store.items.filter((item) => item.name.includes(q));
       if (matched.length === 0) return [];
-      const distance = haversineMeters(source, store);
+      const distance = haversineMeters(source.lat, source.lng, store.lat, store.lng);
       if (distance > radius.meters) return [];
-      return [
-        {
-          store,
-          matched,
-          distance,
-          direction: directionFrom(source, store),
-        },
-      ];
+      return [{ store, matched, distance, direction: directionFrom(source, store) }];
     }).sort((a, b) => a.distance - b.distance);
   }, [source, query, radius]);
 
+  // 지도 초기화 (1회) — 동대문구 넓은 시야 + 동 핀
+  useEffect(() => {
+    if (!loaded || !mapEl.current || mapRef.current) return;
+    const { kakao } = window;
+    const map = new kakao.maps.Map(mapEl.current, {
+      center: new kakao.maps.LatLng(WIDE_CENTER.lat, WIDE_CENTER.lng),
+      level: WIDE_LEVEL,
+    });
+    mapRef.current = map;
+    renderDongPins();
+    kakao.maps.event.addListener(map, "click", () => setSelected(null));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaded]);
+
+  function renderDongPins() {
+    const map = mapRef.current;
+    if (!map || !window.kakao) return;
+    const { kakao } = window;
+    clearOverlays(dongOverlaysRef);
+    for (const dong of DONGS) {
+      const el = document.createElement("div");
+      el.style.cssText = pinStyle({ active: dong.active, filled: dong.active });
+      el.textContent = dong.active ? `📍 ${dong.name}` : dong.name;
+      if (dong.active) el.addEventListener("click", () => selectDong(dong));
+      else el.title = "아직 데이터가 없어요";
+      const overlay = new kakao.maps.CustomOverlay({
+        position: new kakao.maps.LatLng(dong.lat, dong.lng),
+        content: el,
+        yAnchor: 0.5,
+        clickable: true,
+      });
+      overlay.setMap(map);
+      dongOverlaysRef.current.push(overlay);
+    }
+  }
+
+  function selectDong(dong: DongPoint) {
+    const map = mapRef.current;
+    if (!map || !window.kakao) return;
+    clearOverlays(dongOverlaysRef);
+    map.setLevel(DONG_LEVEL);
+    map.panTo(new window.kakao.maps.LatLng(dong.lat, dong.lng));
+    setStep("source");
+    renderSourcePins();
+  }
+
+  function renderSourcePins() {
+    const map = mapRef.current;
+    if (!map || !window.kakao) return;
+    const { kakao } = window;
+    clearOverlays(sourceOverlaysRef);
+    for (const opt of SOURCE_OPTIONS) {
+      const el = document.createElement("div");
+      el.style.cssText = pinStyle({ active: true, filled: false });
+      el.textContent = `🏢 ${opt.label}`;
+      el.addEventListener("click", () => chooseSource(opt));
+      const overlay = new kakao.maps.CustomOverlay({
+        position: new kakao.maps.LatLng(opt.lat, opt.lng),
+        content: el,
+        yAnchor: 1.6,
+        clickable: true,
+      });
+      overlay.setMap(map);
+      sourceOverlaysRef.current.push(overlay);
+    }
+  }
+
+  function placeSourceMarker(point: SourcePoint) {
+    const map = mapRef.current;
+    if (!map || !window.kakao) return;
+    const { kakao } = window;
+    if (sourceMarkerRef.current) sourceMarkerRef.current.setMap(null);
+    const el = document.createElement("div");
+    el.className = "geo-dot";
+    sourceMarkerRef.current = new kakao.maps.CustomOverlay({
+      position: new kakao.maps.LatLng(point.lat, point.lng),
+      content: el,
+      yAnchor: 0.5,
+      zIndex: 3,
+    });
+    sourceMarkerRef.current.setMap(map);
+  }
+
   function chooseSource(point: SourcePoint) {
+    clearOverlays(sourceOverlaysRef);
+    placeSourceMarker(point);
     setSource(point);
     setStep("search");
   }
@@ -258,179 +383,207 @@ export function ImunConceptDemo() {
     chooseSource({ label: customAddress.trim(), ...DEFAULT_CENTER });
   }
 
+  function resetAll() {
+    const map = mapRef.current;
+    clearOverlays(sourceOverlaysRef);
+    clearOverlays(storeOverlaysRef);
+    if (sourceMarkerRef.current) {
+      sourceMarkerRef.current.setMap(null);
+      sourceMarkerRef.current = null;
+    }
+    setSource(null);
+    setQuery("");
+    setRadiusKey("dong");
+    setSelected(null);
+    setStep("dong");
+    if (map && window.kakao) {
+      map.setLevel(WIDE_LEVEL);
+      map.panTo(new window.kakao.maps.LatLng(WIDE_CENTER.lat, WIDE_CENTER.lng));
+    }
+    renderDongPins();
+  }
+
+  // 검색 결과 → 지도 핀 렌더링 + 결과가 보이도록 시야 맞춤
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !window.kakao || step !== "search") return;
+    const { kakao } = window;
+    clearOverlays(storeOverlaysRef);
+
+    for (const r of results) {
+      const el = document.createElement("div");
+      el.className = "store-pin" + (r.store.verified ? "" : " store-pin--gray");
+      el.style.setProperty("--pin-color", r.store.verified ? "#3182f6" : "#9ca3af");
+      const icon = document.createElement("span");
+      icon.className = "store-pin__icon";
+      icon.textContent = CATEGORY_ICON[r.store.category];
+      const name = document.createElement("span");
+      name.className = "store-pin__name";
+      name.textContent = `${r.store.name} · ${r.matched[0].price}`;
+      el.append(icon, name);
+      el.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        setSelected(r);
+      });
+      const overlay = new kakao.maps.CustomOverlay({
+        position: new kakao.maps.LatLng(r.store.lat, r.store.lng),
+        content: el,
+        yAnchor: 1,
+        zIndex: 4,
+        clickable: true,
+      });
+      overlay.setMap(map);
+      storeOverlaysRef.current.push(overlay);
+    }
+
+    if (results.length > 0 && source) {
+      const bounds = new kakao.maps.LatLngBounds();
+      bounds.extend(new kakao.maps.LatLng(source.lat, source.lng));
+      for (const r of results) bounds.extend(new kakao.maps.LatLng(r.store.lat, r.store.lng));
+      map.setBounds(bounds);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [results, step]);
+
   return (
-    <div className="mx-auto max-w-xl space-y-5 p-5 pb-24">
-      <header className="space-y-1">
-        <h1 className="text-xl font-extrabold text-ink">우리 동네, 어디서 살까 🔍</h1>
-        <p className="text-sm text-ink-3">
-          동을 눌러 시작하고, 필요한 걸 검색해서 내 위치 기준 어디서 구할 수 있는지 찾아보세요.
-        </p>
-      </header>
+    <div className="relative h-full w-full">
+      <div ref={mapEl} className="h-full w-full bg-surface-2" />
 
-      {/* 1단계: 동 선택 (블록형 미니맵) */}
-      <section className="space-y-2">
-        <div className="grid grid-cols-3 gap-2">
-          {["회기동", "청량리동", "휘경동"].map((dong) => (
-            <div
-              key={dong}
-              className="flex h-16 items-center justify-center rounded-row border border-line bg-surface-2 text-xs font-semibold text-ink-4"
-              title="아직 데이터가 없어요"
-            >
-              {dong}
-            </div>
-          ))}
-          <button
-            type="button"
-            onClick={() => setStep(step === "map" ? "source" : "map")}
-            className={`col-span-1 flex h-20 -translate-y-2 items-center justify-center rounded-row border-2 text-sm font-extrabold shadow-[var(--sh-2)] transition ${
-              step === "map"
-                ? "border-brand bg-brand-wash text-brand-ink"
-                : "border-brand bg-brand text-white"
-            }`}
-          >
-            이문동
-          </button>
-          {["전농동", "답십리동"].map((dong) => (
-            <div
-              key={dong}
-              className="flex h-16 items-center justify-center rounded-row border border-line bg-surface-2 text-xs font-semibold text-ink-4"
-              title="아직 데이터가 없어요"
-            >
-              {dong}
-            </div>
-          ))}
+      {error && (
+        <div className="absolute inset-0 z-20 flex items-center justify-center bg-surface-2 p-6 text-center text-sm text-ink-3">
+          {error}
         </div>
-        {step === "map" && (
-          <p className="text-center text-xs text-ink-3">👆 이문동을 눌러보세요 (다른 동은 아직 준비 중)</p>
-        )}
-      </section>
+      )}
 
-      {/* 2단계: 출발지 선택 */}
-      {step !== "map" && (
-        <section className="space-y-3 rounded-card border border-line bg-surface p-4 shadow-[var(--sh-card)]">
-          <h2 className="text-sm font-bold text-ink">어디서 출발할까요?</h2>
-          {source && step === "search" ? (
-            <div className="flex items-center justify-between rounded-row bg-brand-wash px-3 py-2 text-sm">
-              <span className="font-semibold text-brand-ink">📍 {source.label}</span>
-              <button type="button" className="btn-bare text-xs" onClick={() => setStep("source")}>
-                변경
+      {/* 상단 플로팅 패널 */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 p-4">
+        <div className="pointer-events-auto mx-auto max-w-md space-y-2 rounded-card border border-line bg-surface/95 p-4 shadow-[var(--sh-2)] backdrop-blur">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <h1 className="text-base font-extrabold text-ink">우리 동네, 어디서 살까 🔍</h1>
+              {step === "dong" && (
+                <p className="mt-0.5 text-xs text-ink-3">지도에서 이문동을 눌러보세요 (다른 동은 준비 중)</p>
+              )}
+              {step === "source" && (
+                <p className="mt-0.5 text-xs text-ink-3">🏢 마커를 눌러 출발지를 고르거나, 주소를 입력하세요.</p>
+              )}
+              {step === "search" && source && (
+                <p className="mt-0.5 text-xs font-semibold text-brand-ink">📍 {source.label} 기준</p>
+              )}
+            </div>
+            {step !== "dong" && (
+              <button type="button" className="btn-bare shrink-0 text-xs" onClick={resetAll}>
+                처음부터
+              </button>
+            )}
+          </div>
+
+          {step === "source" && (
+            <div className="flex gap-2">
+              <input
+                value={customAddress}
+                onChange={(e) => setCustomAddress(e.target.value)}
+                placeholder="남은 주소를 직접 입력 (예: 이문로 12)"
+                className="min-h-[var(--tap-min)] flex-1 rounded-row border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-brand"
+              />
+              <button type="button" className="btn-cta btn-cta--primary px-4" onClick={submitCustomAddress}>
+                확인
               </button>
             </div>
-          ) : (
-            <>
-              <div className="grid gap-2">
-                {SOURCE_OPTIONS.map((opt) => (
+          )}
+
+          {step === "search" && (
+            <div className="space-y-2">
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="딸기, 장미, 두부, 휴지, 포켓몬빵…"
+                className="w-full rounded-[var(--r-pill)] border border-line bg-surface px-4 py-2.5 text-sm text-ink outline-none focus:border-brand"
+              />
+              <div className="flex flex-wrap gap-2">
+                {RADIUS_OPTIONS.map((r) => (
                   <button
-                    key={opt.label}
+                    key={r.key}
                     type="button"
-                    onClick={() => chooseSource(opt)}
-                    className="rounded-row border border-line bg-surface px-3 py-2.5 text-left text-sm font-medium text-ink hover:bg-surface-2"
+                    onClick={() => setRadiusKey(r.key)}
+                    className={`rounded-[var(--r-pill)] border px-3 py-1 text-xs font-bold ${
+                      radiusKey === r.key
+                        ? "border-brand bg-brand text-white"
+                        : "border-line bg-surface text-ink-2"
+                    }`}
                   >
-                    🏢 {opt.label}
+                    {r.label}
                   </button>
                 ))}
               </div>
-              <div className="flex gap-2">
-                <input
-                  value={customAddress}
-                  onChange={(e) => setCustomAddress(e.target.value)}
-                  placeholder="남은 주소를 직접 입력 (예: 이문로 12)"
-                  className="min-h-[var(--tap-min)] flex-1 rounded-row border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-brand"
-                />
-                <button type="button" className="btn-cta btn-cta--primary px-4" onClick={submitCustomAddress}>
-                  확인
-                </button>
-              </div>
-            </>
+              {query.trim() && (
+                <p className="text-xs font-semibold text-ink-3">
+                  &ldquo;{query}&rdquo; {results.length}곳 · {radius.label} 기준
+                </p>
+              )}
+            </div>
           )}
-        </section>
+        </div>
+      </div>
+
+      {/* 검색어는 있는데 결과가 없을 때 */}
+      {step === "search" && query.trim() && results.length === 0 && !selected && (
+        <div className="pointer-events-none absolute inset-x-0 bottom-6 z-10 flex justify-center px-4">
+          <div className="pointer-events-auto rounded-card border border-dashed border-line bg-surface px-4 py-3 text-center text-sm text-ink-3 shadow-[var(--sh-2)]">
+            &ldquo;{query}&rdquo;를 파는 곳을 {radius.label} 범위에서 못 찾았어요. 반경을 넓혀보세요 ↑
+          </div>
+        </div>
       )}
 
-      {/* 3단계: 검색 */}
-      {step === "search" && source && (
-        <section className="space-y-3">
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="딸기, 장미, 두부, 휴지, 포켓몬빵…"
-            className="w-full rounded-[var(--r-pill)] border border-line bg-surface px-5 py-3.5 text-base text-ink shadow-[var(--sh-1)] outline-none focus:border-brand"
-          />
-
-          <div className="flex flex-wrap gap-2">
-            {RADIUS_OPTIONS.map((r) => (
+      {/* 가게 상세(하단 시트) */}
+      {selected && (
+        <div className="absolute inset-x-0 bottom-0 z-20 p-4">
+          <div className="mx-auto max-w-md rounded-card border border-line bg-surface p-4 shadow-[var(--sh-2)]">
+            <div className="flex items-start gap-3">
+              <div className="menu-ic">{CATEGORY_ICON[selected.store.category]}</div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-bold text-ink">{selected.store.name}</span>
+                  {selected.store.verified ? (
+                    <span className="badge badge--verify">인증</span>
+                  ) : (
+                    <span className="badge" style={{ background: "var(--surface-2)", color: "var(--ink-3)" }}>
+                      미인증
+                    </span>
+                  )}
+                </div>
+                <p className="mt-0.5 text-xs font-semibold text-brand-ink">
+                  {selected.direction}쪽 {formatDistance(selected.distance)}
+                </p>
+              </div>
               <button
-                key={r.key}
                 type="button"
-                onClick={() => setRadiusKey(r.key)}
-                className={`rounded-[var(--r-pill)] border px-3 py-1.5 text-xs font-bold ${
-                  radiusKey === r.key
-                    ? "border-brand bg-brand text-white"
-                    : "border-line bg-surface text-ink-2"
-                }`}
+                className="btn-bare shrink-0 text-xs"
+                onClick={() => setSelected(null)}
               >
-                {r.label}
+                닫기
               </button>
-            ))}
-          </div>
-
-          {!query.trim() && (
-            <p className="py-8 text-center text-sm text-ink-3">
-              필요한 걸 검색해보세요. 아이스크림, 복숭아, 장미, 휴지, 두부, 포켓몬빵…
-            </p>
-          )}
-
-          {query.trim() && results.length === 0 && (
-            <div className="rounded-card border border-dashed border-line bg-surface-2 py-8 text-center text-sm text-ink-3">
-              <p>&ldquo;{query}&rdquo;를 파는 곳을 {radius.label} 범위에서 못 찾았어요.</p>
-              <p className="mt-1">반경을 넓혀보세요 →</p>
             </div>
-          )}
-
-          {results.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-xs font-semibold text-ink-3">
-                &ldquo;{query}&rdquo; {results.length}곳 · {radius.label} 기준
-              </p>
-              {results.map(({ store, matched, distance, direction }) => (
-                <a
-                  key={store.id}
-                  href={`https://map.kakao.com/link/search/${encodeURIComponent(store.name)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block rounded-card border border-line bg-surface p-4 shadow-[var(--sh-card)] hover:bg-surface-2"
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="menu-ic">{CATEGORY_ICON[store.category]}</div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-bold text-ink">{store.name}</span>
-                        {store.verified ? (
-                          <span className="badge badge--verify">인증</span>
-                        ) : (
-                          <span className="badge" style={{ background: "var(--surface-2)", color: "var(--ink-3)" }}>
-                            미인증
-                          </span>
-                        )}
-                      </div>
-                      <p className="mt-0.5 text-xs font-semibold text-brand-ink">
-                        {direction}쪽 {formatDistance(distance)}
-                      </p>
-                      <ul className="mt-2 space-y-1">
-                        {matched.map((item) => (
-                          <li key={item.name} className="flex items-center justify-between text-sm">
-                            <span className="text-ink-2">{item.name}</span>
-                            <span className="num font-bold text-ink">{item.price}</span>
-                          </li>
-                        ))}
-                      </ul>
-                      <p className="mt-1.5 text-[11px] text-ink-3">{daysAgo(matched[0].updatedAt)}</p>
-                    </div>
-                  </div>
-                </a>
+            <ul className="mt-2 space-y-1">
+              {selected.matched.map((item) => (
+                <li key={item.name} className="flex items-center justify-between text-sm">
+                  <span className="text-ink-2">{item.name}</span>
+                  <span className="num font-bold text-ink">{item.price}</span>
+                </li>
               ))}
-            </div>
-          )}
-        </section>
+            </ul>
+            <p className="mt-1.5 text-[11px] text-ink-3">{daysAgo(selected.matched[0].updatedAt)}</p>
+            <p className="mt-1 text-[11px] text-ink-4">🔗 나중에 동네 세일 데이터와 연동 예정</p>
+            <a
+              href={`https://map.kakao.com/link/search/${encodeURIComponent(selected.store.name)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-cta btn-cta--block btn-cta--primary mt-3"
+            >
+              카카오맵에서 보기
+            </a>
+          </div>
+        </div>
       )}
     </div>
   );
