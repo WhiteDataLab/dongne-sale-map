@@ -4,10 +4,12 @@
 // 실제 카카오맵 SDK는 쓰지만 가게 데이터는 하드코딩 목업이며 DB/동네 세일과 연동되지 않는다.
 // 정식 채택 시 스펙(docs/PROJECT_SPEC.md)을 먼저 갱신하고 Phase로 편입한다.
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useKakaoLoader } from "./useKakaoLoader";
+import { GpsIcon } from "./GpsIcon";
 import { DEFAULT_CENTER } from "@/lib/constants";
 import { haversineMeters, formatDistance } from "@/lib/geo";
+import { DONG_BOUNDARIES, findDongAt, type DongBoundary } from "@/lib/dongBoundaries";
 
 type Direction = "북" | "북동" | "동" | "남동" | "남" | "남서" | "서" | "북서";
 
@@ -54,27 +56,13 @@ interface SourcePoint {
   lng: number;
 }
 
-interface DongPoint {
-  name: string;
-  lat: number;
-  lng: number;
-  active: boolean;
-}
-
 // 동대문구 넓은 시야 중심(대략) — 이문동을 포함해 인접 동이 함께 보이는 지점.
 const WIDE_CENTER = { lat: 37.5865, lng: 127.0555 };
 const WIDE_LEVEL = 7;
 const DONG_LEVEL = 4;
 
-// 동대문구 동 목업 좌표 (대략 위치). 이문동만 클릭 가능, 나머지는 "준비중" 표시용.
-const DONGS: DongPoint[] = [
-  { name: "이문동", lat: DEFAULT_CENTER.lat, lng: DEFAULT_CENTER.lng, active: true },
-  { name: "회기동", lat: 37.5895, lng: 127.0574, active: false },
-  { name: "청량리동", lat: 37.5803, lng: 127.0468, active: false },
-  { name: "휘경동", lat: 37.5928, lng: 127.0645, active: false },
-  { name: "전농동", lat: 37.5788, lng: 127.0561, active: false },
-  { name: "답십리동", lat: 37.5723, lng: 127.0508, active: false },
-];
+// 실제 데이터(출발지·가게)가 있는 동. 나머지 5개 동은 경계선만 보여주고 "준비중" 안내.
+const DATA_READY_DONG = "이문동";
 
 // 이문동 출발지 후보 (아파트/빌라/오피스텔) — 후보2 컨셉의 목업.
 const SOURCE_OPTIONS: SourcePoint[] = [
@@ -231,7 +219,7 @@ type MatchedResult = {
   direction: Direction;
 };
 
-type Step = "dong" | "source" | "search";
+type Step = "dong" | "source" | "search" | "empty";
 
 function clearOverlays(ref: React.MutableRefObject<any[]>) {
   ref.current.forEach((o) => o.setMap(null));
@@ -254,6 +242,22 @@ function pinStyle({
     opacity:${active ? "1" : ".7"};`;
 }
 
+// 동 경계 폴리곤 스타일 — 선택된 동은 파란 강조, 나머지는 옅은 회색 윤곽선.
+function dongPolygonStyle(selected: boolean) {
+  return selected
+    ? { strokeWeight: 3, strokeColor: "#3182f6", strokeOpacity: 0.9, fillColor: "#3182f6", fillOpacity: 0.12 }
+    : { strokeWeight: 1.5, strokeColor: "#9ca3af", strokeOpacity: 0.55, fillColor: "#ffffff", fillOpacity: 0.02 };
+}
+
+function dongLabelStyle(selected: boolean) {
+  return `display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:999px;
+    font-size:12.5px;font-weight:800;white-space:nowrap;box-shadow:0 4px 14px rgba(25,31,40,.18);
+    border:2px solid ${selected ? "var(--blue)" : "var(--line)"};
+    background:${selected ? "var(--blue)" : "#fff"};
+    color:${selected ? "#fff" : "var(--ink-3)"};
+    cursor:pointer;`;
+}
+
 /** 이문동 컨셉 데모: 실제 카카오맵 위에서 동 클릭 → 출발지 선택 → 검색 결과 핀. */
 export function ImunConceptDemo() {
   const appKey = process.env.NEXT_PUBLIC_KAKAO_MAP_JS_KEY;
@@ -261,20 +265,30 @@ export function ImunConceptDemo() {
 
   const mapEl = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
-  const dongOverlaysRef = useRef<any[]>([]);
+  const dongPolygonsRef = useRef<any[]>([]); // DONG_BOUNDARIES 와 같은 순서로 대응
+  const dongLabelsRef = useRef<any[]>([]);
   const sourceOverlaysRef = useRef<any[]>([]);
   const storeOverlaysRef = useRef<any[]>([]);
   const sourceMarkerRef = useRef<any>(null);
+  const gpsMarkerRef = useRef<any>(null);
   const topPanelRef = useRef<HTMLDivElement>(null);
 
   const [step, setStep] = useState<Step>("dong");
+  const [selectedDongName, setSelectedDongName] = useState<string | null>(null);
   const [source, setSource] = useState<SourcePoint | null>(null);
   const [customAddress, setCustomAddress] = useState("");
   const [query, setQuery] = useState("");
   const [radiusKey, setRadiusKey] = useState<RadiusKey>("dong");
   const [selected, setSelected] = useState<MatchedResult | null>(null);
+  const [locating, setLocating] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
   // 상단 플로팅 패널 높이 — 지도 핀이 패널 아래에 가려지지 않도록 bounds 여백으로 사용.
   const [topInset, setTopInset] = useState(140);
+
+  const flashNotice = useCallback((msg: string) => {
+    setNotice(msg);
+    window.setTimeout(() => setNotice(null), 2400);
+  }, []);
 
   useEffect(() => {
     const el = topPanelRef.current;
@@ -300,7 +314,7 @@ export function ImunConceptDemo() {
     }).sort((a, b) => a.distance - b.distance);
   }, [source, query, radius]);
 
-  // 지도 초기화 (1회) — 동대문구 넓은 시야 + 동 핀
+  // 지도 초기화 (1회) — 동대문구 넓은 시야 + 동 경계 폴리곤(항상 유지, 선택 시 스타일만 갱신)
   useEffect(() => {
     if (!loaded || !mapEl.current || mapRef.current) return;
     const { kakao } = window;
@@ -309,41 +323,71 @@ export function ImunConceptDemo() {
       level: WIDE_LEVEL,
     });
     mapRef.current = map;
-    renderDongPins();
-    kakao.maps.event.addListener(map, "click", () => setSelected(null));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loaded]);
 
-  function renderDongPins() {
-    const map = mapRef.current;
-    if (!map || !window.kakao) return;
-    const { kakao } = window;
-    clearOverlays(dongOverlaysRef);
-    for (const dong of DONGS) {
+    for (const dong of DONG_BOUNDARIES) {
+      const style = dongPolygonStyle(false);
+      const polygon = new kakao.maps.Polygon({
+        path: dong.path.map((p: { lat: number; lng: number }) => new kakao.maps.LatLng(p.lat, p.lng)),
+        ...style,
+      });
+      polygon.setMap(map);
+      kakao.maps.event.addListener(polygon, "click", () => goToDong(dong));
+      dongPolygonsRef.current.push(polygon);
+
       const el = document.createElement("div");
-      el.style.cssText = pinStyle({ active: dong.active, filled: dong.active });
-      el.textContent = dong.active ? `📍 ${dong.name}` : dong.name;
-      if (dong.active) el.addEventListener("click", () => selectDong(dong));
-      else el.title = "아직 데이터가 없어요";
-      const overlay = new kakao.maps.CustomOverlay({
-        position: new kakao.maps.LatLng(dong.lat, dong.lng),
+      el.style.cssText = dongLabelStyle(false);
+      el.textContent = dong.name;
+      el.addEventListener("click", () => goToDong(dong));
+      const label = new kakao.maps.CustomOverlay({
+        position: new kakao.maps.LatLng(dong.center.lat, dong.center.lng),
         content: el,
         yAnchor: 0.5,
         clickable: true,
       });
-      overlay.setMap(map);
-      dongOverlaysRef.current.push(overlay);
+      label.setMap(map);
+      dongLabelsRef.current.push(label);
     }
-  }
 
-  function selectDong(dong: DongPoint) {
+    kakao.maps.event.addListener(map, "click", () => setSelected(null));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaded]);
+
+  // 선택된 동이 바뀌면 폴리곤/라벨 스타일만 갱신(재생성하지 않음 — 경계선은 항상 지도에 남아있음).
+  useEffect(() => {
+    DONG_BOUNDARIES.forEach((dong, i) => {
+      const selected = dong.name === selectedDongName;
+      const polygon = dongPolygonsRef.current[i];
+      const label = dongLabelsRef.current[i];
+      if (polygon) polygon.setOptions(dongPolygonStyle(selected));
+      if (label) {
+        const content = label.getContent() as HTMLElement;
+        content.style.cssText = dongLabelStyle(selected);
+      }
+    });
+  }, [selectedDongName]);
+
+  function goToDong(dong: DongBoundary) {
     const map = mapRef.current;
     if (!map || !window.kakao) return;
-    clearOverlays(dongOverlaysRef);
+    clearOverlays(sourceOverlaysRef);
+    clearOverlays(storeOverlaysRef);
+    if (sourceMarkerRef.current) {
+      sourceMarkerRef.current.setMap(null);
+      sourceMarkerRef.current = null;
+    }
+    setSource(null);
+    setQuery("");
+    setRadiusKey("dong");
+    setSelected(null);
+    setSelectedDongName(dong.name);
     map.setLevel(DONG_LEVEL);
-    map.panTo(new window.kakao.maps.LatLng(dong.lat, dong.lng));
-    setStep("source");
-    renderSourcePins();
+    map.panTo(new window.kakao.maps.LatLng(dong.center.lat, dong.center.lng));
+    if (dong.name === DATA_READY_DONG) {
+      setStep("source");
+      renderSourcePins();
+    } else {
+      setStep("empty");
+    }
   }
 
   function renderSourcePins() {
@@ -408,12 +452,61 @@ export function ImunConceptDemo() {
     setQuery("");
     setRadiusKey("dong");
     setSelected(null);
+    setSelectedDongName(null);
     setStep("dong");
     if (map && window.kakao) {
       map.setLevel(WIDE_LEVEL);
       map.panTo(new window.kakao.maps.LatLng(WIDE_CENTER.lat, WIDE_CENTER.lng));
     }
-    renderDongPins();
+  }
+
+  // GPS로 내 위치를 찾아 그 위치가 속한 동을 자동 선택. 좌표는 화면 표시용일 뿐 저장하지 않음(스펙 2장).
+  function locateMyDong() {
+    if (!navigator.geolocation) {
+      flashNotice("이 기기에서는 위치를 사용할 수 없어요.");
+      return;
+    }
+    setLocating(true);
+    flashNotice("현재 위치를 찾는 중…");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLocating(false);
+        const { latitude, longitude } = pos.coords;
+        const map = mapRef.current;
+        if (map && window.kakao) {
+          const { kakao } = window;
+          const ll = new kakao.maps.LatLng(latitude, longitude);
+          if (!gpsMarkerRef.current) {
+            const el = document.createElement("div");
+            el.className = "geo-dot";
+            gpsMarkerRef.current = new kakao.maps.CustomOverlay({
+              content: el,
+              yAnchor: 0.5,
+              zIndex: 5,
+            });
+          }
+          gpsMarkerRef.current.setPosition(ll);
+          gpsMarkerRef.current.setMap(map);
+        }
+        const found = findDongAt(latitude, longitude);
+        if (found) {
+          goToDong(found);
+          flashNotice(`📍 현재 위치는 ${found.name}이에요`);
+        } else {
+          mapRef.current?.panTo(new window.kakao.maps.LatLng(latitude, longitude));
+          flashNotice("현재 위치는 아직 지원하는 동네 밖이에요 (동대문구 일부만 지원 중).");
+        }
+      },
+      (err) => {
+        setLocating(false);
+        flashNotice(
+          err.code === err.PERMISSION_DENIED
+            ? "위치 권한이 거부됐어요. 브라우저 설정에서 허용해 주세요."
+            : "현재 위치를 가져오지 못했어요.",
+        );
+      },
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 },
+    );
   }
 
   // 검색 결과 → 지도 핀 렌더링 + 결과가 보이도록 시야 맞춤
@@ -476,7 +569,12 @@ export function ImunConceptDemo() {
             <div>
               <h1 className="text-base font-extrabold text-ink">우리 동네, 어디서 살까 🔍</h1>
               {step === "dong" && (
-                <p className="mt-0.5 text-xs text-ink-3">지도에서 이문동을 눌러보세요 (다른 동은 준비 중)</p>
+                <p className="mt-0.5 text-xs text-ink-3">
+                  지도에서 동을 눌러보세요 (지금은 {DATA_READY_DONG}만 데이터가 있어요)
+                </p>
+              )}
+              {step === "empty" && (
+                <p className="mt-0.5 text-xs text-ink-3">📍 {selectedDongName} 을 선택했어요</p>
               )}
               {step === "source" && (
                 <p className="mt-0.5 text-xs text-ink-3">🏢 마커를 눌러 출발지를 고르거나, 주소를 입력하세요.</p>
@@ -540,6 +638,29 @@ export function ImunConceptDemo() {
         </div>
       </div>
 
+      {/* 아직 데이터가 없는 동을 선택했을 때 */}
+      {step === "empty" && (
+        <div className="absolute inset-x-0 bottom-0 z-10 p-4">
+          <div className="mx-auto max-w-md rounded-card border border-line bg-surface p-5 text-center shadow-[var(--sh-2)]">
+            <div className="text-3xl">🚧</div>
+            <p className="mt-2 text-sm font-bold text-ink">{selectedDongName}은 아직 준비 중이에요</p>
+            <p className="mt-1 text-xs text-ink-3">
+              지금은 {DATA_READY_DONG}만 발품 팔아 채워뒀어요. 다음 동네도 곧 만나요!
+            </p>
+            <button
+              type="button"
+              className="btn-cta btn-cta--primary btn-cta--block mt-3"
+              onClick={() => {
+                const imun = DONG_BOUNDARIES.find((d) => d.name === DATA_READY_DONG);
+                if (imun) goToDong(imun);
+              }}
+            >
+              {DATA_READY_DONG} 보러가기
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* 검색어는 있는데 결과가 없을 때 */}
       {step === "search" && query.trim() && results.length === 0 && !selected && (
         <div className="pointer-events-none absolute inset-x-0 bottom-6 z-10 flex justify-center px-4">
@@ -597,6 +718,26 @@ export function ImunConceptDemo() {
               카카오맵에서 보기
             </a>
           </div>
+        </div>
+      )}
+
+      {/* GPS 현재 위치 → 자동 동 선택 */}
+      {!error && !selected && (
+        <button
+          type="button"
+          onClick={locateMyDong}
+          disabled={locating}
+          aria-label="현재 위치로 동 찾기"
+          className="absolute bottom-6 right-4 z-20 flex size-11 items-center justify-center rounded-full bg-white text-ink-2 shadow-md transition-colors hover:bg-surface-2 active:bg-surface-2 disabled:opacity-60"
+        >
+          <GpsIcon className={`size-5 ${locating ? "animate-pulse" : ""}`} />
+        </button>
+      )}
+
+      {/* 토스트 안내 */}
+      {notice && (
+        <div className="pointer-events-none absolute inset-x-0 bottom-20 z-50 flex justify-center px-4">
+          <div className="rounded-full bg-gray-900 px-4 py-2 text-center text-sm text-white shadow-lg">{notice}</div>
         </div>
       )}
     </div>
