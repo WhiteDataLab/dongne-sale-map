@@ -265,6 +265,7 @@ export function ImunConceptDemo() {
   const sourceOverlaysRef = useRef<any[]>([]);
   const storeOverlaysRef = useRef<any[]>([]);
   const sourceMarkerRef = useRef<any>(null);
+  const topPanelRef = useRef<HTMLDivElement>(null);
 
   const [step, setStep] = useState<Step>("dong");
   const [source, setSource] = useState<SourcePoint | null>(null);
@@ -272,6 +273,18 @@ export function ImunConceptDemo() {
   const [query, setQuery] = useState("");
   const [radiusKey, setRadiusKey] = useState<RadiusKey>("dong");
   const [selected, setSelected] = useState<MatchedResult | null>(null);
+  // 상단 플로팅 패널 높이 — 지도 핀이 패널 아래에 가려지지 않도록 bounds 여백으로 사용.
+  const [topInset, setTopInset] = useState(140);
+
+  useEffect(() => {
+    const el = topPanelRef.current;
+    if (!el) return;
+    const measure = () => setTopInset(el.getBoundingClientRect().height);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const radius = RADIUS_OPTIONS.find((r) => r.key === radiusKey)!;
 
@@ -440,10 +453,11 @@ export function ImunConceptDemo() {
       const bounds = new kakao.maps.LatLngBounds();
       bounds.extend(new kakao.maps.LatLng(source.lat, source.lng));
       for (const r of results) bounds.extend(new kakao.maps.LatLng(r.store.lat, r.store.lng));
-      map.setBounds(bounds);
+      // 핀이 상단 플로팅 패널 아래에 가려지지 않도록 패널 높이만큼 상단 여백을 준다.
+      map.setBounds(bounds, topInset + 24, 24, 32, 24);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [results, step]);
+  }, [results, step, topInset]);
 
   return (
     <div className="relative h-full w-full">
@@ -456,7 +470,7 @@ export function ImunConceptDemo() {
       )}
 
       {/* 상단 플로팅 패널 */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 p-4">
+      <div ref={topPanelRef} className="pointer-events-none absolute inset-x-0 top-0 z-10 p-4">
         <div className="pointer-events-auto mx-auto max-w-md space-y-2 rounded-card border border-line bg-surface/95 p-4 shadow-[var(--sh-2)] backdrop-blur">
           <div className="flex items-start justify-between gap-2">
             <div>
