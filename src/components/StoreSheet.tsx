@@ -1172,10 +1172,15 @@ export function SalesTab({
                 {s.salePrice != null ? won(s.salePrice) : "세일중"}
               </p>
             </div>
-            {s.qty?.trim() && <p className="text-xs text-ink-3">{s.qty}</p>}
-            <div className="mt-0.5 flex items-center gap-2 text-xs">
-              <span className="rounded bg-red-50 px-1.5 py-0.5 font-medium text-red-600">
-                {untilLabel(s.expiresAt)}
+            {/* P1-6(두쫀쿠맵 패턴): 수량·마감을 색+숫자로 또렷하게 — "지금" 결정 속도 ↑ */}
+            <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs">
+              {s.qty?.trim() && (
+                <span className="num rounded-full bg-amber-100 px-2 py-0.5 font-extrabold text-amber-800">
+                  📦 {s.qty}
+                </span>
+              )}
+              <span className="num rounded-full bg-deal-wash px-2 py-0.5 font-extrabold text-deal-ink">
+                ⏰ <Countdown to={s.expiresAt} />
               </span>
               <span className="text-ink-3">{freshnessLabel(s.createdAt)}</span>
               {s.isMine && (

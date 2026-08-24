@@ -16,15 +16,23 @@ import { prisma } from "@/lib/prisma";
  * - `classicMap`: **콜드스타트 지도 UI 롤백 스위치**(테마지도 벤치마크 개편, docs/THEME_MAP_BENCHMARK_PM_BRIEF.md).
  *   OFF(기본)=새 UI(히어로 '지금 세일중' 토글·라이브 카운터·세일 히트맵 클러스터·원탭 세일 제보 FAB),
  *   ON=이전 지도 UI(카테고리 칩 필터바·가게 등록 FAB만)로 즉시 되돌림. 데이터/API 는 공용이라 안전.
+ * - `adRestraint`: **소비자 화면 광고 절제 모드**(브리프 §8-11, 야장맵 '광고 무첨가' 신뢰 전략).
+ *   ON(기본)=밀도 임계 전까지 소비자 지도 표면의 광고 신호를 약화 — 마퀴 스폰서 상단 고정·'광고' 배지 제거,
+ *   금색 스폰서 핀→일반 핀, 로컬 광고 스트립(L4) 비노출. 사장님 표면(/manage·구독)은 영향 없음.
+ *   OFF=광고 노출 원복(밀도 임계 도달 후 관리자가 끔). ⚠️ 기본값이 ON 인 유일한 플래그(행 없음 → on).
+ * - `community`: **동네 절약방(가벼운 커뮤니티) 킬스위치**(브리프 §8-7). ON(기본)=글쓰기·목록 노출,
+ *   OFF=글쓰기 차단+목록 숨김(모더레이션 사고 시 즉시 잠금). 행 없음 → on.
  *
- * 기본값은 **전부 OFF**(SiteConfig 행 없음 → off). 즉 배포 즉시 무료 모드 + 새 콜드스타트 UI 이며,
- * 관리자가 켜야 유료/예약/교환(또는 이전 지도 UI 롤백)이 열린다.
+ * 기본값: monetization/reservations/pointshop/classicMap 은 OFF(행 없음 → off),
+ * adRestraint/community 는 ON(행 없음 → on). 즉 배포 즉시 무료 모드 + 새 콜드스타트 UI + 광고 절제 + 절약방 오픈.
  */
 export type LaunchFlags = {
   monetization: boolean;
   reservations: boolean;
   pointshop: boolean;
   classicMap: boolean;
+  adRestraint: boolean;
+  community: boolean;
 };
 
 export const FLAG_KEYS = {
@@ -32,6 +40,8 @@ export const FLAG_KEYS = {
   reservations: "flag_reservations",
   pointshop: "flag_pointshop",
   classicMap: "flag_classic_map",
+  adRestraint: "flag_ad_restraint",
+  community: "flag_community",
 } as const;
 
 /** 현재 런치 플래그. SiteConfig 미설정 키는 off(false) 로 본다(무료 모드 기본). */
@@ -45,6 +55,9 @@ export async function getLaunchFlags(): Promise<LaunchFlags> {
     reservations: v.get(FLAG_KEYS.reservations) === "on",
     pointshop: v.get(FLAG_KEYS.pointshop) === "on",
     classicMap: v.get(FLAG_KEYS.classicMap) === "on",
+    // 아래 둘은 기본 ON(행 없음 → on) — 명시적으로 "off" 일 때만 꺼진다.
+    adRestraint: v.get(FLAG_KEYS.adRestraint) !== "off",
+    community: v.get(FLAG_KEYS.community) !== "off",
   };
 }
 

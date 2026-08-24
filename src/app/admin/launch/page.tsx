@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "운영 모드 — 관리" };
 
 type Row = {
-  key: "monetization" | "reservations" | "pointshop" | "classicMap";
+  key: "monetization" | "reservations" | "pointshop" | "classicMap" | "adRestraint" | "community";
   on: boolean;
   title: string;
   onDesc: string;
@@ -56,6 +56,27 @@ export default async function AdminLaunchPage() {
         "새 콜드스타트 지도 UI가 켜져 있어요(기본). 문제가 생기면 켜서 이전 UI로 즉시 롤백할 수 있어요(재배포 불필요).",
       turnOnLabel: "이전 UI로 롤백하기",
       turnOffLabel: "새 UI로 다시 켜기",
+    },
+    {
+      key: "adRestraint",
+      on: flags.adRestraint,
+      title: "🤫 소비자 화면 광고 절제 모드",
+      onDesc:
+        "켜짐(기본). 지도 화면의 광고 신호를 약화합니다 — 마퀴 스폰서 고정·광고 배지 제거, 금색 핀→일반 핀, 지역 광고 스트립 숨김. 사장님 대시보드·구독은 그대로예요. 밀도(활성 세일)가 차기 전까지 신뢰를 지키는 모드예요.",
+      offDesc:
+        "꺼짐. 스폰서 마퀴 고정·금색 핀·지역 광고가 소비자 지도에 정상 노출됩니다. (밀도 임계 도달 후 권장)",
+      turnOnLabel: "절제 모드 켜기",
+      turnOffLabel: "광고 노출 원복 (절제 끄기)",
+    },
+    {
+      key: "community",
+      on: flags.community,
+      title: "💬 동네 절약방 (가벼운 커뮤니티)",
+      onDesc:
+        "켜짐(기본). 동네 소식에서 이웃끼리 절약 꿀팁·득템 자랑 글을 쓸 수 있어요. 신고 누적 시 자동 숨김으로 모더레이션됩니다.",
+      offDesc: "꺼짐. 글쓰기가 차단되고 목록이 숨겨져요(모더레이션 사고 시 긴급 잠금용).",
+      turnOnLabel: "절약방 열기",
+      turnOffLabel: "절약방 잠그기 (긴급)",
     },
   ];
 

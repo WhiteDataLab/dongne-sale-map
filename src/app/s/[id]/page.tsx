@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { CATEGORY_META, type Category } from "@/lib/constants";
 import { asStoreHours, openStatusNow } from "@/lib/businessHours";
 import { won, untilLabel, freshnessLabel, starString } from "@/lib/format";
+import { regionFromAddress } from "@/lib/sponsors";
 import { ShareButton } from "@/components/ShareButton";
 import { Reveal } from "@/components/Reveal";
 
@@ -35,9 +36,11 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   if (!store) return { title: "가게를 찾을 수 없어요 — 동네 세일 지도" };
 
   const top = store.sales[0];
-  const title = `${store.name} 세일 정보 — 동네 세일 지도`;
+  const region = regionFromAddress(store.address);
+  const regionPrefix = region === "구독" ? "" : `${region} `;
+  const title = `${regionPrefix}${store.name} 세일 정보 — 동네 세일 지도`;
   const description = top
-    ? `🔥 ${top.title}${top.salePrice != null ? ` ${won(top.salePrice)}` : ""} · 지금 진행중인 세일 ${store.sales.length}건`
+    ? `🔥 ${top.title}${top.salePrice != null ? ` ${won(top.salePrice)}` : ""} · ${regionPrefix}지금 진행중인 세일 ${store.sales.length}건`
     : `${store.name}의 메뉴·세일·리뷰를 확인해보세요.`;
 
   // OG/트위터 이미지는 동적 카드(opengraph-image.tsx)가 자동 생성·연결한다.
@@ -60,6 +63,9 @@ export default async function StoreSharePage({ params }: { params: Promise<{ id:
   if (!store || store.status !== "active") notFound();
 
   const meta = CATEGORY_META[store.category as Category];
+  // P1-9: 동네(동) 강조 — "우리 동네" 정서(공유 유입 첫인상)
+  const region = regionFromAddress(store.address);
+  const regionLabel = region === "구독" ? "우리 동네" : region;
   const hours = asStoreHours(store.hoursJson);
   const openStatus = openStatusNow(hours, new Date());
   const ratings = store.reviews.map((r) => r.rating);
@@ -75,7 +81,10 @@ export default async function StoreSharePage({ params }: { params: Promise<{ id:
         style={{ background: `linear-gradient(160deg, ${meta.color}22, ${meta.color}55)` }}
       >
         <span className="text-5xl">{meta.icon}</span>
-        <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-ink">{store.name}</h1>
+        <span className="mt-2 rounded-full bg-deal-wash px-2.5 py-0.5 text-xs font-extrabold text-deal-ink">
+          {regionLabel} 오늘의 떨이·세일
+        </span>
+        <h1 className="mt-1.5 text-2xl font-extrabold tracking-tight text-ink">{store.name}</h1>
         <p className="mt-1 text-sm font-medium text-ink-2">{store.address}</p>
         <div className="mt-2 flex flex-wrap items-center justify-center gap-2 text-xs">
           {openStatus === "open" && (

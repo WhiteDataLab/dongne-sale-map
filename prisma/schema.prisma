@@ -73,6 +73,7 @@ enum ReportTargetType {
   review
   product
   reply // M10: 사장님 리뷰 답글(ReviewReply)
+  post // P1-7: 동네 절약방 글(NeighborhoodPost)
 }
 
 enum ReportStatus {
@@ -241,6 +242,23 @@ model User {
   couponClaims   CouponClaim[] // 받은 쿠폰
   reservations   Reservation[] // M7(L2): 내 떨이 픽업 예약
   reviewReplies  ReviewReply[] @relation("ReviewReplyAuthor") // M8: 내가 단 리뷰 답글(사장님)
+  neighborhoodPosts NeighborhoodPost[] @relation("NhPostAuthor") // P1-7: 동네 절약방 글
+}
+
+// P1-7(콜드스타트 브리프 §8-7) — 동네 절약방: 가벼운 커뮤니티 글(절약 꿀팁·득템 자랑).
+// migration 45. region 은 작성 시 스냅샷(동 단위). 모더레이션 = 작성 시 screen(거절) + 신고 자동숨김(hidden).
+model NeighborhoodPost {
+  id        String   @id @default(cuid())
+  region    String // 동(洞) 이름 스냅샷 (예: 이문동). 미입력 시 "우리 동네"
+  body      String
+  authorId  String
+  hidden    Boolean  @default(false) // 신고 누적 자동숨김 / 관리자
+  createdAt DateTime @default(now())
+
+  author User @relation("NhPostAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([hidden, createdAt])
+  @@index([region, createdAt])
 }
 
 // 로그인 수단(소셜/전화) ↔ User 연결. 계정 연결(account linking)의 핵심 (Phase 5).

@@ -6,6 +6,7 @@ import { CATEGORIES, type Category } from "@/lib/constants";
 import { asStoreHours, isOpenNow, openStatusNow, kstTodayStart } from "@/lib/businessHours";
 import { getLiveSponsorStoreIds } from "@/lib/sponsors";
 import { getProStoreIds } from "@/lib/pro";
+import { getLaunchFlags } from "@/lib/launchFlags";
 import { getSiteSettings } from "@/lib/siteSettings";
 import { liveCouponFilter } from "@/lib/coupons";
 import type { StoreDTO, StoreSource } from "@/lib/types";
@@ -93,7 +94,10 @@ export async function GET(req: NextRequest) {
           where: { storeId: { in: ids }, kind: "shutdown", createdAt: { gte: shutdownSince } },
           _count: true,
         }),
-        getLiveSponsorStoreIds(ids, now), // M1-A: 현재 노출 중인 스폰서
+        // P1-11 광고 절제 모드(기본 ON): 소비자 지도의 금색 스폰서 핀을 일반 핀으로.
+        getLaunchFlags().then((f) =>
+          f.adRestraint ? new Set<string>() : getLiveSponsorStoreIds(ids, now),
+        ), // M1-A: 현재 노출 중인 스폰서
         getProStoreIds(ids, now), // M4: 프로 플랜(상위 노출)
         prisma.coupon.findMany({
           where: { ...liveCouponFilter(now), storeId: { in: ids } },

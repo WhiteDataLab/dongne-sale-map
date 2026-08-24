@@ -33,7 +33,9 @@ export async function toggleLaunchFlag(formData: FormData) {
     key !== "monetization" &&
     key !== "reservations" &&
     key !== "pointshop" &&
-    key !== "classicMap"
+    key !== "classicMap" &&
+    key !== "adRestraint" &&
+    key !== "community"
   ) {
     throw new Error("bad_key");
   }

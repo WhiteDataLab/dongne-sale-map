@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { prisma } from "@/lib/prisma";
 import { CATEGORY_META, type Category } from "@/lib/constants";
+import { regionFromAddress } from "@/lib/sponsors";
 
 /**
  * 공유 OG 카드(브리프 P2 "공유 OG 카드 비주얼") — /s/[id] 링크 미리보기 이미지.
@@ -66,6 +67,9 @@ export default async function OgImage({ params }: { params: Promise<{ id: string
   }
 
   const meta = CATEGORY_META[store.category as Category];
+  // P1-9 공유 카드 고도화: 동네(동)를 앞세워 "우리 동네" 정서 강조(카톡 미리보기 첫인상).
+  const region = regionFromAddress(store.address);
+  const regionLabel = region === "구독" ? "우리 동네" : region;
   const top = store.sales[0];
   const name = store.name.length > 16 ? store.name.slice(0, 16) + "…" : store.name;
   const title = top ? (top.title.length > 20 ? top.title.slice(0, 20) + "…" : top.title) : "";
@@ -112,8 +116,23 @@ export default async function OgImage({ params }: { params: Promise<{ id: string
         >
           {name}
         </div>
-        <div style={{ display: "flex", marginTop: "10px", fontSize: "30px", color: "#4E5968" }}>
-          {meta.label} · {store.address}
+        <div style={{ display: "flex", alignItems: "center", gap: "14px", marginTop: "14px" }}>
+          <div
+            style={{
+              display: "flex",
+              padding: "8px 22px",
+              borderRadius: "999px",
+              background: "#FFEAE0",
+              fontSize: "28px",
+              fontWeight: 800,
+              color: "#D62D14",
+            }}
+          >
+            {regionLabel} 오늘의 떨이·세일
+          </div>
+          <div style={{ display: "flex", fontSize: "28px", color: "#4E5968" }}>
+            {meta.label} · {store.address}
+          </div>
         </div>
 
         {/* 세일 카드 / 폴백 */}
