@@ -228,13 +228,23 @@ function clearOverlays(ref: React.MutableRefObject<any[]>) {
 
 const FLY_DURATION = 650;
 
-// 특정 좌표를 중심으로 부드럽게 줌인/줌아웃하면서 동시에 그 좌표가 화면 중앙으로 오도록 이동.
-// setLevel 의 anchor(줌 기준점)를 대상 좌표로 줘서 "그 지점을 중심으로" 확대되게 하고,
-// 같은 순간 panTo 로 중앙 이동을 겹쳐 실행해 줌+이동이 한 동작처럼 자연스럽게 이어지게 한다.
+// 특정 좌표로 부드럽게 이동한 뒤(panTo), 그 자리에서 부드럽게 확대(setLevel)한다.
+// setLevel 의 anchor 옵션과 panTo 를 동시에 실행하면 서로의 중심 계산이 꼬여
+// 엉뚱하게 줌아웃되는 버그가 있었음 — 그래서 "이동 완료(idle) → 그 자리에서 줌"
+// 순서로 확실히 분리한다. idle 이 안 오는 경우(이미 그 위치인 경우 등)를 대비해
+// 타임아웃 안전장치도 둔다.
 function flyTo(map: any, target: { lat: number; lng: number }, level: number, duration = FLY_DURATION) {
   const { kakao } = window;
   const ll = new kakao.maps.LatLng(target.lat, target.lng);
-  map.setLevel(level, { anchor: ll, animate: { duration } });
+  let zoomed = false;
+  const doZoom = () => {
+    if (zoomed) return;
+    zoomed = true;
+    kakao.maps.event.removeListener(map, "idle", doZoom);
+    map.setLevel(level, { animate: { duration } });
+  };
+  kakao.maps.event.addListener(map, "idle", doZoom);
+  window.setTimeout(doZoom, 700);
   map.panTo(ll);
 }
 
