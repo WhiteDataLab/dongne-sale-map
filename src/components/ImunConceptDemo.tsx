@@ -65,22 +65,27 @@ const DONG_LEVEL = 4;
 const DATA_READY_DONG = "이문동";
 
 // 이문동 출발지 후보 (아파트/빌라/오피스텔) — 후보2 컨셉의 목업.
+// 4곳은 카카오 로컬 키워드 검색으로 찾은 실제 단지 좌표(기존엔 대충 지어낸 좌표라
+// 실제 위치와 어긋났었음 — 예: "이문아이파크자이"가 실제론 다른 대학 건물 위치에 찍혀있었음).
+// 마지막 한 곳은 "잔여 주소 직접 입력" 후보4 컨셉을 보여주기 위한 일반 예시.
 const SOURCE_OPTIONS: SourcePoint[] = [
-  { label: "이문아이파크자이", lat: 37.5978, lng: 127.0601 },
-  { label: "래미안 엘리니티", lat: 37.5952, lng: 127.0577 },
-  { label: "브라운스톤 이문", lat: 37.5991, lng: 127.0583 },
-  { label: "휘경 SK뷰", lat: 37.5967, lng: 127.0645 },
+  { label: "이문아이파크자이", lat: 37.598186166296394, lng: 127.06346879756117 },
+  { label: "래미안 라그란데", lat: 37.6000844489313, lng: 127.060230587332 },
+  { label: "이문삼성래미안1차", lat: 37.6000357871039, lng: 127.056606840929 },
+  { label: "휘경SK뷰", lat: 37.59352647073201, lng: 127.06632505454822 },
   { label: "다세대빌라 (이문로 3길)", lat: 37.5959, lng: 127.0612 },
 ];
 
 // 목업 가게 데이터. 실제 좌표/DB 대신 데모용 하드코딩.
+// 아래 체인 매장 5곳은 이름·좌표 모두 카카오 로컬 키워드 검색으로 실재 지점을 찾아 반영함
+// (기존엔 대충 지어낸 좌표라 실제 지도와 어긋났음 — 이제 실제 지도상 정확한 위치).
 const DEMO_STORES: DemoStore[] = [
   {
-    id: "emart-imun",
-    name: "이마트 이문점",
+    id: "emart-everyday-imun",
+    name: "이마트에브리데이 이문점",
     category: "대형마트",
-    lat: 37.6002,
-    lng: 127.0559,
+    lat: 37.59849154178327,
+    lng: 127.06188598263597,
     verified: true,
     items: [
       { name: "딸기", price: "8,900원", updatedAt: "2026-08-21" },
@@ -91,24 +96,23 @@ const DEMO_STORES: DemoStore[] = [
     ],
   },
   {
-    id: "homeplus-hwigyeong",
-    name: "홈플러스 휘경점",
+    id: "gs-the-fresh-imun-parkxi",
+    name: "GS더프레시 이문파크자이점",
     category: "대형마트",
-    lat: 37.5941,
-    lng: 127.0668,
+    lat: 37.59908111129766,
+    lng: 127.06298149595398,
     verified: true,
     items: [
-      { name: "장미", price: "3,000원/송이", updatedAt: "2026-08-19" },
       { name: "포켓몬빵", price: "1,800원", updatedAt: "2026-08-23" },
       { name: "두부", price: "1,490원", updatedAt: "2026-08-21" },
     ],
   },
   {
-    id: "gs25-imun1",
-    name: "GS25 이문1동점",
+    id: "gs25-imun-canvas",
+    name: "GS25 이문캔버스점",
     category: "편의점",
-    lat: 37.5983,
-    lng: 127.061,
+    lat: 37.5971915355627,
+    lng: 127.061649373943,
     verified: true,
     items: [
       { name: "아이스크림", price: "1,500원", updatedAt: "2026-08-24" },
@@ -116,17 +120,28 @@ const DEMO_STORES: DemoStore[] = [
     ],
   },
   {
-    id: "cu-imun-station",
-    name: "CU 이문역점",
+    id: "cu-imun-gold",
+    name: "CU 이문골드점",
     category: "편의점",
-    lat: 37.5966,
-    lng: 127.0575,
+    lat: 37.6009213156062,
+    lng: 127.062262826867,
     verified: true,
     items: [
       { name: "아이스크림", price: "1,400원", updatedAt: "2026-08-22" },
       { name: "휴지", price: "4,900원", updatedAt: "2026-08-15" },
     ],
   },
+  {
+    id: "gs25-dapsimni-hanyang",
+    name: "GS25 답십리한양점",
+    category: "편의점",
+    lat: 37.57266897198723,
+    lng: 127.06036471674499,
+    verified: true,
+    items: [{ name: "휴지", price: "3,900원", updatedAt: "2026-08-17" }],
+  },
+  // 아래 5곳은 서비스 컨셉상 "이 서비스 자체 DB에만 있는(카카오 POI엔 없는) 동네 가게" 목업
+  // — 실제 상호는 아니고, 좌표만 각 동 경계 안에 들어오도록 findDongAt 으로 검증해 배치함.
   {
     id: "fruit-imun",
     name: "이문 과일가게",
@@ -143,8 +158,8 @@ const DEMO_STORES: DemoStore[] = [
     id: "flower-cheongryangni",
     name: "청량리 꽃집",
     category: "꽃집",
-    lat: 37.5803,
-    lng: 127.0468,
+    lat: 37.588816,
+    lng: 127.045304,
     verified: false,
     items: [{ name: "장미", price: "2,500원/송이", updatedAt: "2026-08-20" }],
   },
@@ -156,15 +171,6 @@ const DEMO_STORES: DemoStore[] = [
     lng: 127.0568,
     verified: false,
     items: [{ name: "장미", price: "3,500원/송이", updatedAt: "2026-08-24" }],
-  },
-  {
-    id: "daiso-dapsimni",
-    name: "다이소 답십리점",
-    category: "생활용품",
-    lat: 37.5723,
-    lng: 127.0508,
-    verified: true,
-    items: [{ name: "휴지", price: "3,900원", updatedAt: "2026-08-17" }],
   },
   {
     id: "banchan-imun",
