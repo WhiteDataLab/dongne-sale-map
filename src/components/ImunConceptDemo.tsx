@@ -226,16 +226,16 @@ function clearOverlays(ref: React.MutableRefObject<any[]>) {
   ref.current = [];
 }
 
-const FLY_DURATION = 900;
+const FLY_DURATION = 650;
 
-// 특정 좌표를 중심으로 부드럽게 줌인/줌아웃(카카오맵 setLevel 의 anchor = 줌 기준점).
-// anchor 는 "줌 시작 시점의 화면 위치"를 고정하는 방식이라 완벽히 정중앙은 아닐 수 있어
-// 애니메이션이 끝난 뒤 짧은 보정 panTo 로 정확히 그 지점을 중앙에 맞춘다.
+// 특정 좌표를 중심으로 부드럽게 줌인/줌아웃하면서 동시에 그 좌표가 화면 중앙으로 오도록 이동.
+// setLevel 의 anchor(줌 기준점)를 대상 좌표로 줘서 "그 지점을 중심으로" 확대되게 하고,
+// 같은 순간 panTo 로 중앙 이동을 겹쳐 실행해 줌+이동이 한 동작처럼 자연스럽게 이어지게 한다.
 function flyTo(map: any, target: { lat: number; lng: number }, level: number, duration = FLY_DURATION) {
   const { kakao } = window;
   const ll = new kakao.maps.LatLng(target.lat, target.lng);
   map.setLevel(level, { anchor: ll, animate: { duration } });
-  window.setTimeout(() => map.panTo(ll), duration);
+  map.panTo(ll);
 }
 
 function pinStyle({
