@@ -226,6 +226,18 @@ function clearOverlays(ref: React.MutableRefObject<any[]>) {
   ref.current = [];
 }
 
+const FLY_DURATION = 900;
+
+// 특정 좌표를 중심으로 부드럽게 줌인/줌아웃(카카오맵 setLevel 의 anchor = 줌 기준점).
+// anchor 는 "줌 시작 시점의 화면 위치"를 고정하는 방식이라 완벽히 정중앙은 아닐 수 있어
+// 애니메이션이 끝난 뒤 짧은 보정 panTo 로 정확히 그 지점을 중앙에 맞춘다.
+function flyTo(map: any, target: { lat: number; lng: number }, level: number, duration = FLY_DURATION) {
+  const { kakao } = window;
+  const ll = new kakao.maps.LatLng(target.lat, target.lng);
+  map.setLevel(level, { anchor: ll, animate: { duration } });
+  window.setTimeout(() => map.panTo(ll), duration);
+}
+
 function pinStyle({
   active,
   filled,
@@ -380,8 +392,7 @@ export function ImunConceptDemo() {
     setRadiusKey("dong");
     setSelected(null);
     setSelectedDongName(dong.name);
-    map.panTo(new window.kakao.maps.LatLng(dong.center.lat, dong.center.lng));
-    map.setLevel(DONG_LEVEL, { animate: { duration: 500 } });
+    flyTo(map, dong.center, DONG_LEVEL);
     if (dong.name === DATA_READY_DONG) {
       setStep("source");
       renderSourcePins();
@@ -455,8 +466,7 @@ export function ImunConceptDemo() {
     setSelectedDongName(null);
     setStep("dong");
     if (map && window.kakao) {
-      map.panTo(new window.kakao.maps.LatLng(WIDE_CENTER.lat, WIDE_CENTER.lng));
-      map.setLevel(WIDE_LEVEL, { animate: { duration: 500 } });
+      flyTo(map, WIDE_CENTER, WIDE_LEVEL);
     }
   }
 
