@@ -380,8 +380,8 @@ export function ImunConceptDemo() {
     setRadiusKey("dong");
     setSelected(null);
     setSelectedDongName(dong.name);
-    map.setLevel(DONG_LEVEL);
     map.panTo(new window.kakao.maps.LatLng(dong.center.lat, dong.center.lng));
+    map.setLevel(DONG_LEVEL, { animate: { duration: 500 } });
     if (dong.name === DATA_READY_DONG) {
       setStep("source");
       renderSourcePins();
@@ -455,8 +455,8 @@ export function ImunConceptDemo() {
     setSelectedDongName(null);
     setStep("dong");
     if (map && window.kakao) {
-      map.setLevel(WIDE_LEVEL);
       map.panTo(new window.kakao.maps.LatLng(WIDE_CENTER.lat, WIDE_CENTER.lng));
+      map.setLevel(WIDE_LEVEL, { animate: { duration: 500 } });
     }
   }
 
