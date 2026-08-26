@@ -10,6 +10,7 @@ import { GpsIcon } from "./GpsIcon";
 import { DEFAULT_CENTER } from "@/lib/constants";
 import { haversineMeters, formatDistance } from "@/lib/geo";
 import { DONG_BOUNDARIES, findDongAt, type DongBoundary } from "@/lib/dongBoundaries";
+import { GU_BOUNDARIES, type GuBoundary } from "@/lib/guBoundaries";
 
 type Direction = "북" | "북동" | "동" | "남동" | "남" | "남서" | "서" | "북서";
 
@@ -60,12 +61,17 @@ interface SourcePoint {
   icon?: string; // 기본값 🏢(아파트 예외 2곳)
 }
 
+// 가장 넓은 시야(구 단위) 중심 — 동대문구+인접 4개 구(중랑·성북·성동·광진)가 함께 보이는 지점.
+const GU_WIDE_CENTER = { lat: 37.579, lng: 127.058 };
+const GU_LEVEL = 9;
+
 // 동대문구 넓은 시야 중심(대략) — 이문동을 포함해 인접 동이 함께 보이는 지점.
 const WIDE_CENTER = { lat: 37.5865, lng: 127.0555 };
 const WIDE_LEVEL = 7;
 const DONG_LEVEL = 4;
 
-// 실제 데이터(출발지·가게)가 있는 동. 나머지 5개 동은 경계선만 보여주고 "준비중" 안내.
+// 실제 데이터(출발지·가게)가 있는 구/동. 나머지는 경계선만 보여주고 "준비중" 안내.
+const DATA_READY_GU = "동대문구";
 const DATA_READY_DONG = "이문동";
 
 // 이문동 출발지 후보 — 후보2 컨셉의 목업.
@@ -278,7 +284,7 @@ type MatchedResult = {
   direction?: Direction;
 };
 
-type Step = "dong" | "source" | "search" | "empty";
+type Step = "gu" | "guEmpty" | "dong" | "source" | "search" | "empty";
 
 function clearOverlays(ref: React.MutableRefObject<any[]>) {
   ref.current.forEach((o) => o.setMap(null));
@@ -346,6 +352,8 @@ export function ImunConceptDemo() {
 
   const mapEl = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
+  const guPolygonsRef = useRef<any[]>([]); // GU_BOUNDARIES 와 같은 순서로 대응
+  const guLabelsRef = useRef<any[]>([]);
   const dongPolygonsRef = useRef<any[]>([]); // DONG_BOUNDARIES 와 같은 순서로 대응
   const dongLabelsRef = useRef<any[]>([]);
   const dongContentOverlaysRef = useRef<any[]>([]); // 선택된 동의 지하철역+동네가게(둘러보기 모드) 핀
@@ -355,7 +363,8 @@ export function ImunConceptDemo() {
   const gpsMarkerRef = useRef<any>(null);
   const topPanelRef = useRef<HTMLDivElement>(null);
 
-  const [step, setStep] = useState<Step>("dong");
+  const [step, setStep] = useState<Step>("gu");
+  const [selectedGuName, setSelectedGuName] = useState<string | null>(null);
   const [selectedDongName, setSelectedDongName] = useState<string | null>(null);
   const [source, setSource] = useState<SourcePoint | null>(null);
   const [customAddress, setCustomAddress] = useState("");
@@ -396,16 +405,63 @@ export function ImunConceptDemo() {
     }).sort((a, b) => a.distance - b.distance);
   }, [source, query, radius]);
 
-  // 지도 초기화 (1회) — 동대문구 넓은 시야 + 동 경계 폴리곤(항상 유지, 선택 시 스타일만 갱신)
+  // 지도 초기화 (1회) — 구 단위 넓은 시야 + 구 경계 폴리곤(항상 유지, 선택 시 스타일만 갱신)
   useEffect(() => {
     if (!loaded || !mapEl.current || mapRef.current) return;
     const { kakao } = window;
     const map = new kakao.maps.Map(mapEl.current, {
-      center: new kakao.maps.LatLng(WIDE_CENTER.lat, WIDE_CENTER.lng),
-      level: WIDE_LEVEL,
+      center: new kakao.maps.LatLng(GU_WIDE_CENTER.lat, GU_WIDE_CENTER.lng),
+      level: GU_LEVEL,
     });
     mapRef.current = map;
 
+    for (const gu of GU_BOUNDARIES) {
+      const style = dongPolygonStyle(false);
+      const polygon = new kakao.maps.Polygon({
+        path: gu.path.map((p: { lat: number; lng: number }) => new kakao.maps.LatLng(p.lat, p.lng)),
+        ...style,
+      });
+      polygon.setMap(map);
+      kakao.maps.event.addListener(polygon, "click", () => goToGu(gu));
+      guPolygonsRef.current.push(polygon);
+
+      const el = document.createElement("div");
+      el.style.cssText = dongLabelStyle(false);
+      el.textContent = gu.name;
+      el.addEventListener("click", () => goToGu(gu));
+      const label = new kakao.maps.CustomOverlay({
+        position: new kakao.maps.LatLng(gu.center.lat, gu.center.lng),
+        content: el,
+        yAnchor: 0.5,
+        clickable: true,
+      });
+      label.setMap(map);
+      guLabelsRef.current.push(label);
+    }
+
+    kakao.maps.event.addListener(map, "click", () => setSelected(null));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaded]);
+
+  // 선택된 구가 바뀌면 폴리곤/라벨 스타일만 갱신(재생성하지 않음 — 경계선은 항상 지도에 남아있음).
+  useEffect(() => {
+    GU_BOUNDARIES.forEach((gu, i) => {
+      const selected = gu.name === selectedGuName;
+      const polygon = guPolygonsRef.current[i];
+      const label = guLabelsRef.current[i];
+      if (polygon) polygon.setOptions(dongPolygonStyle(selected));
+      if (label) {
+        const content = label.getContent() as HTMLElement;
+        content.style.cssText = dongLabelStyle(selected);
+      }
+    });
+  }, [selectedGuName]);
+
+  // 동대문구 진입 시 1회만 동 경계 폴리곤을 그린다(이미 그려져 있으면 재생성하지 않음).
+  function enterDongdaemun() {
+    const map = mapRef.current;
+    if (!map || !window.kakao || dongPolygonsRef.current.length > 0) return;
+    const { kakao } = window;
     for (const dong of DONG_BOUNDARIES) {
       const style = dongPolygonStyle(false);
       const polygon = new kakao.maps.Polygon({
@@ -429,10 +485,33 @@ export function ImunConceptDemo() {
       label.setMap(map);
       dongLabelsRef.current.push(label);
     }
+  }
 
-    kakao.maps.event.addListener(map, "click", () => setSelected(null));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loaded]);
+  function goToGu(gu: GuBoundary) {
+    const map = mapRef.current;
+    if (!map || !window.kakao) return;
+    clearOverlays(sourceOverlaysRef);
+    clearOverlays(storeOverlaysRef);
+    clearOverlays(dongContentOverlaysRef);
+    if (sourceMarkerRef.current) {
+      sourceMarkerRef.current.setMap(null);
+      sourceMarkerRef.current = null;
+    }
+    setSource(null);
+    setQuery("");
+    setRadiusKey("dong");
+    setSelected(null);
+    setSelectedDongName(null);
+    setSelectedGuName(gu.name);
+    if (gu.name === DATA_READY_GU) {
+      enterDongdaemun();
+      flyTo(map, WIDE_CENTER, WIDE_LEVEL);
+      setStep("dong");
+    } else {
+      flyTo(map, gu.center, WIDE_LEVEL);
+      setStep("guEmpty");
+    }
+  }
 
   // 선택된 동이 바뀌면 폴리곤/라벨 스타일만 갱신(재생성하지 않음 — 경계선은 항상 지도에 남아있음).
   useEffect(() => {
@@ -451,6 +530,8 @@ export function ImunConceptDemo() {
   function goToDong(dong: DongBoundary) {
     const map = mapRef.current;
     if (!map || !window.kakao) return;
+    enterDongdaemun(); // 동 경계가 아직 없으면(예: GPS로 구 레벨에서 바로 진입) 먼저 그림
+    setSelectedGuName(DATA_READY_GU);
     clearOverlays(sourceOverlaysRef);
     clearOverlays(storeOverlaysRef);
     if (sourceMarkerRef.current) {
@@ -592,9 +673,10 @@ export function ImunConceptDemo() {
     setRadiusKey("dong");
     setSelected(null);
     setSelectedDongName(null);
-    setStep("dong");
+    setSelectedGuName(null);
+    setStep("gu");
     if (map && window.kakao) {
-      flyTo(map, WIDE_CENTER, WIDE_LEVEL);
+      flyTo(map, GU_WIDE_CENTER, GU_LEVEL);
     }
   }
 
@@ -706,6 +788,14 @@ export function ImunConceptDemo() {
           <div className="flex items-start justify-between gap-2">
             <div>
               <h1 className="text-base font-extrabold text-ink">우리 동네, 어디서 살까 🔍</h1>
+              {step === "gu" && (
+                <p className="mt-0.5 text-xs text-ink-3">
+                  지도에서 구를 눌러보세요 (지금은 {DATA_READY_GU}만 데이터가 있어요)
+                </p>
+              )}
+              {step === "guEmpty" && (
+                <p className="mt-0.5 text-xs text-ink-3">📍 {selectedGuName} 을 선택했어요</p>
+              )}
               {step === "dong" && (
                 <p className="mt-0.5 text-xs text-ink-3">
                   지도에서 동을 눌러보세요 (지금은 {DATA_READY_DONG}만 데이터가 있어요)
@@ -721,7 +811,7 @@ export function ImunConceptDemo() {
                 <p className="mt-0.5 text-xs font-semibold text-brand-ink">📍 {source.label} 기준</p>
               )}
             </div>
-            {step !== "dong" && (
+            {step !== "gu" && (
               <button type="button" className="btn-bare shrink-0 text-xs" onClick={resetAll}>
                 처음부터
               </button>
@@ -775,6 +865,28 @@ export function ImunConceptDemo() {
           )}
         </div>
       </div>
+
+      {/* 동대문구가 아닌 다른 구를 선택했을 때 */}
+      {step === "guEmpty" && (
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 p-4">
+          <div className="pointer-events-auto mx-auto max-w-md rounded-card border border-line bg-surface p-3 text-center shadow-[var(--sh-2)]">
+            <p className="text-xs text-ink-3">
+              {selectedGuName}는 아직 준비 중이에요.{" "}
+              <button
+                type="button"
+                className="font-bold text-brand-ink underline underline-offset-2"
+                onClick={() => {
+                  const dd = GU_BOUNDARIES.find((g) => g.name === DATA_READY_GU);
+                  if (dd) goToGu(dd);
+                }}
+              >
+                {DATA_READY_GU}
+              </button>
+              를 먼저 둘러보세요.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* 아직 아이템 검색은 안 되는 동을 선택했을 때 — 지하철역/동네가게 핀은 지도에 떠 있음 */}
       {step === "empty" && (
