@@ -10,7 +10,7 @@ import { GpsIcon } from "./GpsIcon";
 import { DEFAULT_CENTER } from "@/lib/constants";
 import { haversineMeters, formatDistance } from "@/lib/geo";
 import { DONG_BOUNDARIES, findDongAt, type DongBoundary } from "@/lib/dongBoundaries";
-import { GU_BOUNDARIES, type GuBoundary } from "@/lib/guBoundaries";
+import { GU_BOUNDARIES } from "@/lib/guBoundaries";
 
 type Direction = "북" | "북동" | "동" | "남동" | "남" | "남서" | "서" | "북서";
 
@@ -64,6 +64,8 @@ interface SourcePoint {
 // 가장 넓은 시야(구 단위) 중심 — 동대문구+인접 4개 구(중랑·성북·성동·광진)가 함께 보이는 지점.
 const GU_WIDE_CENTER = { lat: 37.579, lng: 127.058 };
 const GU_LEVEL = 9;
+// 이 레벨(더 넓게 줌아웃) 이상이면 동은 숨기고 구만 보이게 — 동/구가 동시에 보여 혼잡해지는 것 방지.
+const GU_DONG_SWITCH_LEVEL = 8;
 
 // 동대문구 넓은 시야 중심(대략) — 이문동을 포함해 인접 동이 함께 보이는 지점.
 const WIDE_CENTER = { lat: 37.5865, lng: 127.0555 };
@@ -284,11 +286,16 @@ type MatchedResult = {
   direction?: Direction;
 };
 
-type Step = "gu" | "guEmpty" | "dong" | "source" | "search" | "empty";
+type Step = "gu" | "dong" | "source" | "search" | "empty";
 
 function clearOverlays(ref: React.MutableRefObject<any[]>) {
   ref.current.forEach((o) => o.setMap(null));
   ref.current = [];
+}
+
+// 지우지 않고 보이기/숨기기만 전환(구↔동 레벨 전환 시 재생성 비용 없이 토글).
+function setOverlaysVisible(ref: React.MutableRefObject<any[]>, map: any | null) {
+  ref.current.forEach((o) => o.setMap(map));
 }
 
 const FLY_DURATION = 650;
@@ -330,18 +337,49 @@ function pinStyle({
 }
 
 // 동 경계 폴리곤 스타일 — 선택된 동은 파란 강조, 나머지는 옅은 회색 윤곽선.
+// (구 레벨은 아래 guPolygonStyle 에서 보라색 계열로 완전히 다르게 — 구/동을 헷갈리지 않도록)
 function dongPolygonStyle(selected: boolean) {
   return selected
     ? { strokeWeight: 3, strokeColor: "#3182f6", strokeOpacity: 0.9, fillColor: "#3182f6", fillOpacity: 0.12 }
     : { strokeWeight: 1.5, strokeColor: "#9ca3af", strokeOpacity: 0.55, fillColor: "#ffffff", fillOpacity: 0.02 };
 }
 
+// 동 라벨은 둥근 알약(pill) 모양 + 파란색 — 구 라벨(각진 칩 + 보라색)과 모양 자체를 다르게 해서
+// 지도만 봐도 지금 "구 단위"인지 "동 단위"인지 구분되게 한다.
 function dongLabelStyle(selected: boolean) {
   return `display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:999px;
     font-size:12.5px;font-weight:800;white-space:nowrap;box-shadow:0 4px 14px rgba(25,31,40,.18);
     border:2px solid ${selected ? "var(--blue)" : "var(--line)"};
     background:${selected ? "var(--blue)" : "#fff"};
     color:${selected ? "#fff" : "var(--ink-3)"};
+    cursor:pointer;`;
+}
+
+const GU_ACCENT = "#8b5cf6"; // 보라색 — 동 레벨(파란색)과 확실히 구분되는 구 레벨 전용 색
+
+// 구 경계 폴리곤 스타일. 데이터가 있는 구(동대문구)만 보라색 실선, 나머지는 회색 빗금 느낌의
+// 점선(공사중) — 클릭이 안 되는 상태임을 색만으로도 알 수 있게.
+function guPolygonStyle(active: boolean, selected: boolean) {
+  if (!active) {
+    return { strokeWeight: 1.5, strokeColor: "#b0b8c1", strokeOpacity: 0.6, fillColor: "#9ca3af", fillOpacity: 0.15 };
+  }
+  return selected
+    ? { strokeWeight: 3, strokeColor: GU_ACCENT, strokeOpacity: 0.9, fillColor: GU_ACCENT, fillOpacity: 0.14 }
+    : { strokeWeight: 2, strokeColor: GU_ACCENT, strokeOpacity: 0.65, fillColor: GU_ACCENT, fillOpacity: 0.05 };
+}
+
+// 구 라벨은 각진 칩(모서리만 살짝 둥근) 모양 — 동 라벨(완전한 알약)과 형태 자체가 다름.
+function guLabelStyle(active: boolean, selected: boolean) {
+  if (!active) {
+    return `display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:8px;
+      font-size:12px;font-weight:700;white-space:nowrap;box-shadow:0 2px 8px rgba(25,31,40,.12);
+      border:1.5px dashed #b0b8c1;background:#f3f4f6;color:#9ca3af;cursor:not-allowed;`;
+  }
+  return `display:inline-flex;align-items:center;gap:4px;padding:7px 14px;border-radius:8px;
+    font-size:13px;font-weight:800;white-space:nowrap;box-shadow:0 4px 14px rgba(25,31,40,.18);
+    border:2px solid ${GU_ACCENT};
+    background:${selected ? GU_ACCENT : "#fff"};
+    color:${selected ? "#fff" : "#6d28d9"};
     cursor:pointer;`;
 }
 
@@ -364,6 +402,8 @@ export function ImunConceptDemo() {
   const topPanelRef = useRef<HTMLDivElement>(null);
 
   const [step, setStep] = useState<Step>("gu");
+  const stepRef = useRef<Step>("gu"); // idle 이벤트 핸들러(맵 초기화 시 1회 등록)가 최신 step 을 보도록
+  stepRef.current = step;
   const [selectedGuName, setSelectedGuName] = useState<string | null>(null);
   const [selectedDongName, setSelectedDongName] = useState<string | null>(null);
   const [source, setSource] = useState<SourcePoint | null>(null);
@@ -416,19 +456,25 @@ export function ImunConceptDemo() {
     mapRef.current = map;
 
     for (const gu of GU_BOUNDARIES) {
-      const style = dongPolygonStyle(false);
       const polygon = new kakao.maps.Polygon({
         path: gu.path.map((p: { lat: number; lng: number }) => new kakao.maps.LatLng(p.lat, p.lng)),
-        ...style,
+        ...guPolygonStyle(gu.active, false),
       });
       polygon.setMap(map);
-      kakao.maps.event.addListener(polygon, "click", () => goToGu(gu));
       guPolygonsRef.current.push(polygon);
 
       const el = document.createElement("div");
-      el.style.cssText = dongLabelStyle(false);
-      el.textContent = gu.name;
-      el.addEventListener("click", () => goToGu(gu));
+      el.style.cssText = guLabelStyle(gu.active, false);
+      el.textContent = gu.active ? gu.name : `🚧 ${gu.name}`;
+      if (gu.active) {
+        kakao.maps.event.addListener(polygon, "click", () => enterDongdaemun());
+        el.addEventListener("click", () => enterDongdaemun());
+      } else {
+        const notifyUnderConstruction = () =>
+          flashNotice(`${gu.name}는 아직 공사중이에요. 지금은 ${DATA_READY_GU}만 볼 수 있어요.`);
+        kakao.maps.event.addListener(polygon, "click", notifyUnderConstruction);
+        el.addEventListener("click", notifyUnderConstruction);
+      }
       const label = new kakao.maps.CustomOverlay({
         position: new kakao.maps.LatLng(gu.center.lat, gu.center.lng),
         content: el,
@@ -440,6 +486,19 @@ export function ImunConceptDemo() {
     }
 
     kakao.maps.event.addListener(map, "click", () => setSelected(null));
+    // 줌 레벨이 실제로 바뀔 때마다 확인하되, 300ms 동안 더 이상 안 바뀔 때(=완전히 멈췄을 때)만
+    // 판단한다. flyTo 로 우리가 직접 줌을 애니메이션시키는 도중에도 이 이벤트가 여러 번 오는데,
+    // 매번 즉시 판단하면 "패닝만 끝나고 아직 우리 setLevel 이 적용되기 전"인 중간 순간(레벨이
+    // 잠깐 구 레벨 그대로인 상태)에 스스로 접혀버리는 문제가 있었다 — 디바운스로 최종 레벨만 본다.
+    let switchTimer: number | null = null;
+    kakao.maps.event.addListener(map, "zoom_changed", () => {
+      if (switchTimer) window.clearTimeout(switchTimer);
+      switchTimer = window.setTimeout(() => {
+        if (map.getLevel() >= GU_DONG_SWITCH_LEVEL && stepRef.current !== "gu") {
+          collapseToGu();
+        }
+      }, 300);
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loaded]);
 
@@ -449,16 +508,17 @@ export function ImunConceptDemo() {
       const selected = gu.name === selectedGuName;
       const polygon = guPolygonsRef.current[i];
       const label = guLabelsRef.current[i];
-      if (polygon) polygon.setOptions(dongPolygonStyle(selected));
+      if (polygon) polygon.setOptions(guPolygonStyle(gu.active, selected));
       if (label) {
         const content = label.getContent() as HTMLElement;
-        content.style.cssText = dongLabelStyle(selected);
+        content.style.cssText = guLabelStyle(gu.active, selected);
       }
     });
   }, [selectedGuName]);
 
-  // 동대문구 진입 시 1회만 동 경계 폴리곤을 그린다(이미 그려져 있으면 재생성하지 않음).
-  function enterDongdaemun() {
+  // 동 경계 폴리곤을 1회만 그린다(이미 그려져 있으면 재생성하지 않음). 뷰 상태는 건드리지 않는
+  // 순수 준비 작업 — goToDong 의 안전장치(GPS로 구 레벨에서 바로 동으로 진입하는 경우 등)로도 쓰인다.
+  function ensureDongPolygonsCreated() {
     const map = mapRef.current;
     if (!map || !window.kakao || dongPolygonsRef.current.length > 0) return;
     const { kakao } = window;
@@ -487,9 +547,17 @@ export function ImunConceptDemo() {
     }
   }
 
-  function goToGu(gu: GuBoundary) {
+  // 구 레벨에서 동대문구를 클릭했을 때: 동 경계를 준비하고, 구 경계는 숨기고 동 경계로 전환한 뒤
+  // 동 목록 전체가 보이는 시야로 이동한다.
+  function enterDongdaemun() {
     const map = mapRef.current;
     if (!map || !window.kakao) return;
+    ensureDongPolygonsCreated();
+    setOverlaysVisible(guPolygonsRef, null);
+    setOverlaysVisible(guLabelsRef, null);
+    setOverlaysVisible(dongPolygonsRef, map);
+    setOverlaysVisible(dongLabelsRef, map);
+    setSelectedGuName(DATA_READY_GU);
     clearOverlays(sourceOverlaysRef);
     clearOverlays(storeOverlaysRef);
     clearOverlays(dongContentOverlaysRef);
@@ -502,15 +570,33 @@ export function ImunConceptDemo() {
     setRadiusKey("dong");
     setSelected(null);
     setSelectedDongName(null);
-    setSelectedGuName(gu.name);
-    if (gu.name === DATA_READY_GU) {
-      enterDongdaemun();
-      flyTo(map, WIDE_CENTER, WIDE_LEVEL);
-      setStep("dong");
-    } else {
-      flyTo(map, gu.center, WIDE_LEVEL);
-      setStep("guEmpty");
+    flyTo(map, WIDE_CENTER, WIDE_LEVEL);
+    setStep("dong");
+  }
+
+  // 많이 줌아웃해서(GU_DONG_SWITCH_LEVEL 이상) 동 레벨을 접어야 할 때: 지도는 그대로 두고
+  // (사용자가 방금 손으로 줌아웃한 상태) 오버레이 표시와 화면 상태만 구 레벨로 되돌린다.
+  function collapseToGu() {
+    const map = mapRef.current;
+    if (!map) return;
+    clearOverlays(sourceOverlaysRef);
+    clearOverlays(storeOverlaysRef);
+    clearOverlays(dongContentOverlaysRef);
+    if (sourceMarkerRef.current) {
+      sourceMarkerRef.current.setMap(null);
+      sourceMarkerRef.current = null;
     }
+    setSource(null);
+    setQuery("");
+    setRadiusKey("dong");
+    setSelected(null);
+    setSelectedDongName(null);
+    setSelectedGuName(null);
+    setStep("gu");
+    setOverlaysVisible(dongPolygonsRef, null);
+    setOverlaysVisible(dongLabelsRef, null);
+    setOverlaysVisible(guPolygonsRef, map);
+    setOverlaysVisible(guLabelsRef, map);
   }
 
   // 선택된 동이 바뀌면 폴리곤/라벨 스타일만 갱신(재생성하지 않음 — 경계선은 항상 지도에 남아있음).
@@ -530,7 +616,12 @@ export function ImunConceptDemo() {
   function goToDong(dong: DongBoundary) {
     const map = mapRef.current;
     if (!map || !window.kakao) return;
-    enterDongdaemun(); // 동 경계가 아직 없으면(예: GPS로 구 레벨에서 바로 진입) 먼저 그림
+    // 동 경계가 아직 없으면(예: GPS로 구 레벨에서 바로 진입) 먼저 그리고, 구는 숨기고 동만 보이게.
+    ensureDongPolygonsCreated();
+    setOverlaysVisible(guPolygonsRef, null);
+    setOverlaysVisible(guLabelsRef, null);
+    setOverlaysVisible(dongPolygonsRef, map);
+    setOverlaysVisible(dongLabelsRef, map);
     setSelectedGuName(DATA_READY_GU);
     clearOverlays(sourceOverlaysRef);
     clearOverlays(storeOverlaysRef);
@@ -660,21 +751,8 @@ export function ImunConceptDemo() {
   }
 
   function resetAll() {
+    collapseToGu(); // 오버레이 표시·상태를 구 레벨로 정리
     const map = mapRef.current;
-    clearOverlays(sourceOverlaysRef);
-    clearOverlays(storeOverlaysRef);
-    clearOverlays(dongContentOverlaysRef);
-    if (sourceMarkerRef.current) {
-      sourceMarkerRef.current.setMap(null);
-      sourceMarkerRef.current = null;
-    }
-    setSource(null);
-    setQuery("");
-    setRadiusKey("dong");
-    setSelected(null);
-    setSelectedDongName(null);
-    setSelectedGuName(null);
-    setStep("gu");
     if (map && window.kakao) {
       // 동 레벨 → 구 레벨은 거리·줌 차이가 커서 flyTo(panTo+idle 대기)가 불안정했다.
       // "처음부터"는 순간 이동이어도 자연스러운 제스처라 애니메이션 없이 바로 옮긴다.
@@ -797,9 +875,6 @@ export function ImunConceptDemo() {
                   지도에서 구를 눌러보세요 (지금은 {DATA_READY_GU}만 데이터가 있어요)
                 </p>
               )}
-              {step === "guEmpty" && (
-                <p className="mt-0.5 text-xs text-ink-3">📍 {selectedGuName} 을 선택했어요</p>
-              )}
               {step === "dong" && (
                 <p className="mt-0.5 text-xs text-ink-3">
                   지도에서 동을 눌러보세요 (지금은 {DATA_READY_DONG}만 데이터가 있어요)
@@ -869,28 +944,6 @@ export function ImunConceptDemo() {
           )}
         </div>
       </div>
-
-      {/* 동대문구가 아닌 다른 구를 선택했을 때 */}
-      {step === "guEmpty" && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 p-4">
-          <div className="pointer-events-auto mx-auto max-w-md rounded-card border border-line bg-surface p-3 text-center shadow-[var(--sh-2)]">
-            <p className="text-xs text-ink-3">
-              {selectedGuName}는 아직 준비 중이에요.{" "}
-              <button
-                type="button"
-                className="font-bold text-brand-ink underline underline-offset-2"
-                onClick={() => {
-                  const dd = GU_BOUNDARIES.find((g) => g.name === DATA_READY_GU);
-                  if (dd) goToGu(dd);
-                }}
-              >
-                {DATA_READY_GU}
-              </button>
-              를 먼저 둘러보세요.
-            </p>
-          </div>
-        </div>
-      )}
 
       {/* 아직 아이템 검색은 안 되는 동을 선택했을 때 — 지하철역/동네가게 핀은 지도에 떠 있음 */}
       {step === "empty" && (
