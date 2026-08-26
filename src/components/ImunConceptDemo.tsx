@@ -413,7 +413,6 @@ export function ImunConceptDemo() {
   const [selected, setSelected] = useState<MatchedResult | null>(null);
   const [locating, setLocating] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
-  const [debugMsg, setDebugMsg] = useState<string | null>(null); // TODO(debug): 진단용, 원인 파악 후 제거
   // 상단 플로팅 패널 높이 — 지도 핀이 패널 아래에 가려지지 않도록 bounds 여백으로 사용.
   const [topInset, setTopInset] = useState(140);
 
@@ -449,8 +448,6 @@ export function ImunConceptDemo() {
   // 지도 초기화 (1회) — 구 단위 넓은 시야 + 구 경계 폴리곤(항상 유지, 선택 시 스타일만 갱신)
   useEffect(() => {
     if (!loaded || !mapEl.current || mapRef.current) return;
-    // TODO(debug): 구 라벨이 배포본에서 렌더링되지 않는 이슈 추적용 임시 try/catch. 원인 파악 후 제거.
-    try {
     const { kakao } = window;
     const map = new kakao.maps.Map(mapEl.current, {
       center: new kakao.maps.LatLng(GU_WIDE_CENTER.lat, GU_WIDE_CENTER.lng),
@@ -502,11 +499,6 @@ export function ImunConceptDemo() {
         }
       }, 300);
     });
-    setDebugMsg(`init done, guPolys=${guPolygonsRef.current.length}`);
-    } catch (e: any) {
-      setDebugMsg(`INIT ERROR: ${e?.message || String(e)}`);
-      console.error("map init error", e);
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loaded]);
 
@@ -878,7 +870,6 @@ export function ImunConceptDemo() {
           <div className="flex items-start justify-between gap-2">
             <div>
               <h1 className="text-base font-extrabold text-ink">우리 동네, 어디서 살까 🔍</h1>
-              {debugMsg && <p className="text-[10px] text-red-600">{debugMsg}</p>}
               {step === "gu" && (
                 <p className="mt-0.5 text-xs text-ink-3">
                   지도에서 구를 눌러보세요 (지금은 {DATA_READY_GU}만 데이터가 있어요)
