@@ -17,6 +17,7 @@ type StoreCategory =
   | "대형마트"
   | "편의점"
   | "과일가게"
+  | "채소가게"
   | "정육점"
   | "꽃집"
   | "생활용품"
@@ -27,6 +28,7 @@ const CATEGORY_ICON: Record<StoreCategory, string> = {
   대형마트: "🛒",
   편의점: "🏪",
   과일가게: "🍎",
+  채소가게: "🥬",
   정육점: "🥩",
   꽃집: "💐",
   생활용품: "🧻",
@@ -46,6 +48,7 @@ interface DemoStore {
   category: StoreCategory;
   lat: number;
   lng: number;
+  dong: string; // 소속 동 — 동 클릭 시 그 동의 가게만 골라 보여주는 데 사용
   verified: boolean;
   items: DemoItem[];
 }
@@ -83,8 +86,9 @@ interface SubwayStation {
 
 // 지하철역(카카오 공식 카테고리 SW8) — 이문동만이 아니라 우리가 다루는 6개 동
 // 전체에서 조회한 실제 역 좌표. 같은 역의 노선별 중복(회기역 1호선/경의중앙선/
-// 경춘선 등)은 대표 좌표 하나로 합쳤다. 이문동 밖 역은 표시만 되고, 실제
-// "출발지로 선택"은 이문동(신이문역·외대앞역) 클릭 시에만 동작한다.
+// 경춘선 등)은 대표 좌표 하나로 합쳤다. 넓은 시야(WIDE)에선 안 보이고, 동을
+// 클릭해 확대했을 때 그 동 소속 역만 표시된다(renderDongContent). 이문동
+// 역(신이문역·외대앞역)만 클릭 시 실제로 "출발지로 선택"까지 동작한다.
 const SUBWAY_STATIONS: SubwayStation[] = [
   { name: "신이문역", lat: 37.6017816437084, lng: 127.067398003775, dong: "이문동" },
   { name: "외대앞역", lat: 37.596274142656114, lng: 127.06369251145765, dong: "이문동" },
@@ -103,6 +107,7 @@ const DEMO_STORES: DemoStore[] = [
     category: "대형마트",
     lat: 37.59849154178327,
     lng: 127.06188598263597,
+    dong: "이문동",
     verified: true,
     items: [
       { name: "딸기", price: "8,900원", updatedAt: "2026-08-21" },
@@ -118,6 +123,7 @@ const DEMO_STORES: DemoStore[] = [
     category: "대형마트",
     lat: 37.59908111129766,
     lng: 127.06298149595398,
+    dong: "이문동",
     verified: true,
     items: [
       { name: "포켓몬빵", price: "1,800원", updatedAt: "2026-08-23" },
@@ -130,6 +136,7 @@ const DEMO_STORES: DemoStore[] = [
     category: "편의점",
     lat: 37.5971915355627,
     lng: 127.061649373943,
+    dong: "이문동",
     verified: true,
     items: [
       { name: "아이스크림", price: "1,500원", updatedAt: "2026-08-24" },
@@ -142,6 +149,7 @@ const DEMO_STORES: DemoStore[] = [
     category: "편의점",
     lat: 37.6009213156062,
     lng: 127.062262826867,
+    dong: "이문동",
     verified: true,
     items: [
       { name: "아이스크림", price: "1,400원", updatedAt: "2026-08-22" },
@@ -154,17 +162,20 @@ const DEMO_STORES: DemoStore[] = [
     category: "편의점",
     lat: 37.57266897198723,
     lng: 127.06036471674499,
+    dong: "답십리동",
     verified: true,
     items: [{ name: "휴지", price: "3,900원", updatedAt: "2026-08-17" }],
   },
-  // 아래 5곳은 서비스 컨셉상 "이 서비스 자체 DB에만 있는(카카오 POI엔 없는) 동네 가게" 목업
+  // 아래는 서비스 컨셉상 "동네 사람들이 제보로 등록한(카카오 POI엔 없는) 동네 가게" 목업
   // — 실제 상호는 아니고, 좌표만 각 동 경계 안에 들어오도록 findDongAt 으로 검증해 배치함.
+  // 6개 동 전부 최소 1곳씩은 있도록 회기동·휘경동에 채소가게를 새로 추가함.
   {
     id: "fruit-imun",
     name: "이문 과일가게",
     category: "과일가게",
     lat: 37.5969,
     lng: 127.059,
+    dong: "이문동",
     verified: false,
     items: [
       { name: "딸기", price: "7,000원", updatedAt: "2026-08-23" },
@@ -177,6 +188,7 @@ const DEMO_STORES: DemoStore[] = [
     category: "꽃집",
     lat: 37.588816,
     lng: 127.045304,
+    dong: "청량리동",
     verified: false,
     items: [{ name: "장미", price: "2,500원/송이", updatedAt: "2026-08-20" }],
   },
@@ -186,6 +198,7 @@ const DEMO_STORES: DemoStore[] = [
     category: "꽃집",
     lat: 37.5988,
     lng: 127.0568,
+    dong: "이문동",
     verified: false,
     items: [{ name: "장미", price: "3,500원/송이", updatedAt: "2026-08-24" }],
   },
@@ -195,8 +208,29 @@ const DEMO_STORES: DemoStore[] = [
     category: "반찬가게",
     lat: 37.5975,
     lng: 127.0625,
+    dong: "이문동",
     verified: false,
     items: [{ name: "두부", price: "1,300원", updatedAt: "2026-08-24" }],
+  },
+  {
+    id: "veggie-hoegi",
+    name: "회기동 싱싱채소",
+    category: "채소가게",
+    lat: 37.593709,
+    lng: 127.051481,
+    dong: "회기동",
+    verified: false,
+    items: [{ name: "당근", price: "2,000원", updatedAt: "2026-08-22" }],
+  },
+  {
+    id: "veggie-hwigyeong",
+    name: "휘경동 텃밭마켓",
+    category: "채소가게",
+    lat: 37.588233,
+    lng: 127.064494,
+    dong: "휘경동",
+    verified: false,
+    items: [{ name: "양파", price: "1,500원", updatedAt: "2026-08-25" }],
   },
   {
     id: "bakery-jeonnong",
@@ -204,6 +238,7 @@ const DEMO_STORES: DemoStore[] = [
     category: "빵집",
     lat: 37.5788,
     lng: 127.0561,
+    dong: "전농동",
     verified: false,
     items: [{ name: "포켓몬빵", price: "1,900원", updatedAt: "2026-08-21" }],
   },
@@ -238,8 +273,9 @@ function daysAgo(dateStr: string) {
 type MatchedResult = {
   store: DemoStore;
   matched: DemoItem[];
-  distance: number;
-  direction: Direction;
+  // 검색 결과(출발지 기준 거리 계산됨)에서만 채워짐. 동 둘러보기(browse) 모드에선 비워둠.
+  distance?: number;
+  direction?: Direction;
 };
 
 type Step = "dong" | "source" | "search" | "empty";
@@ -312,7 +348,7 @@ export function ImunConceptDemo() {
   const mapRef = useRef<any>(null);
   const dongPolygonsRef = useRef<any[]>([]); // DONG_BOUNDARIES 와 같은 순서로 대응
   const dongLabelsRef = useRef<any[]>([]);
-  const subwayOverlaysRef = useRef<any[]>([]); // 전 지역 공통, 동 선택과 무관하게 항상 유지
+  const dongContentOverlaysRef = useRef<any[]>([]); // 선택된 동의 지하철역+동네가게(둘러보기 모드) 핀
   const sourceOverlaysRef = useRef<any[]>([]);
   const storeOverlaysRef = useRef<any[]>([]);
   const sourceMarkerRef = useRef<any>(null);
@@ -321,9 +357,6 @@ export function ImunConceptDemo() {
 
   const [step, setStep] = useState<Step>("dong");
   const [selectedDongName, setSelectedDongName] = useState<string | null>(null);
-  // 지하철역 핀 클릭 핸들러(맵 초기화 시 1회 등록)가 최신 selectedDongName 을 보도록 ref 로 미러링.
-  const selectedDongNameRef = useRef<string | null>(null);
-  selectedDongNameRef.current = selectedDongName;
   const [source, setSource] = useState<SourcePoint | null>(null);
   const [customAddress, setCustomAddress] = useState("");
   const [query, setQuery] = useState("");
@@ -397,29 +430,6 @@ export function ImunConceptDemo() {
       dongLabelsRef.current.push(label);
     }
 
-    // 지하철역 — 이문동 한정이 아니라 6개 동 전체에 항상 표시(동 선택/줌과 무관).
-    for (const station of SUBWAY_STATIONS) {
-      const el = document.createElement("div");
-      el.style.cssText = pinStyle({ active: true, filled: false });
-      el.textContent = `🚇 ${station.name}`;
-      el.addEventListener("click", () => {
-        if (selectedDongNameRef.current === DATA_READY_DONG && station.dong === DATA_READY_DONG) {
-          chooseSource({ label: station.name, lat: station.lat, lng: station.lng, icon: "🚇" });
-        } else {
-          flashNotice(`${station.dong}은 아직 준비 중이에요. ${DATA_READY_DONG}을 먼저 눌러보세요.`);
-        }
-      });
-      const overlay = new kakao.maps.CustomOverlay({
-        position: new kakao.maps.LatLng(station.lat, station.lng),
-        content: el,
-        yAnchor: 1.6,
-        zIndex: 2,
-        clickable: true,
-      });
-      overlay.setMap(map);
-      subwayOverlaysRef.current.push(overlay);
-    }
-
     kakao.maps.event.addListener(map, "click", () => setSelected(null));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loaded]);
@@ -453,11 +463,67 @@ export function ImunConceptDemo() {
     setSelected(null);
     setSelectedDongName(dong.name);
     flyTo(map, dong.center, DONG_LEVEL);
+    renderDongContent(dong);
     if (dong.name === DATA_READY_DONG) {
       setStep("source");
       renderSourcePins();
     } else {
       setStep("empty");
+    }
+  }
+
+  // 그 동의 지하철역 + 동네 사람들이 제보한 가게(둘러보기 모드, 검색 전이라 방향/거리 없음)를
+  // 표시. 검색 단계(search)로 넘어가면 chooseSource 에서 지워지고 검색 결과 핀으로 대체된다.
+  function renderDongContent(dong: DongBoundary) {
+    const map = mapRef.current;
+    if (!map || !window.kakao) return;
+    const { kakao } = window;
+    clearOverlays(dongContentOverlaysRef);
+
+    for (const station of SUBWAY_STATIONS.filter((s) => s.dong === dong.name)) {
+      const el = document.createElement("div");
+      el.style.cssText = pinStyle({ active: true, filled: false });
+      el.textContent = `🚇 ${station.name}`;
+      el.addEventListener("click", () => {
+        if (dong.name === DATA_READY_DONG) {
+          chooseSource({ label: station.name, lat: station.lat, lng: station.lng, icon: "🚇" });
+        }
+      });
+      const overlay = new kakao.maps.CustomOverlay({
+        position: new kakao.maps.LatLng(station.lat, station.lng),
+        content: el,
+        yAnchor: 1.6,
+        zIndex: 2,
+        clickable: true,
+      });
+      overlay.setMap(map);
+      dongContentOverlaysRef.current.push(overlay);
+    }
+
+    for (const store of DEMO_STORES.filter((s) => s.dong === dong.name)) {
+      const el = document.createElement("div");
+      el.className = "store-pin" + (store.verified ? "" : " store-pin--gray");
+      el.style.setProperty("--pin-color", store.verified ? "#3182f6" : "#9ca3af");
+      const icon = document.createElement("span");
+      icon.className = "store-pin__icon";
+      icon.textContent = CATEGORY_ICON[store.category];
+      const name = document.createElement("span");
+      name.className = "store-pin__name";
+      name.textContent = store.name;
+      el.append(icon, name);
+      el.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        setSelected({ store, matched: store.items });
+      });
+      const overlay = new kakao.maps.CustomOverlay({
+        position: new kakao.maps.LatLng(store.lat, store.lng),
+        content: el,
+        yAnchor: 1,
+        zIndex: 4,
+        clickable: true,
+      });
+      overlay.setMap(map);
+      dongContentOverlaysRef.current.push(overlay);
     }
   }
 
@@ -500,6 +566,7 @@ export function ImunConceptDemo() {
 
   function chooseSource(point: SourcePoint) {
     clearOverlays(sourceOverlaysRef);
+    clearOverlays(dongContentOverlaysRef); // 둘러보기 핀 정리 — 이제부터는 검색 결과 핀이 대신함
     placeSourceMarker(point);
     setSource(point);
     setStep("search");
@@ -515,6 +582,7 @@ export function ImunConceptDemo() {
     const map = mapRef.current;
     clearOverlays(sourceOverlaysRef);
     clearOverlays(storeOverlaysRef);
+    clearOverlays(dongContentOverlaysRef);
     if (sourceMarkerRef.current) {
       sourceMarkerRef.current.setMap(null);
       sourceMarkerRef.current = null;
@@ -708,25 +776,24 @@ export function ImunConceptDemo() {
         </div>
       </div>
 
-      {/* 아직 데이터가 없는 동을 선택했을 때 */}
+      {/* 아직 아이템 검색은 안 되는 동을 선택했을 때 — 지하철역/동네가게 핀은 지도에 떠 있음 */}
       {step === "empty" && (
-        <div className="absolute inset-x-0 bottom-0 z-10 p-4">
-          <div className="mx-auto max-w-md rounded-card border border-line bg-surface p-5 text-center shadow-[var(--sh-2)]">
-            <div className="text-3xl">🚧</div>
-            <p className="mt-2 text-sm font-bold text-ink">{selectedDongName}은 아직 준비 중이에요</p>
-            <p className="mt-1 text-xs text-ink-3">
-              지금은 {DATA_READY_DONG}만 발품 팔아 채워뒀어요. 다음 동네도 곧 만나요!
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 p-4">
+          <div className="pointer-events-auto mx-auto max-w-md rounded-card border border-line bg-surface p-3 text-center shadow-[var(--sh-2)]">
+            <p className="text-xs text-ink-3">
+              🚇🥬 핀을 눌러 {selectedDongName}에 있는 걸 둘러보세요. 아이템 검색은 아직{" "}
+              <button
+                type="button"
+                className="font-bold text-brand-ink underline underline-offset-2"
+                onClick={() => {
+                  const imun = DONG_BOUNDARIES.find((d) => d.name === DATA_READY_DONG);
+                  if (imun) goToDong(imun);
+                }}
+              >
+                {DATA_READY_DONG}
+              </button>
+              에서만 돼요.
             </p>
-            <button
-              type="button"
-              className="btn-cta btn-cta--primary btn-cta--block mt-3"
-              onClick={() => {
-                const imun = DONG_BOUNDARIES.find((d) => d.name === DATA_READY_DONG);
-                if (imun) goToDong(imun);
-              }}
-            >
-              {DATA_READY_DONG} 보러가기
-            </button>
           </div>
         </div>
       )}
@@ -757,9 +824,13 @@ export function ImunConceptDemo() {
                     </span>
                   )}
                 </div>
-                <p className="mt-0.5 text-xs font-semibold text-brand-ink">
-                  {selected.direction}쪽 {formatDistance(selected.distance)}
-                </p>
+                {selected.direction && selected.distance != null ? (
+                  <p className="mt-0.5 text-xs font-semibold text-brand-ink">
+                    {selected.direction}쪽 {formatDistance(selected.distance)}
+                  </p>
+                ) : (
+                  <p className="mt-0.5 text-xs text-ink-3">{selectedDongName} 등록 가게</p>
+                )}
               </div>
               <button
                 type="button"
