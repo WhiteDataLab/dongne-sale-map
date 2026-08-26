@@ -676,7 +676,10 @@ export function ImunConceptDemo() {
     setSelectedGuName(null);
     setStep("gu");
     if (map && window.kakao) {
-      flyTo(map, GU_WIDE_CENTER, GU_LEVEL);
+      // 동 레벨 → 구 레벨은 거리·줌 차이가 커서 flyTo(panTo+idle 대기)가 불안정했다.
+      // "처음부터"는 순간 이동이어도 자연스러운 제스처라 애니메이션 없이 바로 옮긴다.
+      map.setLevel(GU_LEVEL);
+      map.setCenter(new window.kakao.maps.LatLng(GU_WIDE_CENTER.lat, GU_WIDE_CENTER.lng));
     }
   }
 
