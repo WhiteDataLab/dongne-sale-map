@@ -66,53 +66,31 @@ const DONG_LEVEL = 4;
 const DATA_READY_DONG = "이문동";
 
 // 이문동 출발지 후보 — 후보2 컨셉의 목업.
-// 카카오 로컬 API의 "공식 카테고리 코드"(전국 공통, MT1=대형마트/CS2=편의점/SC4=학교/
-// SW8=지하철역 등 18종)로 조회되는 실제 장소만 자동으로 채움. 아파트/주거는 애초에
-// 공식 카테고리 자체가 없어(이름을 일일이 검색해야 함) 전부 뺐고, 예외로 딱 2곳
-// (이문아이파크자이·래미안 라그란데)만 수동으로 남겨뒀다.
-// 대형마트(3)+편의점(28)+학교(4)+지하철역(2)=37곳 — 카테고리 6종(중개업소·병원·
-// 약국·음식점·은행·카페·어린이집·주차장·숙박 등)까지 다 넣으면 이문동 안에서만
-// 291곳이 나와 "출발지 고르기"로는 너무 과해서 이 4개로 좁혔다(2026-08-26 조회 기준).
+// 대형마트·편의점·학교(공식 카테고리로 조회했던 것)는 전부 제거하고, 아파트 2곳만
+// 예외로 유지. 지하철역은 이문동 전용이 아니라 아래 SUBWAY_STATIONS(전 지역 공통
+// 레이어)로 분리했다.
 const SOURCE_OPTIONS: SourcePoint[] = [
   { label: "이문아이파크자이", lat: 37.598186166296394, lng: 127.06346879756117 },
   { label: "래미안 라그란데", lat: 37.6000844489313, lng: 127.060230587332 },
-  { label: "GS더프레시 이문파크자이점", lat: 37.59908111129766, lng: 127.06298149595398, icon: "🛒" },
-  { label: "농협유통하나로마트 외대역점", lat: 37.59720060633378, lng: 127.06153274777935, icon: "🛒" },
-  { label: "이마트 에브리데이 이문점", lat: 37.59849154178327, lng: 127.06188598263597, icon: "🛒" },
-  { label: "신이문역 1호선", lat: 37.6017816437084, lng: 127.067398003775, icon: "🚇" },
-  { label: "외대앞역 1호선", lat: 37.596274142656114, lng: 127.06369251145765, icon: "🚇" },
-  { label: "CU 외대앞역점", lat: 37.5952034940514, lng: 127.062513970259, icon: "🏪" },
-  { label: "CU 외대얄개점", lat: 37.5949174354832, lng: 127.058093111061, icon: "🏪" },
-  { label: "CU 외대이문점", lat: 37.5948262046348, lng: 127.060348640582, icon: "🏪" },
-  { label: "CU 이문1호점", lat: 37.5986163514098, lng: 127.05738371540585, icon: "🏪" },
-  { label: "CU 이문골드점", lat: 37.6009213156062, lng: 127.062262826867, icon: "🏪" },
-  { label: "CU 이문라그란데점", lat: 37.599172221910955, lng: 127.06105650060019, icon: "🏪" },
-  { label: "CU 이문투니온점", lat: 37.6035071914135, lng: 127.062199299247, icon: "🏪" },
-  { label: "CU 이문행복점", lat: 37.6017321511221, lng: 127.065690248415, icon: "🏪" },
-  { label: "CU 한국외국어대학교점", lat: 37.59633593057765, lng: 127.0574091406041, icon: "🏪" },
-  { label: "GS25 신이문대림점", lat: 37.6054071529886, lng: 127.06430278245237, icon: "🏪" },
-  { label: "GS25 외대2점", lat: 37.595932245335554, lng: 127.06108102951393, icon: "🏪" },
-  { label: "GS25 외대경희점", lat: 37.5982877675716, lng: 127.056809345379, icon: "🏪" },
-  { label: "GS25 외대교차로점", lat: 37.5948538580178, lng: 127.064286906451, icon: "🏪" },
-  { label: "GS25 외대라그란데점", lat: 37.59846314941, lng: 127.05927468012604, icon: "🏪" },
-  { label: "GS25 외대스타점", lat: 37.59575621441468, lng: 127.05998251231046, icon: "🏪" },
-  { label: "GS25 이문라그란데점", lat: 37.601773002379126, lng: 127.06178564916232, icon: "🏪" },
-  { label: "GS25 이문래미안점", lat: 37.5937710055856, lng: 127.058837282184, icon: "🏪" },
-  { label: "GS25 이문사랑점", lat: 37.6055664288218, lng: 127.066291576022, icon: "🏪" },
-  { label: "GS25 이문쌍용점", lat: 37.60099726356387, lng: 127.06829983731743, icon: "🏪" },
-  { label: "GS25 이문원탑점", lat: 37.601182395453996, lng: 127.07063280372613, icon: "🏪" },
-  { label: "GS25 이문캔버스점", lat: 37.5971915355627, lng: 127.061649373943, icon: "🏪" },
-  { label: "GS25 이문파크자이점", lat: 37.59892958621251, lng: 127.06327805485505, icon: "🏪" },
-  { label: "GS25 이문햇살점", lat: 37.5938616581957, lng: 127.057716361776, icon: "🏪" },
-  { label: "GS25 이문회기점", lat: 37.592133112505024, lng: 127.05677296261153, icon: "🏪" },
-  { label: "세븐일레븐 경희대기숙사점", lat: 37.5942731040493, lng: 127.056489243398, icon: "🏪" },
-  { label: "세븐일레븐 신이문역점", lat: 37.6033928198793, lng: 127.067037070336, icon: "🏪" },
-  { label: "이마트24 경희대정경대점", lat: 37.5974405639652, lng: 127.055487226438, icon: "🏪" },
-  { label: "이마트24 이문대장점", lat: 37.597046986105475, lng: 127.06239321729046, icon: "🏪" },
-  { label: "경희고등학교", lat: 37.59471715454311, lng: 127.0548726148142, icon: "🏫" },
-  { label: "경희중학교", lat: 37.5943207141803, lng: 127.054881382291, icon: "🏫" },
-  { label: "서울이문초등학교", lat: 37.60225365827153, lng: 127.06435669020352, icon: "🏫" },
-  { label: "한국외국어대학교 서울캠퍼스", lat: 37.5975430443335, lng: 127.05784829549488, icon: "🏫" },
+];
+
+interface SubwayStation {
+  name: string;
+  lat: number;
+  lng: number;
+  dong: string; // 소속 동(우리 6개 동 기준)
+}
+
+// 지하철역(카카오 공식 카테고리 SW8) — 이문동만이 아니라 우리가 다루는 6개 동
+// 전체에서 조회한 실제 역 좌표. 같은 역의 노선별 중복(회기역 1호선/경의중앙선/
+// 경춘선 등)은 대표 좌표 하나로 합쳤다. 이문동 밖 역은 표시만 되고, 실제
+// "출발지로 선택"은 이문동(신이문역·외대앞역) 클릭 시에만 동작한다.
+const SUBWAY_STATIONS: SubwayStation[] = [
+  { name: "신이문역", lat: 37.6017816437084, lng: 127.067398003775, dong: "이문동" },
+  { name: "외대앞역", lat: 37.596274142656114, lng: 127.06369251145765, dong: "이문동" },
+  { name: "회기역", lat: 37.5897962196601, lng: 127.058048369273, dong: "휘경동" },
+  { name: "청량리역", lat: 37.580037056302906, lng: 127.04472723023305, dong: "청량리동" },
+  { name: "답십리역", lat: 37.56697480965114, lng: 127.05256127651293, dong: "답십리동" },
 ];
 
 // 목업 가게 데이터. 실제 좌표/DB 대신 데모용 하드코딩.
@@ -334,6 +312,7 @@ export function ImunConceptDemo() {
   const mapRef = useRef<any>(null);
   const dongPolygonsRef = useRef<any[]>([]); // DONG_BOUNDARIES 와 같은 순서로 대응
   const dongLabelsRef = useRef<any[]>([]);
+  const subwayOverlaysRef = useRef<any[]>([]); // 전 지역 공통, 동 선택과 무관하게 항상 유지
   const sourceOverlaysRef = useRef<any[]>([]);
   const storeOverlaysRef = useRef<any[]>([]);
   const sourceMarkerRef = useRef<any>(null);
@@ -342,6 +321,9 @@ export function ImunConceptDemo() {
 
   const [step, setStep] = useState<Step>("dong");
   const [selectedDongName, setSelectedDongName] = useState<string | null>(null);
+  // 지하철역 핀 클릭 핸들러(맵 초기화 시 1회 등록)가 최신 selectedDongName 을 보도록 ref 로 미러링.
+  const selectedDongNameRef = useRef<string | null>(null);
+  selectedDongNameRef.current = selectedDongName;
   const [source, setSource] = useState<SourcePoint | null>(null);
   const [customAddress, setCustomAddress] = useState("");
   const [query, setQuery] = useState("");
@@ -413,6 +395,29 @@ export function ImunConceptDemo() {
       });
       label.setMap(map);
       dongLabelsRef.current.push(label);
+    }
+
+    // 지하철역 — 이문동 한정이 아니라 6개 동 전체에 항상 표시(동 선택/줌과 무관).
+    for (const station of SUBWAY_STATIONS) {
+      const el = document.createElement("div");
+      el.style.cssText = pinStyle({ active: true, filled: false });
+      el.textContent = `🚇 ${station.name}`;
+      el.addEventListener("click", () => {
+        if (selectedDongNameRef.current === DATA_READY_DONG && station.dong === DATA_READY_DONG) {
+          chooseSource({ label: station.name, lat: station.lat, lng: station.lng, icon: "🚇" });
+        } else {
+          flashNotice(`${station.dong}은 아직 준비 중이에요. ${DATA_READY_DONG}을 먼저 눌러보세요.`);
+        }
+      });
+      const overlay = new kakao.maps.CustomOverlay({
+        position: new kakao.maps.LatLng(station.lat, station.lng),
+        content: el,
+        yAnchor: 1.6,
+        zIndex: 2,
+        clickable: true,
+      });
+      overlay.setMap(map);
+      subwayOverlaysRef.current.push(overlay);
     }
 
     kakao.maps.event.addListener(map, "click", () => setSelected(null));
@@ -642,7 +647,7 @@ export function ImunConceptDemo() {
                 <p className="mt-0.5 text-xs text-ink-3">📍 {selectedDongName} 을 선택했어요</p>
               )}
               {step === "source" && (
-                <p className="mt-0.5 text-xs text-ink-3">🏢 마커를 눌러 출발지를 고르거나, 주소를 입력하세요.</p>
+                <p className="mt-0.5 text-xs text-ink-3">🏢🚇 마커를 눌러 출발지를 고르거나, 주소를 입력하세요.</p>
               )}
               {step === "search" && source && (
                 <p className="mt-0.5 text-xs font-semibold text-brand-ink">📍 {source.label} 기준</p>
