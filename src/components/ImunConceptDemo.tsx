@@ -413,6 +413,7 @@ export function ImunConceptDemo() {
   const [selected, setSelected] = useState<MatchedResult | null>(null);
   const [locating, setLocating] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [debugMsg, setDebugMsg] = useState<string | null>(null); // TODO(debug): 진단용, 원인 파악 후 제거
   // 상단 플로팅 패널 높이 — 지도 핀이 패널 아래에 가려지지 않도록 bounds 여백으로 사용.
   const [topInset, setTopInset] = useState(140);
 
@@ -501,9 +502,9 @@ export function ImunConceptDemo() {
         }
       }, 300);
     });
-    flashNotice(`DEBUG: init done, guPolys=${guPolygonsRef.current.length}`);
+    setDebugMsg(`init done, guPolys=${guPolygonsRef.current.length}`);
     } catch (e: any) {
-      flashNotice(`DEBUG INIT ERROR: ${e?.message || String(e)}`);
+      setDebugMsg(`INIT ERROR: ${e?.message || String(e)}`);
       console.error("map init error", e);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -877,6 +878,7 @@ export function ImunConceptDemo() {
           <div className="flex items-start justify-between gap-2">
             <div>
               <h1 className="text-base font-extrabold text-ink">우리 동네, 어디서 살까 🔍</h1>
+              {debugMsg && <p className="text-[10px] text-red-600">{debugMsg}</p>}
               {step === "gu" && (
                 <p className="mt-0.5 text-xs text-ink-3">
                   지도에서 구를 눌러보세요 (지금은 {DATA_READY_GU}만 데이터가 있어요)
